@@ -1,0 +1,120 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
+import { signUp } from "@/app/actions/auth";
+
+export default function SignupPage() {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const result = await signUp(new FormData(e.currentTarget));
+    if (result?.error) { setError(result.error); setLoading(false); }
+  }
+
+  return (
+    <div className="w-full">
+      <div className="mb-8 text-center">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--foreground)] text-white text-2xl shadow-lg">
+          💰
+        </div>
+        <h1 className="text-[26px] font-semibold tracking-tight text-[var(--foreground)]">
+          Create account
+        </h1>
+        <p className="mt-1 text-[14px] text-[var(--label-secondary)]">
+          Track finances together
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <Field label="Your name" name="name" type="text" placeholder="Marcel" autoComplete="name" />
+        <Field label="Username" name="username" type="text" placeholder="marcel123" autoComplete="username" />
+        <Field label="Email" name="email" type="email" placeholder="you@example.com" autoComplete="email" />
+
+        <div>
+          <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              required
+              autoComplete="new-password"
+              className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full text-[var(--label-tertiary)] transition-colors hover:text-[var(--label-secondary)]"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword
+                ? <EyeOff className="h-4 w-4" strokeWidth={2} />
+                : <Eye className="h-4 w-4" strokeWidth={2} />
+              }
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-[13px] text-rose-700 ring-1 ring-rose-200">
+            {error}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
+        >
+          {loading ? "Creating account…" : "Create account"}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-[13px] text-[var(--label-secondary)]">
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-[var(--foreground)]">
+          Sign in
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  name,
+  type,
+  placeholder,
+  autoComplete,
+}: {
+  label: string;
+  name: string;
+  type: string;
+  placeholder: string;
+  autoComplete?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+        {label}
+      </label>
+      <input
+        name={name}
+        type={type}
+        placeholder={placeholder}
+        required
+        autoComplete={autoComplete}
+        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+      />
+    </div>
+  );
+}

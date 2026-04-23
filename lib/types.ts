@@ -1,0 +1,60 @@
+export type TransactionType = "income" | "expense";
+
+export type DbHousehold = {
+  id: string;
+  name: string;
+  currency: string;
+  symbol: string;
+  invite_code?: string;
+  owner_id?: string | null;
+};
+
+export type DbHouseholdMembership = {
+  household_id: string;
+  role: "owner" | "member";
+  household: DbHousehold;
+};
+
+export type DbCategory = {
+  id: string;
+  name: string;
+  symbol: string;
+  color: string;
+  is_default?: boolean;
+};
+
+export type DbMember = {
+  id: string;
+  name: string;
+  initials: string;
+  avatar_color: string;
+};
+
+export type RecurringFrequency = "weekly" | "monthly" | "yearly";
+
+export type DbRecurringItem = {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  name: string;
+  category_id: string | null;
+  frequency: RecurringFrequency;
+  next_due_date: string | null;
+  repeat_until: string | null;
+  created_by: string | null;
+  created_at: string;
+  categories: DbCategory | null;
+};
+
+export type DbTransaction = {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  name: string;
+  category_id: string | null;
+  date: string;
+  created_by: string | null;
+  created_at: string;
+  categories: DbCategory | null;
+  photo_url: string | null;
+};

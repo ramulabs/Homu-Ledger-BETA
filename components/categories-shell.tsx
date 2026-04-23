@@ -1,0 +1,129 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Lock, Plus } from "lucide-react";
+import EditCategorySheet from "@/components/edit-category-sheet";
+import AddCategorySheet from "@/components/add-category-sheet";
+import type { DbCategory } from "@/lib/types";
+
+type Props = {
+  categories: DbCategory[];
+};
+
+export default function CategoriesShell({ categories: initial }: Props) {
+  const router = useRouter();
+  const [categories, setCategories] = useState(initial);
+  const [editing, setEditing] = useState<DbCategory | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+
+  function openEdit(cat: DbCategory) {
+    setEditing(cat);
+    setSheetOpen(true);
+  }
+
+  function handleUpdated(updated: DbCategory) {
+    setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  }
+
+  function handleDeleted(id: string) {
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+  }
+
+  function handleAdded(cat: DbCategory) {
+    setCategories((prev) => [cat, ...prev]);
+  }
+
+  const defaults = categories.filter((c) => c.is_default);
+  const custom = categories.filter((c) => !c.is_default);
+
+  return (
+    <>
+      <div className="pb-10">
+        <header className="flex items-center justify-between px-5 pt-4 pb-2">
+          <button
+            onClick={() => router.back()}
+            aria-label="Back"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
+          >
+            <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
+          </button>
+          <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Categories</h1>
+          <button
+            onClick={() => setAddOpen(true)}
+            aria-label="Add category"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)] text-white shadow-sm active:scale-95 transition-transform"
+          >
+            <Plus className="h-[18px] w-[18px]" strokeWidth={2.25} />
+          </button>
+        </header>
+
+        {custom.length > 0 && (
+          <section className="mt-5">
+            <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+              Custom
+            </p>
+            <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+              {custom.map((cat) => (
+                <CategoryRow key={cat.id} cat={cat} onTap={openEdit} />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section className="mt-5">
+          <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+            Default
+          </p>
+          <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+            {defaults.map((cat) => (
+              <CategoryRow key={cat.id} cat={cat} onTap={openEdit} />
+            ))}
+          </ul>
+        </section>
+
+        <p className="mt-4 px-6 text-[12px] text-[var(--label-tertiary)]">
+          Default categories can be renamed but not deleted.
+        </p>
+      </div>
+
+      <EditCategorySheet
+        open={sheetOpen}
+        category={editing}
+        onClose={() => setSheetOpen(false)}
+        onUpdated={handleUpdated}
+        onDeleted={handleDeleted}
+      />
+
+      <AddCategorySheet
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdded={handleAdded}
+      />
+    </>
+  );
+}
+
+function CategoryRow({ cat, onTap }: { cat: DbCategory; onTap: (c: DbCategory) => void }) {
+  return (
+    <li>
+      <button
+        onClick={() => onTap(cat)}
+        className="flex w-full items-center gap-3 px-4 py-3 min-h-[56px] text-left active:bg-black/[0.02] transition-colors"
+      >
+        <div
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[20px]"
+          style={{ backgroundColor: `${cat.color}22` }}
+        >
+          {cat.symbol}
+        </div>
+        <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{cat.name}</p>
+        {cat.is_default && (
+          <Lock className="h-3.5 w-3.5 text-[var(--label-tertiary)] mr-1" strokeWidth={2} />
+        )}
+        <ChevronRight className="h-[18px] w-[18px] text-[var(--label-tertiary)]" strokeWidth={2} />
+      </button>
+    </li>
+  );
+}

@@ -1,0 +1,105 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import TransactionsShell from "@/components/transactions-shell";
+import type { DbTransaction, DbCategory, DbMember, DbHouseholdMembership, DbRecurringItem } from "@/lib/types";
+
+export default async function TransactionsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, initials, avatar_color, household_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.household_id) redirect("/onboarding");
+
+  const { data: household } = await supabase
+    .from("households")
+    .select("id, name, opening_balance, currency, symbol")
+    .eq("id", profile.household_id)
+    .single();
+
+  if (!household) redirect("/onboarding");
+
+  const [{ data: categoriesRaw }, { data: membersRaw }, { data: txRaw }, { data: membershipsRaw }, { data: recurringRaw }] = await Promise.all([
+    supabase
+      .from("categories")
+      .select("id, name, symbol, color")
+      .eq("household_id", household.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("profiles")
+      .select("id, name, initials, avatar_color")
+      .eq("household_id", household.id),
+    supabase
+      .from("transactions")
+      .select("id, type, amount, name, category_id, date, created_by, created_at, photo_url, categories(id, name, symbol, color)")
+      .eq("household_id", household.id)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase
+      .from("household_members")
+      .select("household_id, role, household:households(id, name, currency, symbol)")
+      .eq("profile_id", profile.id),
+    supabase
+      .from("recurring_items")
+      .select("id, type, amount, name, category_id, frequency, next_due_date, repeat_until, created_by, created_at, categories(id, name, symbol, color)")
+      .eq("household_id", household.id)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  const categories: DbCategory[] = categoriesRaw ?? [];
+
+  const memberships: DbHouseholdMembership[] = (membershipsRaw ?? []).map((m: any) => ({
+    household_id: m.household_id,
+    role: m.role,
+    household: Array.isArray(m.household) ? m.household[0] : m.household,
+  })).filter((m: DbHouseholdMembership) => m.household);
+
+  const members: Record<string, DbMember> = {};
+  for (const m of membersRaw ?? []) {
+    members[m.id] = m;
+  }
+
+  const transactions: DbTransaction[] = (txRaw ?? []).map((t: any) => ({
+    ...t,
+    amount: Number(t.amount),
+    categories: Array.isArray(t.categories) ? t.categories[0] ?? null : t.categories,
+  }));
+
+  const recurringItems: DbRecurringItem[] = (recurringRaw ?? []).map((r: any) => ({
+    ...r,
+    amount: Number(r.amount),
+    categories: Array.isArray(r.categories) ? r.categories[0] ?? null : r.categories,
+  }));
+
+  const income = transactions
+    .filter((t) => t.type === "income")
+    .reduce((s, t) => s + t.amount, 0);
+  const expenses = transactions
+    .filter((t) => t.type === "expense")
+    .reduce((s, t) => s + t.amount, 0);
+  const balance = Number(household.opening_balance) + income - expenses;
+
+  return (
+    <TransactionsShell
+      transactions={transactions}
+      categories={categories}
+      members={members}
+      householdName={household.name}
+      householdId={household.id}
+      householdSymbol={(household as any).symbol ?? "🏠"}
+      currency={household.currency ?? "IDR"}
+      balance={balance}
+      income={income}
+      expenses={expenses}
+      currentUser={{ initials: profile.initials, avatar_color: profile.avatar_color }}
+      memberships={memberships}
+      recurringItems={recurringItems}
+    />
+  );
+}

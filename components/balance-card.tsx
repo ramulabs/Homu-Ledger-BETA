@@ -1,0 +1,68 @@
+import { formatAmount } from "@/lib/format";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+
+type Props = {
+  balance: number;
+  income: number;
+  expenses: number;
+  currency?: string;
+};
+
+export default function BalanceCard({ balance, income, expenses, currency = "IDR" }: Props) {
+  return (
+    <section className="px-5 pt-6 pb-2">
+      <div className="flex flex-col items-center text-center">
+        <p className="text-[13px] font-medium tracking-wide text-[var(--label-secondary)]">
+          Total Balance
+        </p>
+        <p className="mt-1.5 text-[40px] font-semibold leading-tight tracking-tight text-[var(--foreground)] tabular-nums">
+          {formatAmount(balance, currency)}
+        </p>
+      </div>
+
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <SummaryPill
+          label="Income"
+          value={formatAmount(income, currency)}
+          icon={<ArrowDownLeft className="h-3.5 w-3.5" strokeWidth={2.5} />}
+          tone="income"
+        />
+        <SummaryPill
+          label="Expenses"
+          value={formatAmount(expenses, currency)}
+          icon={<ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.5} />}
+          tone="expense"
+        />
+      </div>
+    </section>
+  );
+}
+
+function SummaryPill({
+  label,
+  value,
+  icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  tone: "income" | "expense";
+}) {
+  const iconBg = tone === "income" ? "bg-emerald-100/70 text-emerald-700" : "bg-amber-100/70 text-amber-800";
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-[var(--surface)] px-3.5 py-3 ring-1 ring-black/[0.04] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      <span className={`flex h-7 w-7 items-center justify-center rounded-full ${iconBg}`}>
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+          {label}
+        </p>
+        <p className="truncate text-[15px] font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
