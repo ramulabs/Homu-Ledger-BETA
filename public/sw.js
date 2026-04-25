@@ -1,4 +1,4 @@
-const CACHE_NAME = "familyledger-v2";
+const CACHE_NAME = "familyledger-v3";
 
 const STATIC_ASSETS = [
   "/",

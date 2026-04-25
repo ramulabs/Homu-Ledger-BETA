@@ -8,25 +8,35 @@ import type { IconStyle } from "@/lib/category-icons";
 
 const FALLBACK_CAT = { name: "Other", symbol: "📋", color: "#6b7280" };
 
+const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
 function ordinal(n: number): string {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
 
-function freqLabel(item: DbRecurringItem): string {
+/** Short badge label — just the frequency word. */
+function freqBadge(item: DbRecurringItem): string {
   switch (item.frequency) {
-    case "weekly":
-      return "Weekly";
-    case "yearly":
-      return "Yearly";
-    case "monthly":
-      if (item.next_due_date) {
-        const day = parseInt(item.next_due_date.split("-")[2]);
-        return `Monthly · ${ordinal(day)} of each month`;
-      }
-      return "Monthly";
+    case "weekly":  return "Weekly";
+    case "monthly": return "Monthly";
+    case "yearly":  return "Yearly";
   }
+}
+
+/** Optional sub-line shown below the badge. */
+function freqSubLabel(item: DbRecurringItem): string | null {
+  if (item.frequency === "monthly" && item.next_due_date) {
+    const day = parseInt(item.next_due_date.split("-")[2]);
+    return `${ordinal(day)} of each month`;
+  }
+  if (item.frequency === "weekly" && item.next_due_date) {
+    const [y, m, d] = item.next_due_date.split("-").map(Number);
+    const dow = new Date(y, m - 1, d).getDay();
+    return `Every ${DAYS[dow]}`;
+  }
+  return null;
 }
 
 function repeatUntilLabel(item: DbRecurringItem): string | null {
@@ -89,17 +99,24 @@ export default function RecurringItemList({ items, currency = "IDR", iconStyle =
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[15px] font-medium text-[var(--foreground)]">{item.name}</p>
-                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 mt-0.5">
-                  <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11px] font-medium text-[var(--label-secondary)]">
-                    {freqLabel(item)}
-                  </span>
-                  {item.next_due_date && item.frequency !== "monthly" && (
-                    <span className="text-[11px] text-[var(--label-tertiary)]">
-                      · Next {formatShortDate(item.next_due_date)}
+                <div className="mt-0.5 space-y-0.5">
+                  <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                    <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11px] font-medium text-[var(--label-secondary)]">
+                      {freqBadge(item)}
                     </span>
-                  )}
-                  {until && (
-                    <span className="text-[11px] text-[var(--label-tertiary)]">· {until}</span>
+                    {item.next_due_date && item.frequency === "yearly" && (
+                      <span className="text-[11px] text-[var(--label-tertiary)]">
+                        · Next {formatShortDate(item.next_due_date)}
+                      </span>
+                    )}
+                    {until && (
+                      <span className="text-[11px] text-[var(--label-tertiary)]">· {until}</span>
+                    )}
+                  </div>
+                  {freqSubLabel(item) && (
+                    <p className="text-[11px] text-[var(--label-tertiary)]">
+                      {freqSubLabel(item)}
+                    </p>
                   )}
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { X, Plus, Check } from "lucide-react";
 import { addCategory } from "@/app/actions/categories";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
+import { CATEGORY_LUCIDE_ICONS, makeLucideSymbol } from "@/lib/category-icons";
 import type { DbCategory } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
@@ -167,7 +168,7 @@ export default function CategoryPicker({
                   <button
                     key={m}
                     type="button"
-                    onClick={() => setIconMode(m)}
+                    onClick={() => { setIconMode(m); setSelectedSymbol(""); }}
                     className={cn(
                       "flex-1 rounded-full py-1 text-[12px] font-medium transition-all min-h-[28px]",
                       iconMode === m
@@ -175,7 +176,7 @@ export default function CategoryPicker({
                         : "text-[var(--label-secondary)]"
                     )}
                   >
-                    {m === "emoji" ? "Emoji" : "Custom"}
+                    {m === "emoji" ? (iconStyle === "2d" ? "Icons" : "Emoji") : "Custom"}
                   </button>
                 ))}
               </div>
@@ -201,7 +202,8 @@ export default function CategoryPicker({
                     className="h-12 flex-1 rounded-xl bg-[var(--background)] px-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
                   />
                 </div>
-              ) : (
+              ) : iconStyle === "2d" ? (
+                /* 2D mode: Lucide icon grid */
                 <div className="space-y-2">
                   <input
                     type="text"
@@ -212,7 +214,63 @@ export default function CategoryPicker({
                     autoFocus
                     className="h-12 w-full rounded-xl bg-[var(--background)] px-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
                   />
-                  {/* Symbol grid */}
+                  {/* Lucide icon grid */}
+                  <div className="grid grid-cols-9 gap-1.5">
+                    {CATEGORY_LUCIDE_ICONS.map(({ id, icon: Icon }) => {
+                      const sym = makeLucideSymbol(id);
+                      const isActive = selectedSymbol === sym;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setSelectedSymbol(sym)}
+                          className={cn(
+                            "flex h-9 w-full items-center justify-center rounded-lg transition-all",
+                            isActive
+                              ? "ring-2 ring-[var(--foreground)]/40 scale-110"
+                              : "bg-[var(--background)] ring-1 ring-black/[0.06]"
+                          )}
+                          style={isActive ? { backgroundColor: `${selectedColor}33`, color: selectedColor } : undefined}
+                        >
+                          <Icon
+                            size={18}
+                            strokeWidth={2}
+                            style={{ color: isActive ? selectedColor : undefined }}
+                            className={isActive ? "" : "text-[var(--label-secondary)]"}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {/* Color palette */}
+                  <div className="flex gap-2 pt-1">
+                    {SOFT_PALETTE.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setSelectedColor(c)}
+                        className={cn(
+                          "flex-1 rounded-full transition-all",
+                          selectedColor === c ? "ring-2 ring-offset-1 ring-[var(--foreground)]/30 scale-110" : ""
+                        )}
+                        style={{ backgroundColor: c, height: 24 }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* 3D mode: emoji grid */
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Category name"
+                    required
+                    autoFocus
+                    className="h-12 w-full rounded-xl bg-[var(--background)] px-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
+                  />
+                  {/* Emoji symbol grid */}
                   <div className="grid grid-cols-9 gap-1.5">
                     {SYMBOLS.map((s) => (
                       <button

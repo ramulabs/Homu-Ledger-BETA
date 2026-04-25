@@ -59,7 +59,7 @@ export default async function ReportsPage() {
       categories={(categoriesRaw ?? []) as DbCategory[]}
       members={members}
       currency={household.currency ?? "IDR"}
-      iconStyle={(profile as any).icon_style ?? "3d"}
+      iconStyle={profile.icon_style ?? "3d"}
     />
   );
 }

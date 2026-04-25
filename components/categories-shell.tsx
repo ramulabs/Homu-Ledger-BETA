@@ -103,6 +103,7 @@ export default function CategoriesShell({ categories: initial, iconStyle = "3d" 
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onAdded={handleAdded}
+        iconStyle={iconStyle}
       />
     </>
   );

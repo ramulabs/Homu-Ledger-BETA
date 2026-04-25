@@ -100,7 +100,7 @@ export default async function TransactionsPage() {
       currentUser={{ initials: profile.initials, avatar_color: profile.avatar_color }}
       memberships={memberships}
       recurringItems={recurringItems}
-      iconStyle={(profile as any).icon_style ?? "3d"}
+      iconStyle={profile.icon_style ?? "3d"}
     />
   );
 }
