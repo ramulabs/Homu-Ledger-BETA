@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Trash2, ChevronRight } from "lucide-react";
 import { addRecurringItem, updateRecurringItem, deleteRecurringItem } from "@/app/actions/recurring";
 import CategoryPicker from "@/components/category-picker";
@@ -53,6 +53,27 @@ export default function AddRecurringSheet({
   const [error, setError] = useState<string | null>(null);
 
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
+  const scrollYRef = useRef(0);
+
+  // Lock body scroll while sheet is open (iOS Safari requires position:fixed)
+  useEffect(() => {
+    if (open) {
+      scrollYRef.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.width = "100%";
+    } else {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollYRef.current);
+    }
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -139,8 +160,8 @@ export default function AddRecurringSheet({
     <>
       <div
         className={cn(
-          "fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300",
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          "fixed inset-0 z-[60] bg-black/40",
+          open ? "opacity-100 pointer-events-auto transition-opacity duration-300" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
       />
