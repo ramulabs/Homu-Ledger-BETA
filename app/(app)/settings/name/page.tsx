@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LedgerNameShell from "./shell";
+import LedgerNameShell from "@/components/ledger-name-shell";
 import { getServerT } from "@/lib/i18n/server";
 
 type Props = {
