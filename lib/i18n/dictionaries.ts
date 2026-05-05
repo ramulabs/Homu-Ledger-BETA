@@ -118,7 +118,11 @@ export const en = {
 
   // Settings
   "settings.title": "Settings",
-  "settings.household": "Household",
+  "settings.household": "Ledger",
+  "settings.ledgerName": "Ledger name",
+  "settings.ledgerName.title": "Ledger name",
+  "settings.ledgerName.subtitle": "Rename this ledger. The name appears in the header and in the ledger switcher.",
+  "settings.ledgerName.placeholder": "e.g. Personal, Family",
   "settings.account": "Account",
   "settings.support": "Support",
   "settings.symbol": "Symbol",
@@ -290,7 +294,11 @@ export const id: Record<TKey, string> = {
 
   // Settings
   "settings.title": "Pengaturan",
-  "settings.household": "Rumah Tangga",
+  "settings.household": "Buku Kas",
+  "settings.ledgerName": "Nama buku kas",
+  "settings.ledgerName.title": "Nama Buku Kas",
+  "settings.ledgerName.subtitle": "Ubah nama buku kas ini. Nama ini muncul di header dan pemilih buku kas.",
+  "settings.ledgerName.placeholder": "mis. Pribadi, Keluarga",
   "settings.account": "Akun",
   "settings.support": "Dukungan",
   "settings.symbol": "Simbol",

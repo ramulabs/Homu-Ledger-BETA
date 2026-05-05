@@ -75,20 +75,24 @@ export default async function SettingsPage() {
             {t("settings.household")}
           </p>
           <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
-            {/* Household name + invite code */}
-            <div className="flex items-center justify-between border-b border-[var(--separator)] px-4 py-3.5">
-              <div>
-                <p className="text-[15px] font-semibold text-[var(--foreground)]">{household.name}</p>
-                <div className="mt-0.5 flex items-center gap-2">
-                  <p className="text-[12px] text-[var(--label-secondary)]">
-                    {t("settings.inviteCode")}{" "}
-                    <span className="font-mono font-bold tracking-[0.18em] text-[var(--foreground)]">
-                      {household.invite_code}
-                    </span>
-                  </p>
-                  <CopyButton text={household.invite_code} />
-                </div>
-              </div>
+            {/* Ledger name — tappable to rename */}
+            <TapLink
+              href={`/settings/name?current=${encodeURIComponent(household.name)}`}
+              className="flex items-center justify-between px-4 pt-3.5 pb-2 active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+            >
+              <p className="truncate text-[15px] font-semibold text-[var(--foreground)]">{household.name}</p>
+              <ChevronRight className="ml-2 h-[18px] w-[18px] shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
+            </TapLink>
+
+            {/* Invite code (separate row so the copy button isn't nested in the link) */}
+            <div className="flex items-center gap-2 border-b border-[var(--separator)] px-4 pb-3">
+              <p className="text-[12px] text-[var(--label-secondary)]">
+                {t("settings.inviteCode")}{" "}
+                <span className="font-mono font-bold tracking-[0.18em] text-[var(--foreground)]">
+                  {household.invite_code}
+                </span>
+              </p>
+              <CopyButton text={household.invite_code} />
             </div>
 
             {/* Symbol link */}
