@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ArrowRightLeft, Check, Calendar } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ArrowRightLeft, Check, Calendar, Repeat } from "lucide-react";
 import { addTransaction, updateTransaction, deleteTransaction, moveTransaction } from "@/app/actions/transactions";
+import { addRecurringItem } from "@/app/actions/recurring";
 import CategoryPicker from "@/components/category-picker";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
@@ -42,6 +43,9 @@ export default function AddTransactionSheet({ open, onClose, categories, editing
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showMovePicker, setShowMovePicker] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [showRecurringPicker, setShowRecurringPicker] = useState(false);
+  const [creatingRecurring, setCreatingRecurring] = useState(false);
+  const [recurringSuccess, setRecurringSuccess] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -110,6 +114,9 @@ export default function AddTransactionSheet({ open, onClose, categories, editing
     setConfirmDelete(false);
     setShowMovePicker(false);
     setMoving(false);
+    setShowRecurringPicker(false);
+    setCreatingRecurring(false);
+    setRecurringSuccess(false);
   }, [open, editing]);
 
   function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -179,6 +186,45 @@ export default function AddTransactionSheet({ open, onClose, categories, editing
     } else {
       onClose();
     }
+  }
+
+  // Compute the next due date for a recurring item created from this transaction:
+  // start one period after the transaction date so it doesn't fire retroactively.
+  function nextDueAfter(txDate: string, frequency: "weekly" | "monthly" | "yearly"): string {
+    const [y, m, d] = txDate.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    if (frequency === "weekly") dt.setDate(dt.getDate() + 7);
+    else if (frequency === "monthly") dt.setMonth(dt.getMonth() + 1);
+    else dt.setFullYear(dt.getFullYear() + 1);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  }
+
+  async function handleCreateRecurring(frequency: "weekly" | "monthly" | "yearly") {
+    if (!editing || creatingRecurring) return;
+    setError(null);
+    setCreatingRecurring(true);
+    const fd = new FormData();
+    fd.set("type", type);
+    fd.set("amount", String(amount.replace(/\./g, "").replace(",", ".") || editing.amount));
+    fd.set("name", name || editing.name);
+    if (categoryId) fd.set("category_id", categoryId);
+    fd.set("frequency", frequency);
+    fd.set("next_due_date", nextDueAfter(date || editing.date, frequency));
+    // repeat_until intentionally left blank → "forever"
+    const result = await addRecurringItem(fd);
+    setCreatingRecurring(false);
+    if (result.error) {
+      setError(result.error);
+      setShowRecurringPicker(false);
+      return;
+    }
+    setRecurringSuccess(true);
+    setShowRecurringPicker(false);
+    // Auto-dismiss the sheet after a short success indicator
+    setTimeout(() => {
+      setRecurringSuccess(false);
+      onClose();
+    }, 1100);
   }
 
   const otherLedgers = memberships.filter((m) => m.household_id !== currentHouseholdId);
@@ -385,28 +431,74 @@ export default function AddTransactionSheet({ open, onClose, categories, editing
             >
               {loading ? tr("common.saving") : editing ? tr("common.saveChanges") : tr("tx.add")}
             </button>
-            {editing && !confirmDelete && !showMovePicker && (
+            {editing && !confirmDelete && !showMovePicker && !showRecurringPicker && !recurringSuccess && (
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={handleDelete}
-                  disabled={loading || moving}
+                  disabled={loading || moving || creatingRecurring}
                   className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl text-[13px] font-medium text-rose-600 disabled:opacity-60"
                 >
                   <Trash2 className="h-4 w-4" strokeWidth={2} />
                   {tr("common.delete")}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRecurringPicker(true)}
+                  disabled={loading || moving || creatingRecurring}
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-60"
+                >
+                  <Repeat className="h-4 w-4" strokeWidth={2} />
+                  Recurring
+                </button>
                 {otherLedgers.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setShowMovePicker(true)}
-                    disabled={loading || moving}
+                    disabled={loading || moving || creatingRecurring}
                     className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-60"
                   >
                     <ArrowRightLeft className="h-4 w-4" strokeWidth={2} />
                     Move
                   </button>
                 )}
+              </div>
+            )}
+            {editing && showRecurringPicker && (
+              <div className="rounded-2xl bg-[var(--background)] ring-1 ring-black/[0.08] overflow-hidden">
+                <p className="px-4 pt-3 pb-1 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+                  Repeat this transaction
+                </p>
+                <p className="px-4 pb-2 text-[12px] text-[var(--label-secondary)]">
+                  Pick how often it should repeat. The next occurrence starts one period after this transaction&apos;s date.
+                </p>
+                <div className="grid grid-cols-3 gap-2 px-3 pb-3">
+                  {(["weekly", "monthly", "yearly"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => handleCreateRecurring(f)}
+                      disabled={creatingRecurring}
+                      className="flex h-11 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.06] disabled:opacity-60 active:scale-[0.98] transition-transform capitalize"
+                    >
+                      {creatingRecurring ? "…" : f}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRecurringPicker(false)}
+                  disabled={creatingRecurring}
+                  className="flex w-full items-center justify-center border-t border-[var(--separator)] py-3 text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+            {editing && recurringSuccess && (
+              <div className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-50 ring-1 ring-emerald-200 text-[13px] font-medium text-emerald-700">
+                <Check className="h-4 w-4" strokeWidth={2.5} />
+                Added to recurring
               </div>
             )}
             {editing && confirmDelete && (

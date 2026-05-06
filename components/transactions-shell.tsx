@@ -13,9 +13,10 @@ import AddRecurringSheet from "@/components/add-recurring-sheet";
 import RecurringItemList from "@/components/recurring-item-list";
 import LedgerSwitcherSheet from "@/components/ledger-switcher-sheet";
 import PullToRefresh from "@/components/pull-to-refresh";
+import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
 import { formatAmount } from "@/lib/format";
-import type { DbTransaction, DbCategory, DbMember, DbHouseholdMembership, DbRecurringItem } from "@/lib/types";
+import type { DbTransaction, DbCategory, DbMember, DbHouseholdMembership, DbRecurringItem, DbPendingInvitation } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
 type SubTab = "history" | "recurring";
@@ -63,6 +64,7 @@ type Props = {
   expenses: number;
   currentUser: { initials: string; avatar_color: string };
   memberships: DbHouseholdMembership[];
+  pendingInvitations?: DbPendingInvitation[];
   recurringItems: DbRecurringItem[];
   iconStyle?: IconStyle;
 };
@@ -80,6 +82,7 @@ export default function TransactionsShell({
   expenses,
   currentUser,
   memberships,
+  pendingInvitations = [],
   recurringItems,
   iconStyle = "3d",
 }: Props) {
@@ -393,6 +396,7 @@ export default function TransactionsShell({
       {showLedgerSwitcher && (
         <LedgerSwitcherSheet
           memberships={memberships}
+          pendingInvitations={pendingInvitations}
           currentHouseholdId={householdId}
           onClose={() => setShowLedgerSwitcher(false)}
         />
@@ -412,6 +416,7 @@ export default function TransactionsShell({
           <div className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 rounded-t-3xl bg-[var(--background)] shadow-2xl max-h-[75vh] flex flex-col">
             <FilterSheet
               categories={allCategories}
+              iconStyle={iconStyle}
               pendingCategories={pendingCategories}
               setPendingCategories={setPendingCategories}
               pendingDateFilter={pendingDateFilter}
@@ -437,6 +442,7 @@ export default function TransactionsShell({
 
 type FilterSheetProps = {
   categories: DbCategory[];
+  iconStyle: IconStyle;
   pendingCategories: string[];
   setPendingCategories: (v: string[]) => void;
   pendingDateFilter: DateFilter;
@@ -453,7 +459,7 @@ type FilterSheetProps = {
 };
 
 function FilterSheet({
-  categories, pendingCategories, setPendingCategories,
+  categories, iconStyle, pendingCategories, setPendingCategories,
   pendingDateFilter, setPendingDateFilter,
   pendingCustomStart, setPendingCustomStart,
   pendingCustomEnd, setPendingCustomEnd,
@@ -555,7 +561,13 @@ function FilterSheet({
                 )}
                 style={selected ? { backgroundColor: cat.color } : undefined}
               >
-                <span>{cat.symbol}</span>
+                <CategoryIcon
+                  symbol={cat.symbol}
+                  iconStyle={iconStyle}
+                  size={14}
+                  emojiSize="14px"
+                  color={selected ? "#ffffff" : (iconStyle === "2d" ? cat.color : undefined)}
+                />
                 {cat.name}
                 {selected && <Check className="h-3 w-3 ml-0.5" strokeWidth={2.5} />}
               </button>

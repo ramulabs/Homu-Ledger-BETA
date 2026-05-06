@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Trash2, ChevronRight } from "lucide-react";
 import { addRecurringItem, updateRecurringItem, deleteRecurringItem } from "@/app/actions/recurring";
 import CategoryPicker from "@/components/category-picker";
+import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
 import { formatShortDate } from "@/lib/format";
 import { useT, useLang } from "@/lib/i18n/provider";
@@ -260,7 +261,18 @@ export default function AddRecurringSheet({
               >
                 {selectedCategory ? (
                   <>
-                    <span className="text-[20px] leading-none">{selectedCategory.symbol}</span>
+                    <span
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: `${selectedCategory.color}22` }}
+                    >
+                      <CategoryIcon
+                        symbol={selectedCategory.symbol}
+                        iconStyle={iconStyle}
+                        size={16}
+                        emojiSize="16px"
+                        color={iconStyle === "2d" ? selectedCategory.color : undefined}
+                      />
+                    </span>
                     <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)]">
                       {selectedCategory.name}
                     </span>
