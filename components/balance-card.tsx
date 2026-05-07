@@ -1,6 +1,6 @@
 "use client";
 
-import { formatAmount } from "@/lib/format";
+import { formatAmount, formatAmountWithSign } from "@/lib/format";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 
@@ -19,8 +19,12 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
         <p className="text-[13px] font-medium tracking-wide text-[var(--label-secondary)]">
           {t("tx.totalBalance")}
         </p>
-        <p className="mt-1.5 text-[40px] font-semibold leading-tight tracking-tight text-[var(--foreground)] tabular-nums">
-          {formatAmount(balance, currency)}
+        <p
+          className={`mt-1.5 text-[40px] font-semibold leading-tight tracking-tight tabular-nums ${
+            balance < 0 ? "text-rose-600" : "text-[var(--foreground)]"
+          }`}
+        >
+          {formatAmountWithSign(balance, currency)}
         </p>
       </div>
 

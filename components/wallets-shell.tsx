@@ -7,7 +7,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import AddWalletSheet from "@/components/add-wallet-sheet";
 import EditWalletSheet from "@/components/edit-wallet-sheet";
 import { useT } from "@/lib/i18n/provider";
-import { formatAmount } from "@/lib/format";
+import { formatAmountWithSign } from "@/lib/format";
 import type { DbWallet } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
@@ -168,8 +168,12 @@ function WalletRow({
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" strokeWidth={2} />
             )}
           </p>
-          <p className="text-[12px] text-[var(--label-secondary)]">
-            {tr("wallet.balance")}: {formatAmount(wallet.balance, currency)}
+          <p
+            className={`text-[12px] ${
+              wallet.balance < 0 ? "text-rose-600" : "text-[var(--label-secondary)]"
+            }`}
+          >
+            {tr("wallet.balance")}: {formatAmountWithSign(wallet.balance, currency)}
           </p>
         </div>
         <ChevronRight className="h-[18px] w-[18px] text-[var(--label-tertiary)]" strokeWidth={2} />

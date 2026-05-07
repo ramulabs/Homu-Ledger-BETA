@@ -12,6 +12,15 @@ export function formatAmountSigned(amount: number, type: "income" | "expense", c
   return `${sign}${formatAmount(amount, currencyCode)}`;
 }
 
+/** Like formatAmount, but preserves the natural sign of the number.
+ *  Use this for balances (which can be negative); use formatAmountSigned for
+ *  individual transactions where the sign is driven by income/expense type.
+ */
+export function formatAmountWithSign(amount: number, currencyCode: string = "IDR"): string {
+  const formatted = formatAmount(amount, currencyCode);
+  return amount < 0 ? `-${formatted}` : formatted;
+}
+
 // Backward-compatible aliases (default IDR)
 export function formatIDR(amount: number): string { return formatAmount(amount, "IDR"); }
 export function formatIDRSigned(amount: number, type: "income" | "expense"): string {
