@@ -71,11 +71,14 @@ export function CategoryIcon({
 
   const LucideIcon = resolveLucideIcon(resolved);
   if (LucideIcon) {
+    // `block` removes the SVG's default baseline alignment — without it, the
+    // icon sits a hair below its flex centre (most visible inside small
+    // badges).
     return (
       <LucideIcon
         size={size}
         strokeWidth={strokeWidth}
-        className={className}
+        className={className ? `${className} block` : "block"}
         style={color ? { color } : undefined}
       />
     );
@@ -83,7 +86,10 @@ export function CategoryIcon({
 
   const fontSize = emojiSize ?? `${size}px`;
   return (
-    <span className={className} style={{ fontSize, lineHeight: 1 }}>
+    <span
+      className={className}
+      style={{ fontSize, lineHeight: 1, display: "block" }}
+    >
       {resolved}
     </span>
   );

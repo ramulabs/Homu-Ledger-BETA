@@ -242,7 +242,10 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "3d
             )}
           </div>
 
-          <div className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3 pb-8">
+          <div
+            className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3"
+            style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}
+          >
             <button
               type="submit"
               disabled={loading}

@@ -45,7 +45,7 @@ export default function WalletPickerSheet({
 
       <div
         className={cn(
-          "fixed bottom-0 left-1/2 z-[90] flex h-[65dvh] w-full max-w-md -translate-x-1/2 flex-col rounded-t-3xl bg-[var(--surface)] transition-transform duration-300 ease-out",
+          "fixed bottom-0 left-1/2 z-[90] flex max-h-[80dvh] w-full max-w-md -translate-x-1/2 flex-col rounded-t-3xl bg-[var(--surface)] transition-transform duration-300 ease-out",
           visible ? "translate-y-0" : "translate-y-full"
         )}
       >
@@ -63,13 +63,13 @@ export default function WalletPickerSheet({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 pt-1">
           {localWallets.length === 0 ? (
             <div className="flex h-24 items-center justify-center">
               <p className="text-[14px] text-[var(--label-secondary)]">{tr("wallet.empty")}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 px-0.5">
               {localWallets.map((w) => {
                 const isSelected = selected === w.id;
                 return (
@@ -111,7 +111,10 @@ export default function WalletPickerSheet({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pb-8 pt-3">
+        <div
+          className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3"
+          style={{ paddingBottom: "max(2rem, env(safe-area-inset-bottom))" }}
+        >
           <button
             onClick={() => setShowAdd(true)}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--background)] py-3 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] transition-colors active:bg-black/[0.04]"

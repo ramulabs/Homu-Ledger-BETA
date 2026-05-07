@@ -29,6 +29,15 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.1.1",
+    date: "May 7, 2026",
+    changes: [
+      { type: "new", en: "New ledgers now start with three default wallets (Cash, Savings, Credit) instead of just Cash", id: "Buku baru kini mulai dengan tiga dompet default (Tunai, Tabungan, Kartu Kredit) bukan cuma Tunai" },
+      { type: "fix", en: "Wallet badge on transaction rows now sits perfectly centred — fixed a hairline baseline offset on the icon", id: "Lencana dompet di baris transaksi kini benar-benar di tengah — perbaikan kecil pada posisi ikon" },
+      { type: "improvement", en: "Wallet picker auto-sizes to its content and respects the iPhone home-indicator safe area, so the bottom row no longer feels cut off", id: "Pemilih dompet kini menyesuaikan tinggi sesuai isi dan menghormati area aman home indicator iPhone, baris bawah tidak terpotong lagi" },
+    ],
+  },
+  {
     version: "1.1.0",
     date: "May 7, 2026",
     changes: [
