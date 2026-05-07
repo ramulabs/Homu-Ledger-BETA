@@ -162,13 +162,14 @@ export default function TransactionsShell({
     return result;
   }, [transactions, searchQuery, activeCategories, activeWallets, activeDateFilter, activeCustomStart, activeCustomEnd]);
 
-  // Recalc balance when filters active
+  // Recalc balance when filters active. Transfers are excluded from income/
+  // expense totals (they net to zero across the ledger).
   const isFiltering = hasActiveFilter || searchQuery.trim().length > 0;
   const filteredIncome = isFiltering
-    ? filteredTransactions.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0)
+    ? filteredTransactions.filter((t) => t.type === "income" && !t.transfer_pair_id).reduce((s, t) => s + t.amount, 0)
     : income;
   const filteredExpenses = isFiltering
-    ? filteredTransactions.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0)
+    ? filteredTransactions.filter((t) => t.type === "expense" && !t.transfer_pair_id).reduce((s, t) => s + t.amount, 0)
     : expenses;
   const filteredBalance = isFiltering
     ? filteredIncome - filteredExpenses

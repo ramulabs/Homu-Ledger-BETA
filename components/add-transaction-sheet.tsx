@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Trash2, Camera, ImagePlus, ChevronRight, ArrowRightLeft, Check, Calendar, Repeat } from "lucide-react";
-import { addTransaction, updateTransaction, deleteTransaction, moveTransaction } from "@/app/actions/transactions";
+import { addTransaction, updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { addRecurringItem } from "@/app/actions/recurring";
 import CategoryPicker from "@/components/category-picker";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
@@ -32,18 +32,22 @@ function todayString() {
 
 export default function AddTransactionSheet({ open, onClose, categories, wallets, onWalletAdded, editing, currency = "IDR", memberships = [], currentHouseholdId, iconStyle = "3d" }: Props) {
   const tr = useT();
-  const [type, setType] = useState<"expense" | "income">("expense");
+  const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
   const [amount, setAmount] = useState("");
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [extraCategories, setExtraCategories] = useState<DbCategory[]>([]);
   const [walletId, setWalletId] = useState<string | null>(null);
+  const [toWalletId, setToWalletId] = useState<string | null>(null);
   const [extraWallets, setExtraWallets] = useState<DbWallet[]>([]);
   const [date, setDate] = useState(todayString);
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
   const [showWalletPicker, setShowWalletPicker] = useState(false);
+  /** Which slot the wallet picker is filling: 'wallet' for normal/income/expense,
+   *  'from' or 'to' for Transfer mode. */
+  const [walletPickerSlot, setWalletPickerSlot] = useState<"wallet" | "from" | "to">("wallet");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -100,10 +104,18 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     ...extraWallets.filter((e) => !wallets.find((w) => w.id === e.id)),
   ];
   const selectedWallet = allWallets.find((w) => w.id === walletId) ?? null;
+  const selectedToWallet = allWallets.find((w) => w.id === toWalletId) ?? null;
+  const isTransfer = type === "transfer";
+
+  function openWalletPicker(slot: "wallet" | "from" | "to") {
+    setWalletPickerSlot(slot);
+    setShowWalletPicker(true);
+  }
 
   useEffect(() => {
     if (!open) return;
     const defaultWallet = wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
+    const altWallet = wallets.find((w) => w.id !== defaultWallet?.id) ?? null;
     if (editing) {
       setType(editing.type);
       setAmount(String(Math.round(Number(editing.amount))));
@@ -111,6 +123,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
       setCategoryId(editing.category_id);
       // Fall back to default wallet for legacy transactions that have no wallet_id
       setWalletId(editing.wallet_id ?? defaultWallet?.id ?? null);
+      setToWalletId(altWallet?.id ?? null);
       setDate(editing.date);
       setPhotoPreview(editing.photo_url ?? null);
     } else {
@@ -119,6 +132,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
       setName("");
       setCategoryId(null);
       setWalletId(defaultWallet?.id ?? null);
+      setToWalletId(altWallet?.id ?? null);
       setDate(todayString());
       setPhotoPreview(null);
     }
@@ -129,6 +143,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     setLoading(false);
     setShowCategoryPicker(false);
     setShowWalletPicker(false);
+    setWalletPickerSlot("wallet");
     setConfirmDelete(false);
     setShowMovePicker(false);
     setMoving(false);
@@ -159,6 +174,34 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (isTransfer) {
+      // Transfer mode — no category, no photo, two wallets required
+      if (!walletId || !toWalletId) {
+        setError("Pick both From and To wallets");
+        setLoading(false);
+        return;
+      }
+      if (walletId === toWalletId) {
+        setError("Source and destination wallets must differ");
+        setLoading(false);
+        return;
+      }
+      const fd = new FormData();
+      fd.set("from_wallet_id", walletId);
+      fd.set("to_wallet_id", toWalletId);
+      fd.set("amount", amount);
+      fd.set("name", name || tr("tx.transfer"));
+      fd.set("date", date);
+      const result = await addTransfer(fd);
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      } else {
+        onClose();
+      }
+      return;
+    }
 
     const fd = new FormData();
     fd.set("type", type);
@@ -289,9 +332,12 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           {/* Scrollable fields */}
           <div data-scroll className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-5 space-y-4 pb-4">
-            {/* Type toggle */}
+            {/* Type toggle — 3-way when adding, 2-way when editing (transfers are immutable) */}
             <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
-              {(["expense", "income"] as const).map((t) => (
+              {(editing
+                ? (["expense", "income"] as const)
+                : (["expense", "income", "transfer"] as const)
+              ).map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -302,10 +348,12 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
                       ? "bg-rose-500 text-white shadow-sm"
                       : type === t && t === "income"
                       ? "bg-emerald-500 text-white shadow-sm"
+                      : type === t && t === "transfer"
+                      ? "bg-[#EE6452] text-white shadow-sm"
                       : "text-[var(--label-secondary)]"
                   )}
                 >
-                  {t === "expense" ? tr("tx.expense") : tr("tx.incomeShort")}
+                  {t === "expense" ? tr("tx.expense") : t === "income" ? tr("tx.incomeShort") : tr("tx.transfer")}
                 </button>
               ))}
             </div>
@@ -326,33 +374,82 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
               />
             </div>
 
-            {/* Wallet */}
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
-                {tr("tx.wallet")}
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowWalletPicker(true)}
-                className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[var(--background)] px-4 ring-1 ring-black/[0.08] transition-colors active:bg-black/[0.04]"
-              >
-                {selectedWallet ? (
-                  <>
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${selectedWallet.color}20` }}>
-                      <CategoryIcon symbol={selectedWallet.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? selectedWallet.color : undefined} />
+            {/* Wallet picker(s) — single in expense/income mode, From + To in transfer mode */}
+            {isTransfer ? (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+                    {tr("tx.transferFrom")}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => openWalletPicker("from")}
+                    className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[var(--background)] px-4 ring-1 ring-black/[0.08] transition-colors active:bg-black/[0.04]"
+                  >
+                    {selectedWallet ? (
+                      <>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${selectedWallet.color}20` }}>
+                          <CategoryIcon symbol={selectedWallet.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? selectedWallet.color : undefined} />
+                        </span>
+                        <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)]">{selectedWallet.name}</span>
+                      </>
+                    ) : (
+                      <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">{tr("wallet.selectWallet")}</span>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
+                  </button>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+                    {tr("tx.transferTo")}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => openWalletPicker("to")}
+                    className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[var(--background)] px-4 ring-1 ring-black/[0.08] transition-colors active:bg-black/[0.04]"
+                  >
+                    {selectedToWallet ? (
+                      <>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${selectedToWallet.color}20` }}>
+                          <CategoryIcon symbol={selectedToWallet.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? selectedToWallet.color : undefined} />
+                        </span>
+                        <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)]">{selectedToWallet.name}</span>
+                      </>
+                    ) : (
+                      <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">{tr("wallet.selectWallet")}</span>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div>
+                <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+                  {tr("tx.wallet")}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => openWalletPicker("wallet")}
+                  className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[var(--background)] px-4 ring-1 ring-black/[0.08] transition-colors active:bg-black/[0.04]"
+                >
+                  {selectedWallet ? (
+                    <>
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${selectedWallet.color}20` }}>
+                        <CategoryIcon symbol={selectedWallet.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? selectedWallet.color : undefined} />
+                      </span>
+                      <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)]">
+                        {selectedWallet.name}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">
+                      {tr("wallet.selectWallet")}
                     </span>
-                    <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)]">
-                      {selectedWallet.name}
-                    </span>
-                  </>
-                ) : (
-                  <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">
-                    {tr("wallet.selectWallet")}
-                  </span>
-                )}
-                <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
-              </button>
-            </div>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
+                </button>
+              </div>
+            )}
 
             {/* Description */}
             <div>
@@ -369,7 +466,8 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
               />
             </div>
 
-            {/* Category */}
+            {/* Category — hidden for transfers */}
+            {!isTransfer && (
             <div>
               <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
                 {tr("tx.category")}
@@ -396,6 +494,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
                 <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
               </button>
             </div>
+            )}
 
             {/* Date */}
             <div>
@@ -419,7 +518,8 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
               </div>
             </div>
 
-            {/* Photo */}
+            {/* Photo — hidden for transfers */}
+            {!isTransfer && (
             <div>
               <label className="mb-2 block text-[13px] font-medium text-[var(--label-secondary)]">
                 {tr("tx.photo")}
@@ -461,6 +561,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
               <input ref={fileRef} type="file" accept="image/*" className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelected(f); }} />
             </div>
+            )}
 
             {error && (
               <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-[13px] text-rose-700 ring-1 ring-rose-200">
@@ -611,12 +712,15 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
         />
       )}
 
-      {/* Wallet picker */}
+      {/* Wallet picker — single sheet that fills whichever slot was tapped */}
       {showWalletPicker && (
         <WalletPickerSheet
           wallets={allWallets}
-          selected={walletId}
-          onSelect={setWalletId}
+          selected={walletPickerSlot === "to" ? toWalletId : walletId}
+          onSelect={(id) => {
+            if (walletPickerSlot === "to") setToWalletId(id);
+            else setWalletId(id);
+          }}
           onClose={() => setShowWalletPicker(false)}
           onWalletAdded={(w) => {
             setExtraWallets((prev) => [...prev, w]);

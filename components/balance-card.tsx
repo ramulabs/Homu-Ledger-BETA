@@ -3,6 +3,7 @@
 import { formatAmount, formatAmountWithSign } from "@/lib/format";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
+import { cn } from "@/lib/cn";
 
 type Props = {
   balance: number;
@@ -20,9 +21,10 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
           {t("tx.totalBalance")}
         </p>
         <p
-          className={`mt-1.5 text-[40px] font-semibold leading-tight tracking-tight tabular-nums ${
+          className={cn(
+            "mt-1.5 text-[40px] font-semibold leading-tight tracking-tight tabular-nums",
             balance < 0 ? "text-rose-600" : "text-[var(--foreground)]"
-          }`}
+          )}
         >
           {formatAmountWithSign(balance, currency)}
         </p>

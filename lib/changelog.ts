@@ -29,6 +29,17 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "0.10.0",
+    date: "May 7, 2026",
+    changes: [
+      { type: "new", en: "Transfer between wallets — third option in Add Transaction (Expense | Income | Transfer) with From and To wallet pickers", id: "Transfer antar dompet — opsi ketiga di Tambah Transaksi (Pengeluaran | Pemasukan | Transfer) dengan pemilih dompet Dari dan Ke" },
+      { type: "new", en: "Transfer rows show with a neutral coral colour and a From → To label, so they don't get mixed up with real income/expense", id: "Baris transfer tampil dengan warna coral netral dan label Dari → Ke, supaya tidak tertukar dengan pemasukan/pengeluaran asli" },
+      { type: "improvement", en: "Transfers are excluded from Income, Expenses and Reports aggregates (they net to zero across your wallets)", id: "Transfer tidak dihitung dalam total Pemasukan, Pengeluaran, dan Laporan (saling menghapus antar dompet)" },
+      { type: "improvement", en: "Per-wallet balance correctly accounts for transfers — the source wallet decreases, the destination wallet increases", id: "Saldo per dompet dihitung benar sesuai transfer — dompet sumber berkurang, dompet tujuan bertambah" },
+      { type: "fix", en: "Hydration mismatch on the Total Balance card resolved", id: "Memperbaiki ketidakcocokan hydration pada kartu Total Saldo" },
+    ],
+  },
+  {
     version: "0.9.0",
     date: "May 7, 2026",
     changes: [

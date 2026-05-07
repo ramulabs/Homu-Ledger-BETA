@@ -77,6 +77,17 @@ export async function updateTransaction(id: string, formData: FormData) {
   const { supabase, householdId } = await getHouseholdId();
   if (!supabase || !householdId) return { error: "Not authenticated" };
 
+  // Transfers are immutable — the user must delete and recreate to change them,
+  // since a transfer is two paired rows and partial updates would desync them.
+  const { data: existing } = await supabase
+    .from("transactions")
+    .select("transfer_pair_id")
+    .eq("id", id)
+    .single();
+  if (existing?.transfer_pair_id) {
+    return { error: "Transfers can't be edited — delete this row and create a new transfer." };
+  }
+
   const type = formData.get("type") as "income" | "expense";
   const name = (formData.get("name") as string).trim();
   const amount = parseAmount(formData.get("amount") as string);
@@ -111,6 +122,33 @@ export async function deleteTransaction(id: string) {
 
   const { error } = await supabase.from("transactions").delete().eq("id", id);
   if (error) return { error: error.message };
+  revalidatePath("/transactions");
+  revalidatePath("/reports");
+}
+
+export async function addTransfer(formData: FormData) {
+  const { supabase, householdId } = await getHouseholdId();
+  if (!supabase || !householdId) return { error: "Not authenticated" };
+
+  const fromWalletId = (formData.get("from_wallet_id") as string) || "";
+  const toWalletId = (formData.get("to_wallet_id") as string) || "";
+  const amount = parseAmount(formData.get("amount") as string);
+  const name = ((formData.get("name") as string) || "Transfer").trim() || "Transfer";
+  const date = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
+
+  if (!fromWalletId || !toWalletId) return { error: "Both wallets required" };
+  if (fromWalletId === toWalletId) return { error: "Source and destination wallets must differ" };
+  if (amount <= 0) return { error: "Amount must be greater than 0" };
+
+  const { error } = await supabase.rpc("create_transfer", {
+    p_from_wallet: fromWalletId,
+    p_to_wallet: toWalletId,
+    p_amount: amount,
+    p_name: name,
+    p_date: date,
+  });
+  if (error) return { error: error.message };
+
   revalidatePath("/transactions");
   revalidatePath("/reports");
 }

@@ -93,10 +93,13 @@ export type DbTransaction = {
   name: string;
   category_id: string | null;
   wallet_id: string | null;
+  transfer_pair_id: string | null;
   date: string;
   created_by: string | null;
   created_at: string;
   categories: DbCategory | null;
   wallets: DbWallet | null;
+  /** Set on transfer rows after deduplication: the OTHER wallet in the pair. */
+  peer_wallet?: DbWallet | null;
   photo_url: string | null;
 };

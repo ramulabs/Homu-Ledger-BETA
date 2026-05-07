@@ -42,7 +42,7 @@ export default async function TransactionsPage() {
       .eq("household_id", household.id),
     supabase
       .from("transactions")
-      .select("id, type, amount, name, category_id, wallet_id, date, created_by, created_at, photo_url, categories(id, name, symbol, color), wallets(id, name, symbol, color, initial_balance, is_default)")
+      .select("id, type, amount, name, category_id, wallet_id, transfer_pair_id, date, created_by, created_at, photo_url, categories(id, name, symbol, color), wallets(id, name, symbol, color, initial_balance, is_default)")
       .eq("household_id", household.id)
       .order("date", { ascending: false })
       .order("created_at", { ascending: false })
@@ -82,12 +82,32 @@ export default async function TransactionsPage() {
     if (p?.id) members[p.id] = p;
   }
 
-  const transactions: DbTransaction[] = (txRaw ?? []).map((t: any) => ({
+  const allTransactions: DbTransaction[] = (txRaw ?? []).map((t: any) => ({
     ...t,
     amount: Number(t.amount),
     categories: Array.isArray(t.categories) ? t.categories[0] ?? null : t.categories,
     wallets: Array.isArray(t.wallets) ? t.wallets[0] ?? null : t.wallets,
   }));
+
+  // Build pair_id → peer wallet map for transfer rendering. The DEST side
+  // (type='income') of each transfer holds the destination wallet info; we
+  // attach it to the SOURCE side so the list can show "From → To" in one row.
+  const peerWalletByPair = new Map<string, DbTransaction["wallets"]>();
+  for (const t of allTransactions) {
+    if (t.transfer_pair_id && t.type === "income") {
+      peerWalletByPair.set(t.transfer_pair_id, t.wallets);
+    }
+  }
+
+  // Display list: drop the destination side of each transfer pair, attach
+  // peer_wallet to the source side. Regular tx pass through unchanged.
+  const transactions: DbTransaction[] = allTransactions
+    .filter((t) => !(t.transfer_pair_id && t.type === "income"))
+    .map((t) =>
+      t.transfer_pair_id
+        ? { ...t, peer_wallet: peerWalletByPair.get(t.transfer_pair_id) ?? null }
+        : t
+    );
 
   const recurringItems: DbRecurringItem[] = (recurringRaw ?? []).map((r: any) => ({
     ...r,
@@ -106,10 +126,14 @@ export default async function TransactionsPage() {
     inviter: Array.isArray(i.inviter) ? i.inviter[0] ?? null : i.inviter,
   })).filter((i: DbPendingInvitation) => i.household);
 
-  const income = transactions
+  // Exclude transfers from income/expense aggregates — they net to zero across
+  // the ledger (source expense + dest income same amount), so including them
+  // would inflate both columns without changing the balance.
+  const realTransactions = allTransactions.filter((t) => !t.transfer_pair_id);
+  const income = realTransactions
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0);
-  const expenses = transactions
+  const expenses = realTransactions
     .filter((t) => t.type === "expense")
     .reduce((s, t) => s + t.amount, 0);
   const balance = Number(household.opening_balance) + income - expenses;
