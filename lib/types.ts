@@ -42,6 +42,25 @@ export type DbWallet = {
   is_default: boolean;
 };
 
+export type SubscriptionTier = "3_months" | "6_months" | "1_year" | "lifetime" | "developer";
+
+export type DbPromoCode = {
+  id: string;
+  code: string;
+  tier: SubscriptionTier;
+  created_at: string;
+  created_by: string;
+  redeemed_by: string | null;
+  redeemed_at: string | null;
+  redeemer?: { id: string; name: string } | null;
+};
+
+export type PromoCodeStats = {
+  total: number;
+  redeemed: number;
+  byTier: Record<SubscriptionTier, { generated: number; redeemed: number }>;
+};
+
 export type DbMember = {
   id: string;
   name: string;

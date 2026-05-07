@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles } from "lucide-react";
 import { TapLink } from "@/components/tap";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/actions/auth";
@@ -15,7 +15,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, name, initials, avatar_color, household_id, language, icon_style")
+    .select("id, name, initials, avatar_color, household_id, language, icon_style, is_developer, subscription_tier, subscription_expires_at")
     .eq("id", user.id)
     .single();
 
@@ -24,6 +24,30 @@ export default async function SettingsPage() {
 
   const iconStyle = (profile?.icon_style as "2d" | "3d" | null) ?? "3d";
   const iconStyleLabel = iconStyle === "2d" ? t("settings.iconStyle.2d") : t("settings.iconStyle.3d");
+
+  // Subscription info — show a small badge on the profile card so the user
+  // knows their tier at a glance.
+  const subTier = profile?.subscription_tier as
+    | "3_months" | "6_months" | "1_year" | "lifetime" | "developer"
+    | null;
+  const subExpires = profile?.subscription_expires_at as string | null;
+  const subBadge = (() => {
+    if (!subTier) return null;
+    if (subTier === "developer") return { label: `PRO · ${t("promo.tier.developer")}`, tone: "rose" as const };
+    if (subTier === "lifetime")  return { label: `PRO · ${t("promo.tier.lifetime")}`, tone: "amber" as const };
+    const tierKey = `promo.tier.${subTier}` as const;
+    if (subExpires) {
+      const d = new Date(subExpires);
+      const dateStr = d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+      return { label: `PRO · ${t(tierKey)} · ${t("promo.subscriptionExpires").replace("{date}", dateStr)}`, tone: "emerald" as const };
+    }
+    return { label: `PRO · ${t(tierKey)}`, tone: "emerald" as const };
+  })();
+  const badgeColors: Record<"rose" | "amber" | "emerald", string> = {
+    rose:    "bg-rose-100 text-rose-700",
+    amber:   "bg-amber-100 text-amber-700",
+    emerald: "bg-emerald-100 text-emerald-700",
+  };
 
   const { data: household } = profile?.household_id
     ? await supabase
@@ -64,6 +88,12 @@ export default async function SettingsPage() {
             {profile?.name ?? "—"}
           </p>
           <p className="truncate text-[13px] text-[var(--label-secondary)]">{user.email}</p>
+          {subBadge && (
+            <span className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeColors[subBadge.tone]}`}>
+              <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
+              {subBadge.label}
+            </span>
+          )}
         </div>
         <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
       </TapLink>
@@ -159,6 +189,13 @@ export default async function SettingsPage() {
         <RowLink href="/settings/updates" icon={<RefreshCw className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.updates")} />
       </Group>
 
+      {/* Developer-only — Promo Codes */}
+      {profile?.is_developer && (
+        <Group title="Developer">
+          <RowLink href="/settings/promo-codes" icon={<Ticket className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.promoCodes")} />
+        </Group>
+      )}
+
       <div className="mx-5 mt-6">
         <form action={signOut}>
           <button
@@ -171,7 +208,7 @@ export default async function SettingsPage() {
         </form>
       </div>
 
-      <p className="mt-6 text-center text-[11px] text-[var(--label-tertiary)]">Homu v0.8.0</p>
+      <p className="mt-6 text-center text-[11px] text-[var(--label-tertiary)]">Homu v0.9.0</p>
     </div>
   );
 }

@@ -29,6 +29,17 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "0.9.0",
+    date: "May 7, 2026",
+    changes: [
+      { type: "new", en: "Promo codes — sign up now requires a single-use HOMU-XXXX-XXXX code", id: "Kode promo — pendaftaran kini memerlukan kode sekali pakai HOMU-XXXX-XXXX" },
+      { type: "new", en: "Developer-only Promo Codes page in Settings — generate codes for 3 months / 6 months / 1 year / Lifetime / Developer tiers, with stats on how many were generated and redeemed", id: "Halaman Kode Promo khusus developer di Pengaturan — buat kode untuk 3 bulan / 6 bulan / 1 tahun / Seumur hidup / Developer, dengan statistik jumlah dibuat dan ditukar" },
+      { type: "new", en: "Welcome modal celebrates new PRO users on first sign-in (\"Congratulations — you are a [tier] PRO user\")", id: "Modal selamat datang merayakan pengguna PRO baru saat pertama kali masuk (\"Selamat — Anda kini pengguna PRO [tier]\")" },
+      { type: "new", en: "PRO badge in your profile shows your subscription tier and expiry date (lifetime/developer never expire)", id: "Lencana PRO di profilmu menampilkan tier langganan dan tanggal kedaluwarsa (seumur hidup/developer tidak kedaluwarsa)" },
+      { type: "improvement", en: "Existing users grandfathered as Lifetime PRO so nobody loses access", id: "Pengguna lama otomatis jadi Lifetime PRO supaya tidak ada yang kehilangan akses" },
+    ],
+  },
+  {
     version: "0.8.0",
     date: "May 7, 2026",
     changes: [

@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createHousehold, joinHousehold, signOut } from "@/app/actions/auth";
-import { cn } from "@/lib/cn";
+import WelcomeProModal from "@/components/welcome-pro-modal";
 
 type Mode = "choose" | "create" | "join";
 
 export default function OnboardingPage() {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <WelcomeProModal />
+      </Suspense>
+      <OnboardingInner />
+    </>
+  );
+}
+
+function OnboardingInner() {
   const [mode, setMode] = useState<Mode>("choose");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

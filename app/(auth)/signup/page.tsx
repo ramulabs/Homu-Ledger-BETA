@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { signUp } from "@/app/actions/auth";
+import { useT } from "@/lib/i18n/provider";
 
 export default function SignupPage() {
+  const t = useT();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -21,25 +23,24 @@ export default function SignupPage() {
   return (
     <div className="w-full">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--foreground)] text-white text-2xl shadow-lg">
-          💰
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/homu-login.png" alt="Homu" className="mx-auto mb-5 h-32 w-32 object-contain" />
         <h1 className="text-[26px] font-semibold tracking-tight text-[var(--foreground)]">
-          Create account
+          {t("auth.createAccount")}
         </h1>
         <p className="mt-1 text-[14px] text-[var(--label-secondary)]">
-          Track finances together
+          {t("auth.trackTogether")}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
-        <Field label="Your name" name="name" type="text" placeholder="Marcel" autoComplete="name" />
-        <Field label="Username" name="username" type="text" placeholder="marcel123" autoComplete="username" />
-        <Field label="Email" name="email" type="email" placeholder="you@example.com" autoComplete="email" />
+        <Field label={t("auth.yourName")} name="name" type="text" placeholder="Marcel" autoComplete="name" />
+        <Field label={t("auth.username")} name="username" type="text" placeholder="marcel123" autoComplete="username" />
+        <Field label={t("auth.email")} name="email" type="email" placeholder="you@example.com" autoComplete="email" />
 
         <div>
           <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
-            Password
+            {t("auth.password")}
           </label>
           <div className="relative">
             <input
@@ -54,7 +55,7 @@ export default function SignupPage() {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full text-[var(--label-tertiary)] transition-colors hover:text-[var(--label-secondary)]"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t("common.close") : t("auth.password")}
             >
               {showPassword
                 ? <EyeOff className="h-4 w-4" strokeWidth={2} />
@@ -62,6 +63,24 @@ export default function SignupPage() {
               }
             </button>
           </div>
+        </div>
+
+        {/* Promo code — required */}
+        <div>
+          <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+            {t("auth.promoCode")}
+          </label>
+          <input
+            name="promo_code"
+            type="text"
+            placeholder={t("auth.promoCodePh")}
+            required
+            autoComplete="off"
+            spellCheck={false}
+            inputMode="text"
+            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] font-mono uppercase tracking-[0.12em] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] placeholder:font-mono focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            style={{ textTransform: "uppercase" }}
+          />
         </div>
 
         {error && (
@@ -73,16 +92,16 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
+          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
         >
-          {loading ? "Creating account…" : "Create account"}
+          {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </button>
       </form>
 
       <p className="mt-6 text-center text-[13px] text-[var(--label-secondary)]">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="font-semibold text-[var(--foreground)]">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </div>

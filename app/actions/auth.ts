@@ -10,9 +10,21 @@ export async function signUp(formData: FormData) {
   const password = formData.get("password") as string;
   const name = formData.get("name") as string;
   const username = (formData.get("username") as string).trim().toLowerCase();
+  const promoCodeRaw = (formData.get("promo_code") as string | null)?.trim();
+  const promoCode = promoCodeRaw ? promoCodeRaw.toUpperCase() : "";
 
+  if (!promoCode) {
+    return { error: "Promo code is required to create an account." };
+  }
   if (!/^[a-z0-9_]{3,20}$/.test(username)) {
     return { error: "Username must be 3–20 characters: letters, numbers, underscores only." };
+  }
+
+  // Pre-check: confirm the code is valid and unredeemed before we create
+  // the auth account. Avoids creating an orphan account if the code is bad.
+  const { data: codeIsValid } = await supabase.rpc("is_promo_code_valid", { p_code: promoCode });
+  if (!codeIsValid) {
+    return { error: "Invalid or already-redeemed promo code." };
   }
 
   const { data: existing } = await supabase
@@ -34,9 +46,17 @@ export async function signUp(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     await supabase.from("profiles").update({ username, email }).eq("id", user.id);
+
+    // Atomic redeem: marks code used + writes subscription_tier on the profile.
+    // Race-condition window is tiny; if it does fail here we surface the error
+    // but the auth account already exists (user can sign in but won't have PRO).
+    const { error: redeemError } = await supabase.rpc("redeem_promo_code", { p_code: promoCode });
+    if (redeemError) {
+      return { error: `Account created but code redemption failed: ${redeemError.message}` };
+    }
   }
 
-  redirect("/onboarding");
+  redirect("/onboarding?welcome=1");
 }
 
 export async function signIn(formData: FormData) {
