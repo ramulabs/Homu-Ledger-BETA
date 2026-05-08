@@ -11,6 +11,8 @@ import { cn } from "@/lib/cn";
 import { useT } from "@/lib/i18n/provider";
 import { formatShortDate } from "@/lib/format";
 import { uploadTransactionPhoto } from "@/lib/upload-photo";
+import { compressPhoto } from "@/lib/compress-photo";
+import PhotoViewer from "@/components/photo-viewer";
 import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
@@ -57,6 +59,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
   const [showRecurringPicker, setShowRecurringPicker] = useState(false);
   const [creatingRecurring, setCreatingRecurring] = useState(false);
   const [recurringSuccess, setRecurringSuccess] = useState(false);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -159,9 +162,14 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
 
   const amountDisplay = amount ? amount.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
 
-  function handlePhotoSelected(file: File) {
-    setPhoto(file);
+  async function handlePhotoSelected(file: File) {
+    // Show the original immediately as a preview so the user sees something
+    // happen instantly, then quietly swap in the compressed File for upload.
+    // Compression is fast (<1s for typical iPhone photos) but on a slow
+    // device we don't want the camera roll → preview transition to feel laggy.
     setPhotoPreview(URL.createObjectURL(file));
+    const compressed = await compressPhoto(file);
+    setPhoto(compressed);
   }
 
   function removePhoto() {
@@ -545,8 +553,18 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
               </label>
               {photoPreview ? (
                 <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photoPreview} alt="Transaction photo" className="h-40 w-full rounded-2xl object-cover" />
+                  {/* Tap the photo to open the fullscreen viewer with a
+                      download button. Uses a button (not just <img>) so
+                      keyboard users can activate it too. */}
+                  <button
+                    type="button"
+                    onClick={() => setShowPhotoViewer(true)}
+                    className="block w-full overflow-hidden rounded-2xl active:opacity-90 transition-opacity"
+                    aria-label={tr("tx.photo")}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photoPreview} alt="Transaction photo" className="h-40 w-full rounded-2xl object-cover" />
+                  </button>
                   <button
                     type="button"
                     onClick={removePhoto}
@@ -749,6 +767,17 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
           currency={currency}
         />
       )}
+
+      {/* Fullscreen photo viewer with download button */}
+      <PhotoViewer
+        url={showPhotoViewer ? photoPreview : null}
+        downloadName={
+          name
+            ? `${name.replace(/[^\w-]+/g, "_")}-${date}.jpg`
+            : `transaction-${date}.jpg`
+        }
+        onClose={() => setShowPhotoViewer(false)}
+      />
     </>
   );
 }

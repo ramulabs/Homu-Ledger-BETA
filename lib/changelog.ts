@@ -29,6 +29,14 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.2.0",
+    date: "May 8, 2026",
+    changes: [
+      { type: "new", en: "Tap a transaction's photo to open it fullscreen, with a download button to save the receipt to your phone", id: "Ketuk foto transaksi untuk membukanya layar penuh, dengan tombol unduh untuk menyimpan struk ke ponselmu" },
+      { type: "improvement", en: "Photos are now auto-compressed in the browser before upload — typical iPhone receipts go from 4-6 MB down to ~300 KB without losing readability, so saves are dramatically faster on mobile data", id: "Foto kini dikompres otomatis di browser sebelum diunggah — struk iPhone biasa turun dari 4-6 MB menjadi ~300 KB tanpa kehilangan ketajaman, jadi simpan jauh lebih cepat di data seluler" },
+    ],
+  },
+  {
     version: "1.1.2",
     date: "May 8, 2026",
     changes: [
