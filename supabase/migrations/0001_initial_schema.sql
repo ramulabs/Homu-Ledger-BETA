@@ -216,7 +216,15 @@ create policy "profiles: self or same household can read"
   on public.profiles for select
   using (
     id = auth.uid()
-    or (household_id is not null and household_id = public.current_household_id())
+    or (
+      household_id is not null
+      and exists (
+        select 1
+        from public.household_members hm
+        where hm.household_id = profiles.household_id
+          and hm.profile_id = auth.uid()
+      )
+    )
   );
 
 -- Users can update their own profile. The active household pointer may only
