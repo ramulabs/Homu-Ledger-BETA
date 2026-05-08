@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.3.5",
+    date: "May 8, 2026",
+    changes: [
+      { type: "improvement", en: "Transaction list now loads 20 items at a time instead of 10 — fewer scroll triggers, more content visible on first glance", id: "Daftar transaksi kini memuat 20 item sekaligus, bukan 10 — lebih sedikit pemicu scroll, lebih banyak konten terlihat sejak awal" },
+    ],
+  },
+  {
     version: "1.3.4",
     date: "May 8, 2026",
     changes: [

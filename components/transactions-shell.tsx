@@ -22,7 +22,7 @@ import type { IconStyle } from "@/lib/category-icons";
 type SubTab = "history" | "recurring";
 type DateFilter = "all" | "30d" | "this_month" | "custom";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 function toInputDate(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
