@@ -174,7 +174,7 @@ export const en = {
   "settings.iconStyle.3d.desc": "Colourful, expressive emojis",
   "settings.language.subtitle": "Choose your preferred language. This applies to your account only.",
   "settings.currency.title": "Currency",
-  "settings.currency.subtitle": "Choose the currency for your household.",
+  "settings.currency.subtitle": "Choose the currency for your ledger.",
 
   // Login / Signup
   "auth.signIn": "Sign in",
@@ -410,7 +410,7 @@ export const id: Record<TKey, string> = {
   "settings.iconStyle.3d.desc": "Emoji penuh warna dan ekspresif",
   "settings.language.subtitle": "Pilih bahasa yang Anda inginkan. Hanya berlaku untuk akun Anda.",
   "settings.currency.title": "Mata Uang",
-  "settings.currency.subtitle": "Pilih mata uang untuk rumah tangga Anda.",
+  "settings.currency.subtitle": "Pilih mata uang untuk buku kas Anda.",
 
   // Login / Signup
   "auth.signIn": "Masuk",

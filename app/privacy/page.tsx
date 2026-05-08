@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         </p>
 
         <p className="mt-4">
-          Homu is a personal finance app for tracking household transactions.
+          Homu is a personal finance app for tracking shared ledger transactions.
           This document describes what data we collect and how we use it.
         </p>
 
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
             display name, optional username, and avatar colour.
           </li>
           <li>
-            <strong>Ledger data:</strong> the household name, currency, symbol,
+            <strong>Ledger data:</strong> the ledger name, currency, symbol,
             opening balance, transactions (description, amount, type, category,
             wallet, date, member), categories, wallets, and recurring items you
             create.
@@ -47,7 +47,7 @@ export default function PrivacyPage() {
           <li>
             <strong>Receipts:</strong> any photos you choose to attach to a
             transaction. Photos are stored in private storage with access
-            limited to members of your household.
+            limited to members of your ledger.
           </li>
           <li>
             <strong>Subscription:</strong> the promo code you redeemed and the
@@ -63,7 +63,7 @@ export default function PrivacyPage() {
         <ul className="mt-2 list-disc pl-5 space-y-1.5">
           <li>
             To sign you in, render your ledger, and let other members of the
-            same household see shared transactions.
+            same ledger see shared transactions.
           </li>
           <li>To send invitations to people you explicitly invite by email or username.</li>
           <li>
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
           <li>
             <strong>Supabase</strong> (Singapore region) — Postgres database for
             your records, plus storage for receipt photos. Row-level security
-            ensures only you and the members of your household can read your data.
+            ensures only you and the members of your ledger can read your data.
           </li>
           <li>
             <strong>Vercel</strong> — serves the app and runs server actions.

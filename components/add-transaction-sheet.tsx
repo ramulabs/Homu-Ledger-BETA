@@ -248,7 +248,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     let photoPath: string | null = null;
     if (photo) {
       if (!currentHouseholdId) {
-        setError("No household selected — please refresh and try again.");
+        setError("No ledger selected — please refresh and try again.");
         setLoading(false);
         return;
       }

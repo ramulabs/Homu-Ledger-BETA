@@ -47,7 +47,7 @@ function OnboardingInner() {
             🏠
           </div>
           <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
-            Set up your household
+            Set up your ledger
           </h1>
           <p className="mt-1 text-[14px] text-[var(--label-secondary)]">
             Create a new shared space or join your partner's
@@ -57,13 +57,13 @@ function OnboardingInner() {
         <div className="w-full space-y-3">
           <OptionCard
             emoji="✨"
-            title="Create a household"
+            title="Create a ledger"
             sub="Start fresh — your partner joins with your invite code"
             onClick={() => setMode("create")}
           />
           <OptionCard
             emoji="🔗"
-            title="Join a household"
+            title="Join a ledger"
             sub="Enter the 6-digit code your partner shared with you"
             onClick={() => setMode("join")}
           />
@@ -91,13 +91,13 @@ function OnboardingInner() {
           ← Back
         </button>
         <h1 className="mb-1 text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
-          Create your household
+          Create your ledger
         </h1>
         <p className="mb-6 text-[14px] text-[var(--label-secondary)]">
           Give it a name. Your partner will join using the invite code we generate.
         </p>
         <form onSubmit={handleCreate} className="space-y-3">
-          <InputField label="Household name" name="name" placeholder="e.g. Marcel & Partner" />
+          <InputField label="Ledger name" name="name" placeholder="e.g. Marcel & Partner" />
           <InputField
             label="Opening balance (Rp)"
             name="opening_balance"
@@ -113,7 +113,7 @@ function OnboardingInner() {
             disabled={loading}
             className="flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
           >
-            {loading ? "Creating…" : "Create household"}
+            {loading ? "Creating…" : "Create ledger"}
           </button>
         </form>
       </div>
@@ -130,7 +130,7 @@ function OnboardingInner() {
         ← Back
       </button>
       <h1 className="mb-1 text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
-        Join a household
+        Join a ledger
       </h1>
       <p className="mb-6 text-[14px] text-[var(--label-secondary)]">
         Enter the 6-digit invite code from your partner.
@@ -158,7 +158,7 @@ function OnboardingInner() {
           disabled={loading || code.length < 6}
           className="flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
         >
-          {loading ? "Joining…" : "Join household"}
+          {loading ? "Joining…" : "Join ledger"}
         </button>
       </form>
     </div>
