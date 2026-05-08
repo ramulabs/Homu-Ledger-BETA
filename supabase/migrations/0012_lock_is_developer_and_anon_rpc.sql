@@ -22,11 +22,10 @@
 -- deployed, otherwise sign-in/sign-up will break.
 
 -- 1) Block is_developer self-promotion -----------------------------------
--- Replace the existing UPDATE policy on profiles. The policy drops the
--- previous "self can update" / "self can update safe fields" variants
--- and replaces them with one that explicitly compares is_developer to
--- the current row value — so the user can only "update" the column to
--- the same value it already had.
+-- The UPDATE policy locks household_id swaps to ledgers the user is a
+-- member of. The is_developer rule is enforced by a BEFORE UPDATE
+-- trigger in migration 0017 — putting it in the policy as a subquery
+-- against `profiles` itself caused infinite RLS recursion.
 DROP POLICY IF EXISTS "profiles: self can update" ON public.profiles;
 DROP POLICY IF EXISTS "profiles: self can update safe fields" ON public.profiles;
 CREATE POLICY "profiles: self can update safe fields"
@@ -34,7 +33,6 @@ CREATE POLICY "profiles: self can update safe fields"
   USING (id = auth.uid())
   WITH CHECK (
     id = auth.uid()
-    -- household_id may only point at a ledger the user is a member of
     AND (
       household_id IS NULL
       OR EXISTS (
@@ -43,10 +41,6 @@ CREATE POLICY "profiles: self can update safe fields"
         WHERE hm.household_id = profiles.household_id
           AND hm.profile_id = auth.uid()
       )
-    )
-    -- is_developer is server-controlled; the user cannot flip it via UPDATE
-    AND is_developer = (
-      SELECT p2.is_developer FROM public.profiles p2 WHERE p2.id = auth.uid()
     )
   );
 
