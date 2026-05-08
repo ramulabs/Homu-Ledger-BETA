@@ -29,6 +29,17 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.4.0",
+    date: "May 8, 2026",
+    changes: [
+      { type: "improvement", en: "Major security hardening: ledger membership is now atomic, photo storage is private with on-demand signed URLs, and developer flag can no longer be self-promoted", id: "Pengamanan besar: keanggotaan buku kini atomik, penyimpanan foto privat dengan URL bertanda tangan sesuai permintaan, dan flag developer tidak bisa dipromosikan sendiri" },
+      { type: "improvement", en: "Privacy policy page added (Settings → Privacy Policy) — required for App Store and Play Store submission", id: "Halaman kebijakan privasi ditambahkan (Pengaturan → Kebijakan Privasi) — diperlukan untuk pengiriman App Store dan Play Store" },
+      { type: "improvement", en: "iPhone notch and home indicator are now respected — bottom navigation no longer hides under the home bar on newer iPhones", id: "Notch iPhone dan home indicator kini dihormati — navigasi bawah tidak lagi tertutup home bar di iPhone baru" },
+      { type: "improvement", en: "Reports page is faster on low-end phones — the breakdown list no longer re-renders when you toggle the period dropdown or tap a bar segment", id: "Halaman Laporan lebih cepat di ponsel low-end — daftar rincian tidak lagi di-render ulang saat ganti periode atau ketuk segmen bar" },
+      { type: "improvement", en: "Server validates description length, amount bounds, type, and date format — clearer error messages instead of silent failures or oversized data", id: "Server memvalidasi panjang deskripsi, batas jumlah, tipe, dan format tanggal — pesan error lebih jelas, bukan kegagalan diam atau data terlalu besar" },
+    ],
+  },
+  {
     version: "1.3.6",
     date: "May 8, 2026",
     changes: [

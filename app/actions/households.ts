@@ -2,26 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { LIMITS, validateAmount, validateCurrency, validateName, validateSymbol } from "@/lib/validation";
 
 export async function switchHousehold(householdId: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { data: membership } = await supabase
-    .from("household_members")
-    .select("household_id")
-    .eq("household_id", householdId)
-    .eq("profile_id", user.id)
-    .single();
-
-  if (!membership) return { error: "Not a member of this household" };
-
-  const { error } = await supabase
-    .from("profiles")
-    .update({ household_id: householdId })
-    .eq("id", user.id);
-
+  const { error } = await supabase.rpc("switch_household", { p_household_id: householdId });
   if (error) return { error: error.message };
 
   revalidatePath("/transactions");
@@ -43,9 +31,12 @@ export async function updateHouseholdCurrency(currency: string): Promise<{ error
 
   if (!profile?.household_id) return { error: "No household" };
 
+  const currencyErr = validateCurrency(currency);
+  if (currencyErr) return { error: currencyErr };
+
   const { error } = await supabase
     .from("households")
-    .update({ currency })
+    .update({ currency: currency.trim() })
     .eq("id", profile.household_id);
 
   if (error) return { error: error.message };
@@ -62,8 +53,8 @@ export async function updateHouseholdName(name: string): Promise<{ error?: strin
   if (!user) return { error: "Not authenticated" };
 
   const trimmed = name.trim();
-  if (!trimmed) return { error: "Name required" };
-  if (trimmed.length > 60) return { error: "Name too long" };
+  const nameErr = validateName(trimmed, LIMITS.HOUSEHOLD_NAME);
+  if (nameErr) return { error: nameErr };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -99,6 +90,9 @@ export async function updateHouseholdSymbol(symbol: string): Promise<{ error?: s
 
   if (!profile?.household_id) return { error: "No household" };
 
+  const symbolErr = validateSymbol(symbol);
+  if (symbolErr) return { error: symbolErr };
+
   const { error } = await supabase
     .from("households")
     .update({ symbol })
@@ -121,7 +115,12 @@ export async function createNewLedger(formData: FormData): Promise<{ error?: str
   const openingBalanceRaw = (formData.get("opening_balance") as string) || "0";
   const openingBalance = parseFloat(openingBalanceRaw.replace(/\./g, "").replace(",", ".")) || 0;
 
-  if (!name) return { error: "Name required" };
+  const nameErr = validateName(name, LIMITS.HOUSEHOLD_NAME);
+  if (nameErr) return { error: nameErr };
+  const currencyErr = validateCurrency(currency);
+  if (currencyErr) return { error: currencyErr };
+  const balanceErr = validateAmount(openingBalance, { allowZero: true });
+  if (balanceErr) return { error: balanceErr };
 
   const { data: codeData, error: codeError } = await supabase.rpc("generate_invite_code");
   if (codeError) return { error: codeError.message };

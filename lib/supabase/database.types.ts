@@ -487,6 +487,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_household_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: string
+      }
+      can_access_transaction_photo: {
+        Args: { p_object_name: string }
+        Returns: boolean
+      }
       create_transfer: {
         Args: {
           p_amount: number
@@ -514,8 +522,20 @@ export type Database = {
         }[]
       }
       generate_promo_code_string: { Args: never; Returns: string }
+      get_ledger_totals: {
+        Args: never
+        Returns: {
+          balance: number
+          expenses: number
+          income: number
+        }[]
+      }
       get_email_by_username: { Args: { p_username: string }; Returns: string }
       is_promo_code_valid: { Args: { p_code: string }; Returns: boolean }
+      join_household_by_invite_code: {
+        Args: { p_code: string }
+        Returns: string
+      }
       lookup_household_by_invite_code: {
         Args: { p_code: string }
         Returns: {
@@ -540,6 +560,10 @@ export type Database = {
           expires_at: string
           tier: string
         }[]
+      }
+      switch_household: {
+        Args: { p_household_id: string }
+        Returns: undefined
       }
     }
     Enums: {

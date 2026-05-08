@@ -34,9 +34,18 @@ CREATE POLICY "household_members: members can read same household"
   ON public.household_members FOR SELECT
   USING (household_id = public.current_household_id());
 
-CREATE POLICY "household_members: can insert own"
+CREATE POLICY "household_members: owner can insert own membership"
   ON public.household_members FOR INSERT
-  WITH CHECK (profile_id = auth.uid());
+  WITH CHECK (
+    profile_id = auth.uid()
+    AND role = 'owner'
+    AND EXISTS (
+      SELECT 1
+      FROM public.households h
+      WHERE h.id = household_id
+        AND h.owner_id = auth.uid()
+    )
+  );
 
 CREATE POLICY "household_members: can delete own"
   ON public.household_members FOR DELETE

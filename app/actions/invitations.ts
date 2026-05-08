@@ -82,54 +82,12 @@ export async function acceptInvitation(invitationId: string): Promise<{ error?: 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { data: invite } = await supabase
-    .from("household_invitations")
-    .select("id, household_id, invited_by, invited_user_id, status")
-    .eq("id", invitationId)
-    .single();
-
-  if (!invite) return { error: "Invitation not found" };
-  if (invite.invited_user_id !== user.id) return { error: "Not your invitation" };
-  if (invite.status !== "pending") return { error: "Invitation is no longer pending" };
-
-  // Verify the inviter is STILL a member of the household at accept time.
-  // Without this, a removed member's stale pending invites would still grant
-  // access to their old ledger.
-  const { data: inviterMembership } = await supabase
-    .from("household_members")
-    .select("profile_id")
-    .eq("household_id", invite.household_id)
-    .eq("profile_id", invite.invited_by)
-    .maybeSingle();
-  if (!inviterMembership) {
-    // Auto-decline so the now-invalid invite stops appearing in the
-    // recipient's pending list. (The status CHECK constraint allows
-    // pending/accepted/declined; 'declined' fits closest semantically.)
-    await supabase
-      .from("household_invitations")
-      .update({ status: "declined" })
-      .eq("id", invitationId);
-    return { error: "This invitation is no longer valid — the inviter is no longer a member of that ledger." };
-  }
-
-  // Add to household_members
-  const { error: memberError } = await supabase
-    .from("household_members")
-    .upsert({ household_id: invite.household_id, profile_id: user.id, role: "member" });
-
-  if (memberError) return { error: memberError.message };
-
-  // Mark invitation accepted
-  await supabase
-    .from("household_invitations")
-    .update({ status: "accepted" })
-    .eq("id", invitationId);
-
-  // Switch the user into the new ledger
-  await supabase
-    .from("profiles")
-    .update({ household_id: invite.household_id })
-    .eq("id", user.id);
+  // Migration 0011 moved the accept flow into a SECURITY DEFINER RPC that
+  // also verifies the inviter is still a member of the household (auto-
+  // declining stale invites from removed members), inserts membership,
+  // and switches the user into the new ledger atomically.
+  const { error } = await supabase.rpc("accept_household_invitation", { p_invitation_id: invitationId });
+  if (error) return { error: error.message };
 
   revalidatePath("/transactions");
   revalidatePath("/reports");
@@ -199,22 +157,10 @@ export async function joinLedgerByCode(code: string): Promise<{ error?: string }
   const trimmed = code.trim().toUpperCase();
   if (!trimmed) return { error: "Invite code required" };
 
-  const { data: lookupRows, error: lookupError } = await supabase
-    .rpc("lookup_household_by_invite_code", { p_code: trimmed });
-  const household = Array.isArray(lookupRows) ? lookupRows[0] : lookupRows;
-
-  if (lookupError || !household) return { error: "Invalid invite code." };
-
-  await supabase
-    .from("household_members")
-    .upsert({ household_id: household.id, profile_id: user.id, role: "member" });
-
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({ household_id: household.id })
-    .eq("id", user.id);
-
-  if (profileError) return { error: profileError.message };
+  // Migration 0011 locked down household_members INSERT to owners only;
+  // joins must go through the SECURITY DEFINER RPC.
+  const { error } = await supabase.rpc("join_household_by_invite_code", { p_code: trimmed });
+  if (error) return { error: "Invalid invite code." };
 
   revalidatePath("/transactions");
   revalidatePath("/reports");

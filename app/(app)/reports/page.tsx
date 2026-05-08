@@ -27,6 +27,8 @@ async function fetchReportTransactions(
       .eq("household_id", householdId)
       .is("transfer_pair_id", null)
       .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .range(from, from + QUERY_PAGE_SIZE - 1);
 
     if (error) throw new Error(`Failed to load report transactions: ${error.message}`);

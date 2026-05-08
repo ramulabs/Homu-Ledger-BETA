@@ -483,17 +483,43 @@ GRANT EXECUTE ON FUNCTION public.redeem_promo_code(TEXT) TO authenticated;
 -- -------------------------------------------------------------------------
 -- Transaction photo storage
 -- -------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.can_access_transaction_photo(p_object_name TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public', 'storage'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.household_members hm
+    WHERE hm.household_id::TEXT = (storage.foldername(p_object_name))[1]
+      AND hm.profile_id = auth.uid()
+  );
+$function$;
+
+GRANT EXECUTE ON FUNCTION public.can_access_transaction_photo(TEXT) TO authenticated;
+
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('transaction-photos', 'transaction-photos', TRUE)
+VALUES ('transaction-photos', 'transaction-photos', FALSE)
 ON CONFLICT (id) DO UPDATE SET public = EXCLUDED.public;
 
 DROP POLICY IF EXISTS "transaction_photos: authenticated can upload" ON storage.objects;
-CREATE POLICY "transaction_photos: authenticated can upload"
+DROP POLICY IF EXISTS "transaction_photos: members can upload" ON storage.objects;
+CREATE POLICY "transaction_photos: members can upload"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (bucket_id = 'transaction-photos');
+  WITH CHECK (
+    bucket_id = 'transaction-photos'
+    AND public.can_access_transaction_photo(name)
+  );
 
 DROP POLICY IF EXISTS "transaction_photos: public can read" ON storage.objects;
-CREATE POLICY "transaction_photos: public can read"
+DROP POLICY IF EXISTS "transaction_photos: members can read" ON storage.objects;
+CREATE POLICY "transaction_photos: members can read"
   ON storage.objects FOR SELECT
-  USING (bucket_id = 'transaction-photos');
+  TO authenticated
+  USING (
+    bucket_id = 'transaction-photos'
+    AND public.can_access_transaction_photo(name)
+  );

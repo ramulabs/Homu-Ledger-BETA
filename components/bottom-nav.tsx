@@ -22,7 +22,12 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 z-50">
+    <nav
+      className="fixed bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 z-50"
+      // Pad the nav itself by the iPhone home-indicator inset so the bar
+      // sits visually above it on notch devices, instead of being covered.
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="relative h-[84px]">
         <div className="absolute inset-x-0 bottom-0 h-[72px] border-t border-black/[0.06] bg-[var(--surface)]/85 backdrop-blur-xl" />
 

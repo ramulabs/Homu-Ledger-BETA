@@ -217,22 +217,11 @@ export async function joinHousehold(formData: FormData) {
 
   const code = (formData.get("invite_code") as string).trim().toUpperCase();
 
-  const { data: lookupRows, error: lookupError } = await supabase
-    .rpc("lookup_household_by_invite_code", { p_code: code });
-  const household = Array.isArray(lookupRows) ? lookupRows[0] : lookupRows;
+  // Migration 0011 locked down household_members INSERT to owners only;
+  // joins must go through the SECURITY DEFINER RPC which both validates
+  // the code and inserts the membership atomically.
+  const { error } = await supabase.rpc("join_household_by_invite_code", { p_code: code });
+  if (error) return { error: "Invalid invite code. Check the code and try again." };
 
-  if (lookupError || !household) return { error: "Invalid invite code. Check the code and try again." };
-
-  // Track membership (upsert in case they're re-joining)
-  await supabase
-    .from("household_members")
-    .upsert({ household_id: household.id, profile_id: user.id, role: "member" });
-
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .update({ household_id: household.id })
-    .eq("id", user.id);
-
-  if (profileError) return { error: profileError.message };
   redirect("/transactions");
 }

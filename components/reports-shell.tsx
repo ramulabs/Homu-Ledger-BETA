@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, memo } from "react";
 import { ChevronDown, Wallet as WalletIcon, Check } from "lucide-react";
 import PullToRefresh from "@/components/pull-to-refresh";
 import {
@@ -541,93 +541,24 @@ export default function ReportsShell({ transactions, categories, wallets, member
             </div>
           </div>
 
-          {/* Breakdown list */}
+          {/* Breakdown list — extracted into memoized components so toggling
+              other report state (period selector, segment popup) doesn't
+              re-render this list of dozens of <li>s on every keypress. */}
           {breakdown === "category" ? (
-            <div className="px-5 pt-3 pb-6">
-              <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
-                {byCategory.map((c) => {
-                  const pct = grandTotal > 0 ? (c.total / grandTotal) * 100 : 0;
-                  return (
-                    <li key={c.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <span className="flex h-8 w-8 items-center justify-center rounded-full text-base" style={{ backgroundColor: `${c.color}1A` }}>
-                            <CategoryIcon symbol={c.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? c.color : undefined} />
-                          </span>
-                          <div>
-                            <p className="text-[14px] font-medium text-[var(--foreground)]">{c.name}</p>
-                            <p className="text-[11px] text-[var(--label-secondary)]">{pct.toFixed(1)}%</p>
-                          </div>
-                        </div>
-                        <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(c.total, currency)}</p>
-                      </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: c.color }} />
-                      </div>
-                    </li>
-                  );
-                })}
-                {uncategorizedTotal > 0 && (
-                  <li className="px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-black/[0.05]">📋</span>
-                        <div>
-                          <p className="text-[14px] font-medium text-[var(--foreground)]">Uncategorized</p>
-                          <p className="text-[11px] text-[var(--label-secondary)]">{((uncategorizedTotal / grandTotal) * 100).toFixed(1)}%</p>
-                        </div>
-                      </div>
-                      <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(uncategorizedTotal, currency)}</p>
-                    </div>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
-                      <div className="h-full rounded-full bg-[var(--label-tertiary)]" style={{ width: `${(uncategorizedTotal / grandTotal) * 100}%` }} />
-                    </div>
-                  </li>
-                )}
-              </ul>
-            </div>
+            <CategoryBreakdown
+              items={byCategory}
+              uncategorizedTotal={uncategorizedTotal}
+              grandTotal={grandTotal}
+              currency={currency}
+              iconStyle={iconStyle}
+            />
           ) : (
-            <div className="px-5 pt-3 pb-6">
-              <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
-                {byMember.map((m) => {
-                  const pct = grandTotal > 0 ? (m.total / grandTotal) * 100 : 0;
-                  return (
-                    <li key={m.id} className="px-4 py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white" style={{ backgroundColor: m.avatar_color }}>{m.initials}</span>
-                          <div>
-                            <p className="text-[14px] font-medium text-[var(--foreground)]">{m.name}</p>
-                            <p className="text-[11px] text-[var(--label-secondary)]">{pct.toFixed(1)}%</p>
-                          </div>
-                        </div>
-                        <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(m.total, currency)}</p>
-                      </div>
-                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: m.avatar_color }} />
-                      </div>
-                    </li>
-                  );
-                })}
-                {unassignedTotal > 0 && (
-                  <li className="px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-black/[0.05]">?</span>
-                        <div>
-                          <p className="text-[14px] font-medium text-[var(--foreground)]">Unassigned</p>
-                          <p className="text-[11px] text-[var(--label-secondary)]">{((unassignedTotal / grandTotal) * 100).toFixed(1)}%</p>
-                        </div>
-                      </div>
-                      <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(unassignedTotal, currency)}</p>
-                    </div>
-                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
-                      <div className="h-full rounded-full bg-[var(--label-tertiary)]" style={{ width: `${(unassignedTotal / grandTotal) * 100}%` }} />
-                    </div>
-                  </li>
-                )}
-              </ul>
-            </div>
+            <MemberBreakdown
+              items={byMember}
+              unassignedTotal={unassignedTotal}
+              grandTotal={grandTotal}
+              currency={currency}
+            />
           )}
         </>
       )}
@@ -635,6 +566,112 @@ export default function ReportsShell({ transactions, categories, wallets, member
     </PullToRefresh>
   );
 }
+
+type CategoryRow = { id: string; name: string; symbol: string; color: string; total: number };
+type MemberRow = { id: string; name: string; initials: string; avatar_color: string; total: number };
+
+const CategoryBreakdown = memo(function CategoryBreakdown({
+  items, uncategorizedTotal, grandTotal, currency, iconStyle,
+}: {
+  items: CategoryRow[]; uncategorizedTotal: number; grandTotal: number;
+  currency: string; iconStyle: IconStyle;
+}) {
+  return (
+    <div className="px-5 pt-3 pb-6">
+      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+        {items.map((c) => {
+          const pct = grandTotal > 0 ? (c.total / grandTotal) * 100 : 0;
+          return (
+            <li key={c.id} className="px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full text-base" style={{ backgroundColor: `${c.color}1A` }}>
+                    <CategoryIcon symbol={c.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? c.color : undefined} />
+                  </span>
+                  <div>
+                    <p className="text-[14px] font-medium text-[var(--foreground)]">{c.name}</p>
+                    <p className="text-[11px] text-[var(--label-secondary)]">{pct.toFixed(1)}%</p>
+                  </div>
+                </div>
+                <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(c.total, currency)}</p>
+              </div>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: c.color }} />
+              </div>
+            </li>
+          );
+        })}
+        {uncategorizedTotal > 0 && (
+          <li className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-black/[0.05]">📋</span>
+                <div>
+                  <p className="text-[14px] font-medium text-[var(--foreground)]">Uncategorized</p>
+                  <p className="text-[11px] text-[var(--label-secondary)]">{((uncategorizedTotal / grandTotal) * 100).toFixed(1)}%</p>
+                </div>
+              </div>
+              <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(uncategorizedTotal, currency)}</p>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+              <div className="h-full rounded-full bg-[var(--label-tertiary)]" style={{ width: `${(uncategorizedTotal / grandTotal) * 100}%` }} />
+            </div>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+});
+
+const MemberBreakdown = memo(function MemberBreakdown({
+  items, unassignedTotal, grandTotal, currency,
+}: {
+  items: MemberRow[]; unassignedTotal: number; grandTotal: number; currency: string;
+}) {
+  return (
+    <div className="px-5 pt-3 pb-6">
+      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+        {items.map((m) => {
+          const pct = grandTotal > 0 ? (m.total / grandTotal) * 100 : 0;
+          return (
+            <li key={m.id} className="px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white" style={{ backgroundColor: m.avatar_color }}>{m.initials}</span>
+                  <div>
+                    <p className="text-[14px] font-medium text-[var(--foreground)]">{m.name}</p>
+                    <p className="text-[11px] text-[var(--label-secondary)]">{pct.toFixed(1)}%</p>
+                  </div>
+                </div>
+                <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(m.total, currency)}</p>
+              </div>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: m.avatar_color }} />
+              </div>
+            </li>
+          );
+        })}
+        {unassignedTotal > 0 && (
+          <li className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-black/[0.05]">?</span>
+                <div>
+                  <p className="text-[14px] font-medium text-[var(--foreground)]">Unassigned</p>
+                  <p className="text-[11px] text-[var(--label-secondary)]">{((unassignedTotal / grandTotal) * 100).toFixed(1)}%</p>
+                </div>
+              </div>
+              <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(unassignedTotal, currency)}</p>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+              <div className="h-full rounded-full bg-[var(--label-tertiary)]" style={{ width: `${(unassignedTotal / grandTotal) * 100}%` }} />
+            </div>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+});
 
 function SummaryCell({ label, value, tone }: { label: string; value: string; tone: "good" | "bad" | "neutral" }) {
   const color = tone === "good" ? "text-emerald-700" : tone === "bad" ? "text-rose-700" : "text-[var(--foreground)]";

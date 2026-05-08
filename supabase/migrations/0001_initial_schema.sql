@@ -189,7 +189,16 @@ stable
 security definer
 set search_path = public
 as $$
-  select household_id from public.profiles where id = auth.uid();
+  select p.household_id
+  from public.profiles p
+  where p.id = auth.uid()
+    and p.household_id is not null
+    and exists (
+      select 1
+      from public.household_members hm
+      where hm.household_id = p.household_id
+        and hm.profile_id = p.id
+    );
 $$;
 
 -- =========================================================================
@@ -210,11 +219,23 @@ create policy "profiles: self or same household can read"
     or (household_id is not null and household_id = public.current_household_id())
   );
 
--- Users can update their own profile (name, initials, avatar, household_id for join/leave)
+-- Users can update their own profile. The active household pointer may only
+-- point at a ledger where the user is already a member.
 create policy "profiles: self can update"
   on public.profiles for update
   using (id = auth.uid())
-  with check (id = auth.uid());
+  with check (
+    id = auth.uid()
+    and (
+      household_id is null
+      or exists (
+        select 1
+        from public.household_members hm
+        where hm.household_id = profiles.household_id
+          and hm.profile_id = auth.uid()
+      )
+    )
+  );
 
 -- HOUSEHOLDS ---------------------------------------------------------------
 -- Bootstrap policy for the initial schema. Migration 0002 adds owner_id and

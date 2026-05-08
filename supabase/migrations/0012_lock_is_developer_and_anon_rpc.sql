@@ -51,7 +51,10 @@ CREATE POLICY "profiles: self can update safe fields"
   );
 
 -- 2) Revoke anon enumeration ---------------------------------------------
-REVOKE EXECUTE ON FUNCTION public.is_promo_code_valid(TEXT) FROM anon;
-REVOKE EXECUTE ON FUNCTION public.get_email_by_username(TEXT) FROM anon;
+-- Also revoke from PUBLIC: PostgreSQL grants EXECUTE to PUBLIC by default
+-- on new functions, and that grant is inherited by `anon`. Just revoking
+-- from anon is not enough.
+REVOKE EXECUTE ON FUNCTION public.is_promo_code_valid(TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_email_by_username(TEXT) FROM PUBLIC, anon;
 -- Authenticated grant remains — and the auth-flow callers will use the
 -- service role key, which bypasses RLS and these grants entirely.

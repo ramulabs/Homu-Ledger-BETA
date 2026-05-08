@@ -33,6 +33,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
   minimumScale: 1,
   userScalable: false,
+  // viewport-fit=cover lets the page extend into the iPhone notch / home
+  // indicator area. We then opt fixed UI back in via env(safe-area-inset-*).
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
