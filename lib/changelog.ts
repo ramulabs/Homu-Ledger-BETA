@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.7.7",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Cream strip below the popup and the bottom navigation bar in the installed iPhone app is now finally fixed by adding a fixed surface-coloured filler in the iPhone home-indicator zone — it sits behind everything so any element clipped at the visual viewport boundary blends with it instead of showing the cream page background", id: "Strip cream di bawah popup dan bar navigasi bawah di aplikasi iPhone terinstal akhirnya diperbaiki dengan menambah lapisan latar warna sheet di zona home indicator iPhone — lapisan ini berada di belakang semua elemen, sehingga apa pun yang terpotong di batas viewport visual menyatu dengannya, bukan menampilkan latar krem halaman" },
+    ],
+  },
+  {
     version: "1.7.6",
     date: "May 9, 2026",
     changes: [
