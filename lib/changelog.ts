@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.8.2",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Scrolling inside the Add Transaction or Add Recurring popup no longer scrolls the page underneath. Added `overscroll-behavior: contain` to the popup's inner scroll area on the recurring sheet (was missing) and `overscroll-behavior: none` globally on html/body so iOS scroll-chaining can't bubble out of the popup.", id: "Scroll di dalam popup Tambah Transaksi atau Tambah Pengulangan tidak lagi menggeser halaman di belakangnya. Menambahkan `overscroll-behavior: contain` pada area scroll di popup pengulangan (sebelumnya tidak ada) dan `overscroll-behavior: none` global di html/body sehingga scroll iOS tidak menerobos keluar dari popup." },
+    ],
+  },
+  {
     version: "1.8.1",
     date: "May 9, 2026",
     changes: [

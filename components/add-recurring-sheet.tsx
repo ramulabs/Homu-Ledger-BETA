@@ -214,7 +214,7 @@ export default function AddRecurringSheet({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-          <div data-scroll className="flex-1 overflow-y-auto px-5 space-y-4 pb-4">
+          <div data-scroll className="flex-1 overflow-y-auto overscroll-contain px-5 space-y-4 pb-4">
 
             {/* Type toggle */}
             <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
