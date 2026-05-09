@@ -71,16 +71,20 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
   useEffect(() => {
     if (!open) return;
 
-    // iOS Safari ignores overflow:hidden on body for touch-driven scroll.
-    // position:fixed on the body is the only reliable way to prevent ALL
-    // directional scrolling (including horizontal) while the sheet is open.
-    const scrollY = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    document.body.style.overflowX = "hidden";
+    // Lock the page underneath without using `position: fixed` on body.
+    // iOS PWA standalone treats `position: fixed` children of a fixed body
+    // as anchored to body's collapsed bounds (above the home-indicator zone)
+    // instead of the visual viewport, which is what made the bottom nav
+    // and this popup end above the home indicator with a strip of page bg
+    // visible underneath. Plain overflow:hidden keeps body in normal flow
+    // so fixed children resolve `bottom: 0` to the actual viewport bottom.
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
 
-    // Belt-and-suspenders: also block any touchmove that escapes the sheet.
+    // The touchmove guard below handles momentum scroll on iOS Safari, where
+    // overflow:hidden alone can be bypassed by an active touch gesture.
     function onTouchMove(e: TouchEvent) {
       const sheet = sheetRef.current;
       if (!sheet) { e.preventDefault(); return; }
@@ -91,16 +95,8 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
-      // Unlock body immediately on close (matches v1.5.5). Deferring the
-      // unlock kept the page underneath in its locked-state coordinate frame
-      // for the entire 420ms slide-out, which on iOS PWA standalone made the
-      // bottom navigation render in a raised position visible behind the
-      // sliding-out popup.
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflowX = "";
-      window.scrollTo(0, scrollY);
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);

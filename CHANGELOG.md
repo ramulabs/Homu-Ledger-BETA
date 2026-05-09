@@ -2,6 +2,10 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.8.1 - May 9, 2026
+
+After the v1.8.0 v1.5.5 baseline revert still showed the cream strip below the popup in installed iPhone PWA, switched the body-scroll lock from `position: fixed; top: -scrollY; width: 100%` to plain `overflow: hidden` on `<html>` and `<body>`. iOS PWA standalone WebKit was treating `position: fixed` children of a fixed-positioned body as anchored to body's collapsed bounds (above the home-indicator safe-area zone) instead of the actual viewport, which made the popup and the bottom nav both end above the home indicator with a strip of page bg visible. With body in normal flow, fixed children resolve `bottom: 0` to the actual viewport bottom. The existing touchmove preventer still handles the momentum-scroll case where overflow:hidden alone isn't enough on iOS Safari.
+
 ## v1.8.0 - May 9, 2026
 
 After v1.7.x's accumulating attempts to fix iOS PWA standalone safe-area rendering kept making things worse, reverted to the v1.5.5 baseline that the user reported as working perfectly:

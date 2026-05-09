@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.8.1",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Body-scroll lock for popups switched from `position: fixed` (which on iOS PWA standalone made the bottom nav and popup anchor above the home indicator, exposing a cream strip) to `overflow: hidden` on html and body. The touchmove guard still prevents momentum scroll from bypassing the lock.", id: "Kunci body-scroll untuk popup beralih dari `position: fixed` (yang di iPhone PWA terinstal membuat bar navigasi dan popup melayang di atas home indicator, sehingga muncul strip krem) ke `overflow: hidden` pada html dan body. Penjaga touchmove tetap mencegah scroll inertia menerobos kunci tersebut." },
+    ],
+  },
+  {
     version: "1.8.0",
     date: "May 9, 2026",
     changes: [

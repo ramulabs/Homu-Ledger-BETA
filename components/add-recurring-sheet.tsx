@@ -56,20 +56,22 @@ export default function AddRecurringSheet({
   const [error, setError] = useState<string | null>(null);
 
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
-  const scrollYRef = useRef(0);
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll while sheet is open (iOS Safari requires position:fixed),
-  // and explicitly block any touchmove that escapes the sheet — this is what
-  // prevents the page underneath from scrolling on iOS PWAs even when body
-  // lock is in place.
+  // Lock the page underneath without using `position: fixed` on body.
+  // iOS PWA standalone treats `position: fixed` children of a fixed body
+  // as anchored to body's collapsed bounds (above the home-indicator zone)
+  // instead of the visual viewport, which is what made the bottom nav
+  // and this popup end above the home indicator with a strip of page bg
+  // visible underneath. Plain overflow:hidden keeps body in normal flow
+  // so fixed children resolve `bottom: 0` to the actual viewport bottom.
   useEffect(() => {
     if (!open) return;
 
-    scrollYRef.current = window.scrollY;
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollYRef.current}px`;
-    document.body.style.width = "100%";
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
 
     function onTouchMove(e: TouchEvent) {
       const sheet = sheetRef.current;
@@ -81,13 +83,8 @@ export default function AddRecurringSheet({
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
-      // Unlock body immediately on close (matches v1.5.5). Deferring the
-      // unlock kept the bottom navigation rendering in a raised position
-      // visible behind the sliding-out popup on iOS PWA standalone.
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollYRef.current);
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);
