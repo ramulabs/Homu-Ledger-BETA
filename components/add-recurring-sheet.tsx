@@ -58,33 +58,18 @@ export default function AddRecurringSheet({
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
   const scrollYRef = useRef(0);
   const sheetRef = useRef<HTMLDivElement>(null);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lock body scroll while sheet is open (iOS Safari requires position:fixed),
   // and explicitly block any touchmove that escapes the sheet — this is what
   // prevents the page underneath from scrolling on iOS PWAs even when body
-  // lock is in place. The unlock is deferred until after the slide-out
-  // animation finishes so the page behind doesn't visibly jump while the
-  // sheet is closing.
+  // lock is in place.
   useEffect(() => {
     if (!open) return;
-
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
 
     scrollYRef.current = window.scrollY;
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollYRef.current}px`;
     document.body.style.width = "100%";
-
-    // Recolour <html> to the sheet's surface colour. iOS PWA standalone
-    // renders the home-indicator safe-area zone using the html element's
-    // background, so this hides the page-bg strip that would otherwise show
-    // below the sheet's submit button when bottom: 0 clips at the visual
-    // viewport boundary.
-    document.documentElement.style.backgroundColor = "var(--surface)";
 
     function onTouchMove(e: TouchEvent) {
       const sheet = sheetRef.current;
@@ -96,16 +81,14 @@ export default function AddRecurringSheet({
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
+      // Unlock body immediately on close (matches v1.5.5). Deferring the
+      // unlock kept the bottom navigation rendering in a raised position
+      // visible behind the sliding-out popup on iOS PWA standalone.
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      window.scrollTo(0, scrollYRef.current);
       document.removeEventListener("touchmove", onTouchMove);
-      const savedScrollY = scrollYRef.current;
-      closeTimeoutRef.current = setTimeout(() => {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.documentElement.style.backgroundColor = "";
-        window.scrollTo(0, savedScrollY);
-        closeTimeoutRef.current = null;
-      }, 420);
     };
   }, [open]);
 
@@ -203,26 +186,20 @@ export default function AddRecurringSheet({
         onClick={onClose}
       />
 
-      {/* Slide-animated wrapper covering the full viewport. The sheet's bg
-          ending exactly at the visual viewport bottom (iOS PWA standalone
-          quirk) is hidden by recolouring the <html> element to var(--surface)
-          while the sheet is open — see the body-lock effect above — so the
-          home-indicator safe-area zone is the same colour as the sheet. */}
+      {/* Sheet — single-div structure matching v1.5.5 (which worked in iOS
+          PWA standalone). The wrapper-pattern variants introduced in v1.7.x
+          interacted badly with iOS standalone's containing-block resolution
+          when the body is `position: fixed`-locked. paddingTop respects the
+          Dynamic Island so the close X is tappable. */}
       <div
         ref={sheetRef}
         className={cn(
-          "fixed inset-0 z-[70] flex justify-center [touch-action:pan-y]",
+          "fixed bottom-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 h-dvh flex flex-col rounded-t-3xl bg-[var(--surface)] [touch-action:pan-y]",
           "transition-transform duration-[420ms] [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
           open ? "translate-y-0" : "translate-y-full"
         )}
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
-        {/* The actual sheet card: max-width-constrained, full height of the
-            wrapper (which is the full viewport), with the surface background.
-            paddingTop respects the Dynamic Island so the close X is tappable. */}
-        <div
-          className="w-full max-w-md h-full flex flex-col rounded-t-3xl bg-[var(--surface)]"
-          style={{ paddingTop: "env(safe-area-inset-top)" }}
-        >
         <div className="flex shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-black/10" />
         </div>
@@ -467,7 +444,6 @@ export default function AddRecurringSheet({
             )}
           </div>
         </form>
-        </div>
       </div>
 
       {showCategoryPicker && (

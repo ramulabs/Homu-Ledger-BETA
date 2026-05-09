@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.8.0",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Reverted the layout changes that were causing the popup-bottom and bottom-navigation glitches in the installed iPhone app. The popup sheet structure is back to v1.5.5's single-div pattern, the body-scroll unlock fires immediately on close (instead of after 420ms), and the experimental safe-area filler element has been removed", id: "Mengembalikan perubahan layout yang menyebabkan masalah pada bagian bawah popup dan bar navigasi bawah di aplikasi iPhone terinstal. Struktur popup kembali ke pola satu div seperti v1.5.5, kunci body-scroll dibuka segera setelah popup ditutup (bukan setelah 420ms), dan elemen pengisi safe area eksperimental telah dihapus" },
+    ],
+  },
+  {
     version: "1.7.7",
     date: "May 9, 2026",
     changes: [

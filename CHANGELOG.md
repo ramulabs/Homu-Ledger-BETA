@@ -2,6 +2,17 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.8.0 - May 9, 2026
+
+After v1.7.x's accumulating attempts to fix iOS PWA standalone safe-area rendering kept making things worse, reverted to the v1.5.5 baseline that the user reported as working perfectly:
+
+- **Popup sheets** (Add Transaction + Add Recurring): wrapper-pattern (outer `fixed inset-0` + inner `h-full` + flex stretch) introduced in v1.7.2 reverted to v1.5.5's single-div `fixed bottom-0 left-1/2 -translate-x-1/2 h-dvh` structure. The wrapper variants interacted badly with iOS standalone's containing-block resolution when `<body>` is `position: fixed`-locked.
+- **Body-scroll unlock** now fires immediately on popup close (matches v1.5.5). The 420ms `setTimeout` defer added in v1.7.2 was keeping the page in its locked-state coordinate frame for the entire slide-out animation, which made the bottom navigation render in a raised position visible behind the closing popup.
+- **Removed `<html>` background manipulation** added in v1.7.5–1.7.6. Reverted `globals.css` to v1.5.5's `html, body { background: var(--background); }`.
+- **Removed v1.7.7 safe-area filler** in `(app)/layout.tsx`. It anchored to `bottom: 0` itself, which meant it shifted up with the bottom nav under iOS PWA body-lock — it couldn't help.
+- Kept the Dynamic Island top-safe-area handling on the popup via `paddingTop: env(safe-area-inset-top)` (added in v1.7.0; needed to keep the close X reachable on iPhones with Dynamic Island).
+- Kept the smoother slide-in easing introduced in v1.7.0.
+
 ## v1.7.7 - May 9, 2026
 
 - Final fix for the cream strip below the popup and bottom navigation in the installed iPhone PWA. v1.7.6 set `<html>` bg to `var(--surface)` but `<body>` and the root `<div>` in `(app)/layout.tsx` (which has `bg-[var(--background)]` and `min-h-dvh`) cover the html, so the safe-area zone still showed cream. Added a fixed surface-coloured filler element pinned to `bottom: 0` with `height: env(safe-area-inset-bottom)` and `z-0 pointer-events-none`. It sits behind everything (popup z=70, bottom nav z=50) and only paints in the iPhone home-indicator zone — so any element that ends at the visual viewport boundary blends with it.
