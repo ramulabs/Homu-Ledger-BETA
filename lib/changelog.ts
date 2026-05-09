@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.5.0",
+    date: "May 9, 2026",
+    changes: [
+      { type: "new", en: "Delete a ledger from Settings → Ledger name — tap the trash icon top-right and confirm. Permanently removes the ledger and all its wallets, categories, transactions, recurring items, and members. You can't delete your only ledger — create or join another first.", id: "Hapus buku dari Pengaturan → Nama buku — ketuk ikon tempat sampah di kanan atas dan konfirmasi. Menghapus permanen buku beserta semua dompet, kategori, transaksi, item berulang, dan anggotanya. Buku terakhirmu tidak bisa dihapus — buat atau gabung buku lain dulu." },
+    ],
+  },
+  {
     version: "1.4.0",
     date: "May 8, 2026",
     changes: [
