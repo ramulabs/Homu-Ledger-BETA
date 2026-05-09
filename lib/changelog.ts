@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.8.3",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Combined fix for the cream strip and the popup-scroll-bleed in the installed iPhone PWA: body-scroll lock is back to `position: fixed` (which iOS Safari respects reliably) but body now also gets explicit `top: -scrollY; bottom: 0; left: 0; right: 0` so its box fills the viewport. iOS no longer collapses body's height, so fixed children with `bottom: 0` resolve to the actual viewport bottom — no cream strip — while scroll inside the popup stays inside the popup", id: "Perbaikan gabungan untuk strip krem dan kebocoran scroll popup di aplikasi iPhone terinstal: kunci body-scroll kembali memakai `position: fixed` (yang dihormati Safari iOS) tetapi body kini juga diberi `top: -scrollY; bottom: 0; left: 0; right: 0` eksplisit agar kotaknya memenuhi viewport. iOS tidak lagi merobek tinggi body, sehingga elemen fixed dengan `bottom: 0` menempel di dasar viewport sebenarnya — tanpa strip krem — sembari scroll di dalam popup tetap di dalam popup" },
+    ],
+  },
+  {
     version: "1.8.2",
     date: "May 9, 2026",
     changes: [

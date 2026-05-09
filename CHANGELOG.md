@@ -2,6 +2,15 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.8.3 - May 9, 2026
+
+Combined fix for both iOS PWA standalone bugs we've been bouncing between:
+
+- v1.7.x's `position: fixed` body lock fixed scroll-bleed but caused the cream strip (iOS resolved `position: fixed; bottom: 0` children against body's collapsed bounds, above the home-indicator zone).
+- v1.8.1's `overflow: hidden` body lock fixed the cream strip but let scroll bleed through to the page underneath (iOS Safari standalone bypasses overflow:hidden + overscroll-behavior + touchmove preventer for sufficient touch gestures).
+
+This release uses `position: fixed` body lock (reliable scroll lock) AND gives body explicit `top: -scrollY; bottom: 0; left: 0; right: 0` so its box fills the viewport. With body's bounds explicitly matching the viewport, iOS doesn't collapse body's height — `bottom: 0` on fixed children resolves to the actual viewport bottom.
+
 ## v1.8.2 - May 9, 2026
 
 After v1.8.1's `overflow: hidden` body lock fixed the cream strip, scroll inside the popup was bleeding to the page underneath via iOS scroll-chaining (the page-bg scrollbar indicator was visible while scrolling the form). Two fixes:

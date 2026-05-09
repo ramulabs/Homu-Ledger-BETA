@@ -58,20 +58,30 @@ export default function AddRecurringSheet({
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Lock the page underneath without using `position: fixed` on body.
-  // iOS PWA standalone treats `position: fixed` children of a fixed body
-  // as anchored to body's collapsed bounds (above the home-indicator zone)
-  // instead of the visual viewport, which is what made the bottom nav
-  // and this popup end above the home indicator with a strip of page bg
-  // visible underneath. Plain overflow:hidden keeps body in normal flow
-  // so fixed children resolve `bottom: 0` to the actual viewport bottom.
+  // Body-scroll lock with explicit viewport bounds. We use `position: fixed`
+  // (the only reliable scroll lock on iOS Safari) BUT give body explicit
+  // top/bottom/left/right so its box fills the viewport. Without explicit
+  // bottom, iOS PWA standalone collapses body's height and resolves
+  // `position: fixed; bottom: 0` children to body's collapsed bottom edge,
+  // which sits above the home-indicator zone — the cream-strip bug.
   useEffect(() => {
     if (!open) return;
 
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-    const prevBodyOverflow = document.body.style.overflow;
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+    const prev = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      bottom: document.body.style.bottom,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    };
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.bottom = "0";
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
 
     function onTouchMove(e: TouchEvent) {
       const sheet = sheetRef.current;
@@ -83,8 +93,13 @@ export default function AddRecurringSheet({
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
-      document.documentElement.style.overflow = prevHtmlOverflow;
-      document.body.style.overflow = prevBodyOverflow;
+      document.body.style.position = prev.position;
+      document.body.style.top = prev.top;
+      document.body.style.bottom = prev.bottom;
+      document.body.style.left = prev.left;
+      document.body.style.right = prev.right;
+      document.body.style.width = prev.width;
+      window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);
