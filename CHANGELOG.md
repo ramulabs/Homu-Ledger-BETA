@@ -2,6 +2,24 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.10.0 - May 9, 2026
+
+Rolled back to the v1.8.3 codebase. v1.9.0–v1.9.3 attempts at animation polish, scroll-bleed mitigation, and the home-indicator-strip mitigation each introduced new regressions, so reverted entirely.
+
+Files restored to their v1.8.3 state:
+- `components/add-transaction-sheet.tsx`
+- `components/add-recurring-sheet.tsx`
+- `components/balance-card.tsx`
+- `components/edit-wallet-sheet.tsx`
+- `components/add-category-sheet.tsx`
+- `components/edit-category-sheet.tsx`
+- `components/wallet-picker-sheet.tsx`
+- `components/category-picker.tsx`
+- `app/globals.css`
+- `app/(app)/layout.tsx`
+
+Bumped forward as v1.10.0 (rather than tagging as v1.8.3) so the deployed build can be uniquely identified and the SW cache (`homu-v23`) forces fresh chunks.
+
 ## v1.9.3 - May 9, 2026
 
 After multiple attempts (v1.7.x – v1.9.2) failed to make the popup actually cover the iPhone home-indicator zone in iOS PWA standalone, switched strategy: leave the popup's geometry alone and **make the colour shown in that uncovered zone match the popup**.

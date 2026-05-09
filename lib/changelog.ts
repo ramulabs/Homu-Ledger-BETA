@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.10.0",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Rolled back the popup behaviour and animations to the v1.8.3 baseline. v1.9.0–v1.9.3 attempts to refine the close animation, scroll-bleed, and home-indicator strip kept introducing new regressions, so reverted entirely to the version that was last reported as working", id: "Mengembalikan perilaku popup dan animasi ke baseline v1.8.3. Upaya v1.9.0–v1.9.3 untuk memperbaiki animasi menutup, scroll bocor, dan strip home indicator terus memunculkan regresi baru, jadi dikembalikan sepenuhnya ke versi yang terakhir dilaporkan bekerja" },
+    ],
+  },
+  {
     version: "1.9.3",
     date: "May 9, 2026",
     changes: [

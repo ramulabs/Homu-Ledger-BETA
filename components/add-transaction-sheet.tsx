@@ -72,17 +72,21 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     if (!open) return;
 
     // Body-scroll lock with explicit viewport bounds. We use `position: fixed`
-    // (the only reliable scroll lock on iOS Safari) and give body explicit
-    // top/bottom/left/right so its box fills the viewport, otherwise iOS PWA
-    // standalone collapses body's height and the bottom-anchored fixed
-    // children (popup, bottom nav) end above the home-indicator zone — the
-    // cream-strip bug. Cleanup unconditionally clears the lock-related
-    // properties; we don't try to restore a snapshot of pre-lock styles
-    // because the snapshot pattern can stale-capture locked values when
-    // popup-open/close events overlap (a close from a previous popup hasn't
-    // settled before the next open captures `prev`).
+    // (the only reliable scroll lock on iOS Safari) BUT give body explicit
+    // top/bottom/left/right so its box fills the viewport. Without explicit
+    // bottom, iOS PWA standalone collapses body's height and resolves
+    // `position: fixed; bottom: 0` children to body's collapsed bottom edge,
+    // which sits above the home-indicator zone — the cream-strip bug.
     const scrollY = window.scrollY;
-    document.body.classList.add("popup-open");
+    const prev = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      bottom: document.body.style.bottom,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+      overflowX: document.body.style.overflowX,
+    };
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.bottom = "0";
@@ -101,14 +105,13 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
-      document.body.classList.remove("popup-open");
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.bottom = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      document.body.style.overflowX = "";
+      document.body.style.position = prev.position;
+      document.body.style.top = prev.top;
+      document.body.style.bottom = prev.bottom;
+      document.body.style.left = prev.left;
+      document.body.style.right = prev.right;
+      document.body.style.width = prev.width;
+      document.body.style.overflowX = prev.overflowX;
       window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", onTouchMove);
     };

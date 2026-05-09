@@ -9,23 +9,13 @@
   --label-secondary: rgba(66, 52, 40, 0.55);
   --label-tertiary: rgba(66, 52, 40, 0.38);
   --accent: #b5663a;
-
-  /* Page background switch. While a sheet popup is open, the page
-   * underneath should appear in the same colour as the popup so the safe-
-   * area strip iOS PWA standalone leaves uncovered (the cream-strip bug)
-   * blends with the popup. The popup effects toggle `body.popup-open`. */
-  --page-bg: var(--background);
-}
-
-body.popup-open {
-  --page-bg: var(--surface);
 }
 
 html, body {
   overflow-x: hidden;
   overscroll-behavior: none;
   max-width: 100vw;
-  background: var(--page-bg);
+  background: var(--background);
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -64,15 +54,13 @@ input[type="date"]::-webkit-clear-button {
 
 /* ── Micro-animations ───────────────────────────────────────────────────── */
 
-/* Transaction row: fade + slide up (GPU-composited, no layout cost).
-   Smooth ease-out (cubic-bezier(0.22, 1, 0.36, 1) = easeOutQuart) over
-   0.5s — slow enough to feel considered, fast enough not to be sluggish. */
+/* Transaction row: fade + slide up (GPU-composited, no layout cost) */
 @keyframes row-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-row-in {
-  animation: row-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: row-in 0.22s ease both;
   will-change: opacity, transform;
 }
 
@@ -83,7 +71,7 @@ input[type="date"]::-webkit-clear-button {
   100% { background-color: transparent; }
 }
 .animate-tx-flash {
-  animation: tx-flash 1.1s ease both;
+  animation: tx-flash 0.9s ease both;
 }
 
 /* Splash screen: gentle scale + opacity breathe on the logo while the
@@ -97,14 +85,13 @@ input[type="date"]::-webkit-clear-button {
   will-change: transform, opacity;
 }
 
-/* Filter chip pop: gentle scale bounce on activation. Softened from a
-   sharp 0.22s pop to a 0.32s settle so it feels less twitchy. */
+/* Filter chip pop: slight scale bounce on activation */
 @keyframes chip-pop {
   0%   { transform: scale(1); }
-  40%  { transform: scale(0.92); }
-  75%  { transform: scale(1.04); }
+  40%  { transform: scale(0.88); }
+  75%  { transform: scale(1.06); }
   100% { transform: scale(1); }
 }
 .animate-chip-pop {
-  animation: chip-pop 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: chip-pop 0.22s ease both;
 }
