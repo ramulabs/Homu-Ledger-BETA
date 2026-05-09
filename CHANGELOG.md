@@ -2,6 +2,11 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.6.0 - May 9, 2026
+
+- Added a branded launch splash to cover the gap between iOS's PWA pre-render and the first paint of the app. Cream background with the Homu icon centred, gentle breathing animation, fades out after ~900ms.
+- Switched PWA `theme_color` and `background_color` from `#1a1a1a` / `#f5f0eb` to a unified `#f6f1e9` so the iOS pre-render flash and the splash blend seamlessly with the app's body colour instead of appearing black.
+
 ## v1.5.5 - May 9, 2026
 
 - Cropped the bottom navigation's empty white space above the icons. Previously the bar was 72px + safe-area-inset-bottom (~106px on iPhone) tall with icons at bottom: 8px, leaving ~38px of empty white above them. The bar is now a flat 72px with the icon row filling its full height; the bar still reaches the physical bottom of the screen and the home indicator overlays its bottom edge as iOS expects.

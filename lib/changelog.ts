@@ -29,6 +29,14 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.6.0",
+    date: "May 9, 2026",
+    changes: [
+      { type: "new", en: "Branded launch splash — relaunching the installed app now shows the Homu icon on a warm cream background with a gentle breathing animation instead of a black flash, and fades smoothly into the main screen", id: "Splash screen ber-branding — saat membuka kembali aplikasi terinstal kini muncul ikon Homu di latar cream hangat dengan animasi napas lembut menggantikan kilatan layar hitam, lalu memudar mulus ke layar utama" },
+      { type: "improvement", en: "PWA launch background colour switched from dark to brand cream so the iOS pre-render flash matches the app instead of looking black", id: "Warna latar saat aplikasi PWA dimuat diganti dari gelap ke cream Homu, jadi kilatan iOS sebelum aplikasi siap kini selaras dengan tampilan aplikasi" },
+    ],
+  },
+  {
     version: "1.5.5",
     date: "May 9, 2026",
     changes: [

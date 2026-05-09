@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ServiceWorkerRegistrar from "@/components/service-worker-registrar";
+import SplashScreen from "@/components/splash-screen";
 
 export const metadata: Metadata = {
   title: "Homu",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1a1a1a",
+  themeColor: "#f6f1e9",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full">
+        <SplashScreen />
         {children}
         <ServiceWorkerRegistrar />
       </body>
