@@ -91,7 +91,7 @@ function LedgerNamePageInner() {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Personal, Family"
+          placeholder="e.g. Personal, Homu"
           maxLength={60}
           autoFocus
           className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"

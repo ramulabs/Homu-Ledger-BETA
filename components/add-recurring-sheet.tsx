@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Trash2, ChevronRight } from "lucide-react";
 import { addRecurringItem, updateRecurringItem, deleteRecurringItem } from "@/app/actions/recurring";
 import CategoryPicker from "@/components/category-picker";
@@ -57,24 +57,35 @@ export default function AddRecurringSheet({
 
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
   const scrollYRef = useRef(0);
+  const sheetRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll while sheet is open (iOS Safari requires position:fixed)
+  // Lock body scroll while sheet is open (iOS Safari requires position:fixed),
+  // and explicitly block any touchmove that escapes the sheet — this is what
+  // prevents the page underneath from scrolling on iOS PWAs even when body
+  // lock is in place.
   useEffect(() => {
-    if (open) {
-      scrollYRef.current = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollYRef.current}px`;
-      document.body.style.width = "100%";
-    } else {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      window.scrollTo(0, scrollYRef.current);
+    if (!open) return;
+
+    scrollYRef.current = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = "100%";
+
+    function onTouchMove(e: TouchEvent) {
+      const sheet = sheetRef.current;
+      if (!sheet) { e.preventDefault(); return; }
+      if (!sheet.contains(e.target as Node)) { e.preventDefault(); return; }
+      const scrollable = (e.target as Element)?.closest?.("[data-scroll]");
+      if (!scrollable) e.preventDefault();
     }
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
+
     return () => {
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.width = "";
+      window.scrollTo(0, scrollYRef.current);
+      document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);
 
@@ -166,17 +177,24 @@ export default function AddRecurringSheet({
     <>
       <div
         className={cn(
-          "fixed inset-0 z-[60] bg-black/40",
-          open ? "opacity-100 pointer-events-auto transition-opacity duration-300" : "opacity-0 pointer-events-none"
+          "fixed inset-0 z-[60] bg-black/40 transition-opacity duration-[420ms]",
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
       />
 
       <div
+        ref={sheetRef}
         className={cn(
-          "fixed bottom-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 h-dvh flex flex-col rounded-t-3xl bg-[var(--surface)] transition-transform duration-300",
+          "fixed bottom-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 h-dvh flex flex-col rounded-t-3xl bg-[var(--surface)] [touch-action:pan-y]",
+          "transition-transform duration-[420ms] [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
           open ? "translate-y-0" : "translate-y-full"
         )}
+        // Respect the iPhone Dynamic Island / status bar at the top so the
+        // close button is reachable. Bottom padding is applied on the footer
+        // itself so the submit button sits a sensible distance above the
+        // home indicator.
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="flex shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-black/10" />
@@ -195,7 +213,7 @@ export default function AddRecurringSheet({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-5 space-y-4 pb-4">
+          <div data-scroll className="flex-1 overflow-y-auto px-5 space-y-4 pb-4">
 
             {/* Type toggle */}
             <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
@@ -398,7 +416,10 @@ export default function AddRecurringSheet({
             )}
           </div>
 
-          <div className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3 pb-8 space-y-2">
+          <div
+            className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3 space-y-2"
+            style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+          >
             <button
               type="submit"
               disabled={loading}

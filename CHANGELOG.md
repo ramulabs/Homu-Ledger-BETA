@@ -2,6 +2,13 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.7.0 - May 9, 2026
+
+- Fixed the Add Recurring popup being unusable on iPhones with Dynamic Island. The sheet now respects `env(safe-area-inset-top)` so the close button is reachable, and adopts the same touchmove guard as Add Transaction so the page underneath can no longer scroll while the popup is open.
+- Add Transaction popup now uses `h-dvh` (was `h-[95dvh]`) so it fills the screen with no background strip showing underneath, and the footer's bottom padding now respects `env(safe-area-inset-bottom)` so the submit button sits a clean distance above the home indicator.
+- Replaced the bouncy spring entrance animation on both popups (`cubic-bezier(0.34, 1.56, 0.64, 1)`, 380ms) with a smooth Apple-style ease-out (`cubic-bezier(0.32, 0.72, 0, 1)`, 420ms). No more overshoot.
+- Renamed `"familyledger"` → `"homu"` in `package.json` (and `package-lock.json`), bumped the service-worker `CACHE_NAME` to `homu-v9`, and replaced the `"e.g. Personal, Family"` ledger-name placeholder with `"e.g. Personal, Homu"` (and the Bahasa version `"mis. Pribadi, Keluarga"` → `"mis. Pribadi, Homu"`) so the brand is consistent everywhere it appears.
+
 ## v1.6.0 - May 9, 2026
 
 - Added a branded launch splash to cover the gap between iOS's PWA pre-render and the first paint of the app. Cream background with the Homu icon centred, gentle breathing animation, fades out after ~900ms.

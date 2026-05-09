@@ -358,14 +358,19 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
         onClick={onClose}
       />
 
-      {/* 95% height sheet */}
+      {/* Full-height sheet */}
       <div
         ref={sheetRef}
         className={cn(
-          "fixed bottom-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 h-[95dvh] flex flex-col rounded-t-3xl bg-[var(--surface)] overflow-x-hidden [touch-action:pan-y]",
-          "transition-transform duration-[380ms] [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
+          "fixed bottom-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 h-dvh flex flex-col rounded-t-3xl bg-[var(--surface)] overflow-x-hidden [touch-action:pan-y]",
+          // Smooth Apple-style ease-out — no overshoot, calmer arrival than
+          // the previous spring (0.34, 1.56, 0.64, 1) which felt distracting.
+          "transition-transform duration-[420ms] [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
           open ? "translate-y-0" : "translate-y-full"
         )}
+        // Respect the iPhone Dynamic Island / status bar at the top so the
+        // close button is reachable. Footer handles its own bottom safe area.
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         {/* Drag handle */}
         <div className="flex shrink-0 justify-center pt-3 pb-1">
@@ -638,7 +643,10 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
           </div>
 
           {/* Sticky footer — always visible */}
-          <div className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3 pb-8 space-y-2">
+          <div
+            className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3 space-y-2"
+            style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+          >
             <button
               type="submit"
               disabled={loading || moving}

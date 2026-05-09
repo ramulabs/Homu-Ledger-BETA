@@ -29,6 +29,16 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.7.0",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Add Recurring popup is now reachable on iPhone — top no longer hides behind the Dynamic Island, the close button works, and scrolling stays inside the popup instead of moving the page underneath", id: "Popup Tambah Pengulangan kini bisa diakses di iPhone — bagian atas tidak lagi tertutup Dynamic Island, tombol tutup bekerja, dan scroll tetap di dalam popup, bukan menggeser halaman di belakangnya" },
+      { type: "improvement", en: "Add Transaction popup now fills the screen instead of leaving a strip of background showing underneath, and respects the iPhone safe areas so the close and submit buttons sit correctly", id: "Popup Tambah Transaksi kini memenuhi layar tanpa menyisakan strip latar di bawahnya, dan menghormati safe area iPhone agar tombol tutup dan simpan berada di posisi yang pas" },
+      { type: "improvement", en: "Calmer popup entry animation — replaced the bouncy spring with a smooth ease-out so opening Add Transaction or Add Recurring feels less distracting", id: "Animasi pembukaan popup lebih tenang — gerakan pegas yang memantul diganti dengan ease-out yang halus, jadi membuka Tambah Transaksi atau Tambah Pengulangan terasa tidak mengganggu" },
+      { type: "improvement", en: "Renamed remaining 'Family' references to 'Homu' for naming consistency — ledger name placeholder, internal package name, and PWA cache key now all use the Homu brand", id: "Sisa kata 'Family' diganti menjadi 'Homu' agar penamaan konsisten — placeholder nama buku, nama paket internal, dan kunci cache PWA kini menggunakan merek Homu" },
+    ],
+  },
+  {
     version: "1.6.0",
     date: "May 9, 2026",
     changes: [
