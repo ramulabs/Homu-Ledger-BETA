@@ -82,6 +82,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     // popup-open/close events overlap (a close from a previous popup hasn't
     // settled before the next open captures `prev`).
     const scrollY = window.scrollY;
+    document.body.classList.add("popup-open");
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.bottom = "0";
@@ -100,6 +101,7 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
+      document.body.classList.remove("popup-open");
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.bottom = "";

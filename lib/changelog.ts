@@ -29,6 +29,13 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.9.3",
+    date: "May 9, 2026",
+    changes: [
+      { type: "fix", en: "Stopped trying to make the popup `cover` the iPhone home-indicator zone (which iOS PWA standalone has been refusing to do across multiple attempts) and instead made the page underneath blend with the popup. While a popup is open, body gets a `popup-open` class that flips `--page-bg` from cream to surface. So the home-indicator strip iOS leaves uncovered now matches the popup's white surface and is invisible", id: "Berhenti memaksa popup `menutupi` zona home indicator iPhone (yang ditolak iOS PWA standalone berulang kali) dan sebaliknya membuat halaman di bawahnya berbaur dengan popup. Saat popup terbuka, body mendapat kelas `popup-open` yang membalik `--page-bg` dari krem ke putih sheet. Strip yang ditinggalkan iOS di zona home indicator kini berwarna sama dengan popup dan tidak terlihat" },
+    ],
+  },
+  {
     version: "1.9.2",
     date: "May 9, 2026",
     changes: [

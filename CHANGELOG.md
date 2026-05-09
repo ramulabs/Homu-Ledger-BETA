@@ -2,6 +2,17 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.9.3 - May 9, 2026
+
+After multiple attempts (v1.7.x – v1.9.2) failed to make the popup actually cover the iPhone home-indicator zone in iOS PWA standalone, switched strategy: leave the popup's geometry alone and **make the colour shown in that uncovered zone match the popup**.
+
+- New `--page-bg` CSS variable defaults to `var(--background)` (cream).
+- New rule `body.popup-open { --page-bg: var(--surface); }` flips it to white.
+- `(app)/layout.tsx` outer div and `html, body` rules now use `var(--page-bg)`.
+- Both popup body-lock effects toggle `document.body.classList.add/remove("popup-open")` alongside the existing `position: fixed` lock.
+
+So while a popup is open, the entire page underneath (including the strip iOS PWA standalone leaves uncovered above the home indicator) is the same colour as the popup — invisible to the user. When the popup closes, the class is removed and the page returns to cream.
+
 ## v1.9.2 - May 9, 2026
 
 User reported the cream strip + scroll-bleed regression on v1.9.0 even after a clean PWA reinstall (so v1.9.1's SW cache bump and Cause #1 are ruled out). Cause #2 from the analysis: the `prev` snapshot pattern in the body-lock effect can stale-capture locked values when popup open/close events overlap (a previous popup's deferred unlock hasn't fired before the next open captures `prev`), leaving body's lock-style state corrupted on subsequent operations.

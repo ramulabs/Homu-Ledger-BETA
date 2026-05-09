@@ -71,6 +71,7 @@ export default function AddRecurringSheet({
     if (!open) return;
 
     const scrollY = window.scrollY;
+    document.body.classList.add("popup-open");
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.bottom = "0";
@@ -88,6 +89,7 @@ export default function AddRecurringSheet({
     document.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
+      document.body.classList.remove("popup-open");
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.bottom = "";
