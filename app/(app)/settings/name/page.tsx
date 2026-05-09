@@ -2,8 +2,8 @@
 
 import { Suspense, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
-import { updateHouseholdName } from "@/app/actions/households";
+import { ChevronLeft, Trash2, Loader2 } from "lucide-react";
+import { deleteCurrentHousehold, updateHouseholdName } from "@/app/actions/households";
 
 export default function LedgerNamePage() {
   return (
@@ -22,6 +22,10 @@ function LedgerNamePageInner() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const trimmed = name.trim();
   const canSave = trimmed.length > 0 && trimmed !== initial && !saving;
 
@@ -38,6 +42,21 @@ function LedgerNamePageInner() {
     startTransition(() => { router.back(); });
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    const result = await deleteCurrentHousehold();
+    if (result.error) {
+      setDeleting(false);
+      setDeleteError(result.error);
+      return;
+    }
+    startTransition(() => {
+      router.replace("/transactions");
+      router.refresh();
+    });
+  }
+
   return (
     <div className="pb-10">
       <header className="flex items-center justify-between px-5 pt-4 pb-4">
@@ -51,7 +70,16 @@ function LedgerNamePageInner() {
         <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
           Ledger name
         </h1>
-        <div className="h-9 w-9" />
+        <button
+          onClick={() => {
+            setDeleteError(null);
+            setConfirmOpen(true);
+          }}
+          aria-label="Delete ledger"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-rose-600 ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
+        >
+          <Trash2 className="h-[18px] w-[18px]" strokeWidth={2.25} />
+        </button>
       </header>
 
       <p className="px-6 pb-4 text-[13px] text-[var(--label-secondary)]">
@@ -82,6 +110,57 @@ function LedgerNamePageInner() {
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
+
+      {confirmOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-[80] bg-black/50"
+            onClick={() => { if (!deleting) setConfirmOpen(false); }}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-ledger-title"
+            className="fixed bottom-0 left-1/2 z-[90] w-full max-w-md -translate-x-1/2 rounded-t-3xl bg-[var(--surface)] px-5 pb-8 pt-5"
+          >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
+            <h2
+              id="delete-ledger-title"
+              className="text-[17px] font-semibold text-[var(--foreground)]"
+            >
+              Delete this ledger?
+            </h2>
+            <p className="mt-2 text-[13px] leading-snug text-[var(--label-secondary)]">
+              {initial
+                ? <>This permanently deletes <span className="font-semibold text-[var(--foreground)]">{initial}</span> and all of its wallets, categories, transactions, recurring items, and members. This cannot be undone.</>
+                : <>This permanently deletes the ledger and all of its wallets, categories, transactions, recurring items, and members. This cannot be undone.</>
+              }
+            </p>
+            {deleteError && (
+              <p className="mt-3 text-[12px] text-rose-600">{deleteError}</p>
+            )}
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                disabled={deleting}
+                className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[var(--background)] text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] disabled:opacity-50 active:bg-black/[0.04]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-rose-600 text-[14px] font-semibold text-white disabled:opacity-60 active:scale-[0.99]"
+              >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />}
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

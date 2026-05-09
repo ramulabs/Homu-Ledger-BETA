@@ -105,6 +105,61 @@ export async function updateHouseholdSymbol(symbol: string): Promise<{ error?: s
   return {};
 }
 
+export async function deleteCurrentHousehold(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("household_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.household_id) return { error: "No household" };
+
+  const householdId = profile.household_id;
+
+  const { data: household } = await supabase
+    .from("households")
+    .select("owner_id")
+    .eq("id", householdId)
+    .single();
+
+  if (!household) return { error: "Ledger not found" };
+  if (household.owner_id !== user.id) {
+    return { error: "Only the owner can delete this ledger" };
+  }
+
+  // Pick a fallback ledger to switch to before deleting, so the user lands
+  // somewhere instead of having a NULL household_id afterward.
+  const { data: fallback } = await supabase
+    .from("household_members")
+    .select("household_id")
+    .eq("profile_id", user.id)
+    .neq("household_id", householdId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!fallback?.household_id) {
+    return { error: "Create or join another ledger first — you can't delete your only ledger." };
+  }
+
+  const { error: deleteError } = await supabase
+    .from("households")
+    .delete()
+    .eq("id", householdId);
+
+  if (deleteError) return { error: deleteError.message };
+
+  await supabase.rpc("switch_household", { p_household_id: fallback.household_id });
+
+  revalidatePath("/settings");
+  revalidatePath("/transactions");
+  revalidatePath("/reports");
+  return {};
+}
+
 export async function createNewLedger(formData: FormData): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
