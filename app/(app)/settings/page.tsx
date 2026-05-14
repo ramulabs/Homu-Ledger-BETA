@@ -205,7 +205,7 @@ export default async function SettingsPage() {
         <RowLink href="/settings/updates" icon={<RefreshCw className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.updates")} />
       </Group>
 
-      {/* Developer-only — Promo Codes, Feedback */}
+      {/* Developer-only — Promo Codes, Feedback, AI Settings */}
       {profile?.is_developer && (
         <Group title="Developer">
           <RowLink href="/settings/promo-codes" icon={<Ticket className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.promoCodes")} />
@@ -215,6 +215,7 @@ export default async function SettingsPage() {
             label="Feedback Tickets"
             rightSlot={<DevFeedbackBadge initialCount={openTicketCount} />}
           />
+          <RowLink href="/settings/ai-admin" icon={<Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("ai.admin.title")} />
           <RowLink href="/design-system" icon={<Palette className="h-[18px] w-[18px]" strokeWidth={2} />} label="DesignSystem" />
         </Group>
       )}
@@ -231,7 +232,7 @@ export default async function SettingsPage() {
         </form>
       </div>
 
-      <p className="mt-6 text-center text-[11px] text-[var(--label-tertiary)]">Homu v1.24.0</p>
+      <p className="mt-6 text-center text-[11px] text-[var(--label-tertiary)]">Homu v1.25.0</p>
     </div>
   );
 }

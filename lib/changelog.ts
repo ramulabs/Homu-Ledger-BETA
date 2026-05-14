@@ -29,6 +29,15 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.25.0",
+    date: "May 15, 2026",
+    changes: [
+      { type: "new", en: "AI auto-categorization: as you type a description, the category is auto-picked for you. Powered by Google Gemini Flash-Lite, with a smart cache layer that learns from every transaction — so most of the time it's instant and free", id: "Kategorisasi otomatis AI: saat kamu mengetik deskripsi, kategorinya akan terpilih otomatis. Didukung Google Gemini Flash-Lite dengan lapisan cache pintar yang belajar dari setiap transaksi — jadi kebanyakan langsung dan gratis" },
+      { type: "improvement", en: "The cache shares learning across the whole household: if Mom teaches it 'Pampers → Baby's Health', Dad benefits next time. ~250 common keywords (English + Bahasa) pre-seeded per default category so the cache is useful from day one", id: "Cache berbagi pembelajaran ke seluruh keluarga: kalau Mama mengajari 'Pampers → Kesehatan Bayi', Papa langsung dapat manfaatnya. ~250 kata kunci umum (Inggris + Bahasa) sudah disiapkan per kategori default agar cache berguna dari hari pertama" },
+      { type: "new", en: "Developer Settings → AI Settings: paste your Gemini API key, test the connection, and watch this-month usage (calls, tokens, cost, cache hit rate)", id: "Pengaturan Developer → Pengaturan AI: tempel API key Gemini, tes koneksi, dan pantau penggunaan bulan ini (panggilan, token, biaya, tingkat cache)" },
+    ],
+  },
+  {
     version: "1.24.0",
     date: "May 15, 2026",
     changes: [

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ArrowRightLeft, Check, Calendar, Repeat, Wallet } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ArrowRightLeft, Check, Calendar, Repeat, Wallet, Sparkles, Loader2 } from "lucide-react";
 import { addTransaction, updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { signTransactionPhoto } from "@/app/actions/photos";
 import { addRecurringItem } from "@/app/actions/recurring";
+import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
 import CategoryPicker from "@/components/category-picker";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
 import { CategoryIcon } from "@/components/category-icon";
@@ -74,6 +75,22 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
   const [frequency, setFrequency] = useState<RecurringFrequency>("monthly");
   const [repeatUntilMode, setRepeatUntilMode] = useState<"forever" | "date">("forever");
   const [repeatUntilDate, setRepeatUntilDate] = useState("");
+  // ── AI auto-categorisation (v1.25.0) ────────────────────────────────
+  // `aiSuggestingFor` is the debounced description we're CURRENTLY
+  // querying for. Used both as a request-token (so a stale response
+  // doesn't overwrite a newer suggestion) and as a UI signal (spinner).
+  // `aiSource` lets us style cache vs. AI hits differently if we ever
+  // want to — for now both look identical.
+  // `userTouchedCategory` flips true once the user manually picks a
+  // category. After that we never override their choice with an AI
+  // suggestion, even if the description keeps changing.
+  const [aiSuggestingFor, setAiSuggestingFor] = useState<string | null>(null);
+  const [aiSource, setAiSource] = useState<"cache" | "ai" | null>(null);
+  const [userTouchedCategory, setUserTouchedCategory] = useState(false);
+  // Track what the AI most recently SUGGESTED so onSubmit can tell
+  // "user accepted the suggestion" from "user typed/picked something
+  // else". Doesn't drive any UI directly.
+  const aiSuggestedRef = useRef<string | null>(null);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const previewObjectUrlRef = useRef<string | null>(null);
 
@@ -207,7 +224,61 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
     setFrequency("monthly");
     setRepeatUntilMode("forever");
     setRepeatUntilDate("");
+    // AI state — always reset on open. If editing a transaction we
+    // don't want to auto-suggest (the user is reviewing, not entering).
+    setAiSuggestingFor(null);
+    setAiSource(null);
+    setUserTouchedCategory(!!editing);
+    aiSuggestedRef.current = null;
   }, [open, editing, wallets]);
+
+  // ── AI auto-categorisation effect ──────────────────────────────────
+  // Watch the description: 600ms after the user stops typing, ask
+  // suggestCategory(). If the user hasn't manually picked a category
+  // yet, pre-fill with the suggestion. Skipped entirely for transfers
+  // (no category) and edits (reviewing, not entering). Errors from the
+  // server action are swallowed — categorisation is best-effort and
+  // must never block the user from saving.
+  useEffect(() => {
+    if (!open || editing || isTransfer) return;
+    if (userTouchedCategory) return;
+    const trimmed = name.trim();
+    if (trimmed.length < 2) return;
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      setAiSuggestingFor(trimmed);
+      const kind: "income" | "expense" = type === "income" ? "income" : "expense";
+      const res = await suggestCategory(trimmed, kind);
+      if (cancelled) return;
+      // Re-check user-touched: if they picked a category while the
+      // request was in flight, don't overwrite their choice.
+      setAiSuggestingFor((current) => (current === trimmed ? null : current));
+      if (userTouchedCategoryRef.current) return;
+      if (res.ok) {
+        setCategoryId(res.categoryId);
+        setAiSource(res.source);
+        aiSuggestedRef.current = res.categoryId;
+      } else {
+        // Soft failure — clear the spinner, leave the field empty so
+        // the user knows to pick manually.
+        setAiSource(null);
+      }
+    }, 600);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [open, editing, isTransfer, userTouchedCategory, name, type]);
+
+  // Stable ref to userTouchedCategory so the in-flight effect above can
+  // read the latest value without restarting on every state change.
+  const userTouchedCategoryRef = useRef(userTouchedCategory);
+  useEffect(() => {
+    userTouchedCategoryRef.current = userTouchedCategory;
+  }, [userTouchedCategory]);
 
   useEffect(() => {
     if (open || !previewObjectUrlRef.current) return;
@@ -279,6 +350,10 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
         setError(result.error);
         setLoading(false);
       } else {
+        // Fire-and-forget: teach the cache the (possibly corrected)
+        // mapping so the next time this description is typed it
+        // hits instantly. Doesn't block the close.
+        void recordCategoryUsage(name, categoryId);
         onClose();
       }
       return;
@@ -352,6 +427,11 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
       setError(result.error);
       setLoading(false);
     } else {
+      // Teach the cache. We do this for BOTH new adds and edits —
+      // when the user re-categorizes an old entry, that's a strong
+      // signal that the old hint was wrong. Fire-and-forget; don't
+      // hold the sheet open waiting for the upsert.
+      void recordCategoryUsage(name, categoryId);
       onClose();
     }
   }
@@ -618,7 +698,12 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
               className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
             />
 
-            {/* Category — hidden for transfers */}
+            {/* Category — hidden for transfers.
+                Shows a spinner on the right while AI is thinking
+                (`aiSuggestingFor` non-null). After the suggestion
+                lands, a small sparkle marks AI-authored choices until
+                the user manually overrides — useful trust signal
+                ("the category was auto-picked, double-check it"). */}
             {!isTransfer && (
               <button
                 type="button"
@@ -631,14 +716,28 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${selectedCategory.color}20` }}>
                       <CategoryIcon symbol={selectedCategory.symbol} iconStyle={iconStyle} size={16} emojiSize="16px" color={iconStyle === "2d" ? selectedCategory.color : undefined} />
                     </span>
-                    <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)]">
+                    <span className="flex-1 text-left text-[15px] font-medium text-[var(--foreground)] truncate">
                       {selectedCategory.name}
                     </span>
+                    {aiSource && (
+                      <Sparkles
+                        className="h-3.5 w-3.5 shrink-0 text-[var(--label-tertiary)]"
+                        strokeWidth={2.25}
+                        aria-label={tr("ai.suggestedByAI")}
+                      />
+                    )}
                   </>
                 ) : (
                   <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">
                     {tr("tx.selectCategory")}
                   </span>
+                )}
+                {aiSuggestingFor !== null && !userTouchedCategory && (
+                  <Loader2
+                    className="h-4 w-4 shrink-0 animate-spin text-[var(--label-tertiary)]"
+                    strokeWidth={2}
+                    aria-label={tr("ai.thinking")}
+                  />
                 )}
                 <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
               </button>
@@ -986,13 +1085,22 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
       </div>
 
       {/* Category picker — filtered to the current transaction's type
-          (transfers don't have a category, so we don't reach this branch). */}
+          (transfers don't have a category, so we don't reach this branch).
+          Wrapping onSelect tags the change as user-driven so the AI
+          effect won't overwrite it on the next keystroke. */}
       {showCategoryPicker && (
         <CategoryPicker
           categories={allCategories}
           selected={categoryId}
           type={type === "income" ? "income" : "expense"}
-          onSelect={setCategoryId}
+          onSelect={(id) => {
+            setCategoryId(id);
+            setUserTouchedCategory(true);
+            // Once the user picks, the AI's suggestion is no longer
+            // the "active" one — clear the source badge so the chip
+            // doesn't claim AI authorship of a manual choice.
+            setAiSource(null);
+          }}
           onClose={() => setShowCategoryPicker(false)}
           onCategoryAdded={(cat) => setExtraCategories((prev) => [...prev, cat])}
           iconStyle={iconStyle}

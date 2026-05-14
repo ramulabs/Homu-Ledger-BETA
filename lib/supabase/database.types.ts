@@ -1,5 +1,5 @@
 // AUTO-GENERATED — do not edit by hand.
-// Regenerated via Supabase MCP after migration 0022_promo_code_label.
+// Regenerated via Supabase MCP after migration 0023_ai_categorization.
 export type Json =
   | string
   | number
@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_usage_logs: {
+        Row: {
+          cache_status: string
+          created_at: string
+          estimated_cost_usd: number
+          feature: string
+          household_id: string | null
+          id: string
+          input_tokens: number
+          model: string
+          output_tokens: number
+          preview: string | null
+          provider: string
+          total_tokens: number | null
+          user_id: string | null
+        }
+        Insert: {
+          cache_status?: string
+          created_at?: string
+          estimated_cost_usd?: number
+          feature: string
+          household_id?: string | null
+          id?: string
+          input_tokens?: number
+          model: string
+          output_tokens?: number
+          preview?: string | null
+          provider: string
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          cache_status?: string
+          created_at?: string
+          estimated_cost_usd?: number
+          feature?: string
+          household_id?: string | null
+          id?: string
+          input_tokens?: number
+          model?: string
+          output_tokens?: number
+          preview?: string | null
+          provider?: string
+          total_tokens?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_logs_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_usage_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           color: string
@@ -48,6 +140,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "categories_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_hints: {
+        Row: {
+          category_id: string
+          hits: number
+          household_id: string
+          keyword: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          hits?: number
+          household_id: string
+          keyword: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          hits?: number
+          household_id?: string
+          keyword?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_hints_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_hints_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "households"
@@ -571,6 +705,7 @@ export type Database = {
         Args: { p_object_name: string }
         Returns: boolean
       }
+      clear_category_hints: { Args: never; Returns: number }
       create_transfer: {
         Args: {
           p_amount: number
@@ -614,6 +749,19 @@ export type Database = {
         Args: { p_code: string }
         Returns: string
       }
+      log_api_usage: {
+        Args: {
+          p_cache_status: string
+          p_estimated_cost: number
+          p_feature: string
+          p_input_tokens: number
+          p_model: string
+          p_output_tokens: number
+          p_preview?: string
+          p_provider: string
+        }
+        Returns: undefined
+      }
       lookup_user_for_invite: {
         Args: { p_query: string }
         Returns: {
@@ -632,6 +780,14 @@ export type Database = {
           expires_at: string
           tier: string
         }[]
+      }
+      save_app_setting: {
+        Args: { p_key: string; p_value: string }
+        Returns: undefined
+      }
+      seed_default_category_hints: {
+        Args: { p_household_id: string }
+        Returns: undefined
       }
       switch_household: { Args: { p_household_id: string }; Returns: undefined }
     }
