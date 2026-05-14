@@ -2,6 +2,69 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
+## v1.25.0 - May 15, 2026
+
+AI auto-categorization. The big feature from the v1.24.0 handoff plus a smart cache layer that turns most lookups into a single indexed Postgres query.
+
+### Why a cache layer
+
+Original brief: every transaction description → Gemini call. Gemini Flash-Lite free tier is 1,500 requests/day, which sounds generous until you imagine a household with several active members.
+
+Inverted the flow:
+
+```
+description → normalise → category_hints lookup
+                  ├── HIT  → return category, 0 tokens, ~10ms
+                  └── MISS → Gemini call → INSERT hint → return
+```
+
+After the first time anyone types "Paracetamol", the household's cache permanently associates it with the chosen category. Member-wide learning, zero per-keystroke tokens for repeat transactions, and Gemini stays inside the free tier even for active families.
+
+### What shipped
+
+**Migration `0023_ai_categorization.sql`:**
+- `category_hints (household_id, keyword, category_id, source, hits, updated_at)` — PK on `(household_id, keyword)`, FK cascades on both category and household deletion. RLS: members of the household have full CRUD via `current_household_id()`.
+- `api_usage_logs` — one row per LLM call. Columns: provider, model, input/output tokens (with a generated `total_tokens` column), `estimated_cost_usd`, `feature`, `cache_status` enum (`miss`|`hit`|`error`), truncated `preview`. RLS: developer-only SELECT.
+- `app_settings (key, value, updated_at, updated_by)` — single-row key/value for the Gemini API key. RLS: developer-only SELECT/UPDATE.
+- RPCs: `log_api_usage` (auth-gated INSERT into `api_usage_logs`), `save_app_setting` (developer-only UPSERT into `app_settings`), `clear_category_hints` (developer-only wipe for the current household), `seed_default_category_hints` (idempotent bilingual seeding per household).
+- Trigger `zz_seed_default_category_hints` on `households` AFTER INSERT runs the seed function — fires after the existing `seed_default_categories` trigger so the categories exist when we look them up by name.
+- One-shot backfill at the bottom of the migration seeds existing households.
+
+**Bilingual seed list (~250 keywords across 10 default categories):** Food & Drink, Transport, Housing, Health, Shopping, Entertainment, Education, Salary, Bonus, Reimburse. English + Bahasa where it matters (e.g. `bensin` → Transport, `apotek` → Health, `belanja` → Food & Drink). Other is intentionally NOT seeded so it acts as a real catch-all.
+
+**Server-only LLM service:**
+- `lib/llm/normalize.ts` — lowercase, strip noisy punctuation, drop trailing units (`mg`, `ml`, etc), tokenize. Exports `candidateKeys(desc)` (ordered list of cache lookup candidates, longest-first) and `canonicalKey(desc)` (single key for storage after a miss).
+- `lib/llm/gemini.ts` — Gemini Flash-Lite REST wrapper. Reads `gemini_api_key` from `app_settings` server-side; never touches the client. 6s timeout via `AbortController`, 30-token output cap, deterministic `temperature: 0.0` so the same description always returns the same category. Logs every call to `api_usage_logs` (including hits via `logCacheHit`).
+- `lib/llm/pricing.ts` — per-model `$/1M tokens` table for cost estimates. Falls back to 0 for unknown models.
+
+**Server actions in `app/actions/ai.ts`:**
+- `suggestCategory(description, type)` — runs the candidate-keys lookup, then falls through to Gemini on miss. Inserts the canonical hint after a successful AI answer so the next call is a hit. Filters category candidates to the user's selected `income`/`expense` type so we never suggest an expense category for an income transaction.
+- `recordCategoryUsage(description, categoryId)` — called from the save handler. Upserts the hint with `source='user'`, so the cache learns the user's actual choice (passive correction learning, no extra AI call).
+- `saveGeminiKey`, `clearGeminiKey`, `testGeminiConnection` — developer-only, route via `save_app_setting` RPC.
+
+**Add Transaction wiring (`components/add-transaction-sheet.tsx`):**
+- 600ms-debounced effect on the description field calls `suggestCategory`. Only fires for new (non-editing, non-transfer) entries.
+- `userTouchedCategory` flag prevents the AI from clobbering a manual pick.
+- Category button shows a `Sparkles` icon when the current selection came from AI, and a spinning `Loader2` while the suggestion is in-flight.
+- On save, `recordCategoryUsage` fires-and-forgets to teach the cache.
+
+**Dev panel — `/settings/ai-admin`:**
+- API key input (masked), Save, Clear, Test Connection.
+- This-month usage rollup: cache hit rate (headline), cost (USD), calls, tokens, AI calls vs. hits vs. errors.
+- New `RowLink` to it under the Developer group in Settings.
+
+### Required after deploy
+
+The Gemini API key isn't in the repo. After this PR is merged and deployed, go to **Settings → Developer → AI Settings** and paste your key from [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey). Until a key is set, the suggestion silently no-ops — users can still pick categories manually.
+
+### Trade-offs
+
+- **Wrong cache state on category rename**: if you rename a default category, hints pointing to it still work (FK is by id, not name). If you DELETE a default category, `ON DELETE CASCADE` cleans up its hints automatically.
+- **Custom categories pay a warm-up cost**: new categories start with zero hints. After 5-15 transactions the AI fills them in. No special UI needed.
+- **`preview` column stores truncated descriptions**: max 80 chars, only the first part of the description. Useful for debugging stale cache mappings; tolerable from a privacy standpoint since household members can already see each other's transactions.
+
+---
+
 ## v1.24.0 - May 15, 2026
 
 UX polish + small auth probe. Five themes:
