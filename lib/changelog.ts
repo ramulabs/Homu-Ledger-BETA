@@ -45,6 +45,21 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.37.0",
+    date: "May 15, 2026",
+    changes: [
+      { type: "new", audience: "user",
+        en: "You can now change your email address from Edit Profile → Email & Password. Tap Change, enter the new address, and we'll send a 6-digit code to the new address. Enter the code and your account email is updated.",
+        id: "Sekarang kamu bisa mengganti email dari Edit Profile → Email & Password. Tap Change, masukkan alamat baru, dan kami akan mengirim kode 6 digit ke alamat baru itu. Masukkan kodenya dan email akunmu akan diperbarui." },
+      { type: "improvement", audience: "dev",
+        en: "Two new server actions in app/actions/auth.ts: `requestEmailChange(newEmail)` calls supabase.auth.updateUser({ email }) which triggers Supabase to send the email-change confirmation. `verifyEmailChangeOtp(newEmail, token)` runs verifyOtp({ type: 'email_change' }) then mirrors the new email onto public.profiles.email so RLS-readable views stay consistent.",
+        id: "Dua aksi server baru di app/actions/auth.ts: `requestEmailChange(newEmail)` memanggil supabase.auth.updateUser({ email }) yang memicu Supabase mengirim konfirmasi email-change. `verifyEmailChangeOtp(newEmail, token)` menjalankan verifyOtp({ type: 'email_change' }) lalu mencerminkan email baru ke public.profiles.email agar view berbasis RLS tetap konsisten." },
+      { type: "improvement", audience: "dev",
+        en: "Edit Profile section 3 is now a 4-state state-machine for email (idle → request → otp → done). Inline rather than a sub-route so the user keeps context. With Supabase 'Secure email change' ON (default), the OLD email ALSO has to be confirmed via its magic link — toggle OFF in Authentication → Email → Secure email change for the single-OTP UX to be sufficient.",
+        id: "Edit Profile section 3 sekarang state machine 4-langkah untuk email (idle → request → otp → done). Inline alih-alih sub-route agar user tetap dalam konteks. Dengan 'Secure email change' ON (default) di Supabase, email LAMA juga harus dikonfirmasi via magic link — toggle OFF di Authentication → Email → Secure email change agar UX satu-OTP sudah cukup." },
+    ],
+  },
+  {
     version: "1.36.1",
     date: "May 15, 2026",
     changes: [
