@@ -6,6 +6,13 @@ import { addTransaction } from "@/app/actions/transactions";
 import { addWallet } from "@/app/actions/wallets";
 import { addCategory } from "@/app/actions/categories";
 import { getAll, remove, recordFailure, subscribe } from "@/lib/sync-queue";
+import { withTimeout, isTimeoutError } from "@/lib/with-timeout";
+
+// Per-op replay deadline. iOS-PWA-on-dead-network fetches can hang
+// indefinitely; without a cap, a single stale op would block the rest of
+// the queue forever. On timeout we record a failure and move on — the
+// next 'online' trigger will retry.
+const REPLAY_TIMEOUT_MS = 8000;
 
 // Drains the offline write-queue back through the matching server actions
 // whenever it's plausible the network is back: page load, online event,
@@ -48,13 +55,13 @@ async function replayOnce(onCompleted: () => void) {
         let result: { error?: string };
         switch (op.action) {
           case "addTransaction":
-            result = await addTransaction(fd);
+            result = await withTimeout(addTransaction(fd), REPLAY_TIMEOUT_MS);
             break;
           case "addWallet":
-            result = await addWallet(fd);
+            result = await withTimeout(addWallet(fd), REPLAY_TIMEOUT_MS);
             break;
           case "addCategory":
-            result = await addCategory(fd);
+            result = await withTimeout(addCategory(fd), REPLAY_TIMEOUT_MS);
             break;
         }
         if (result?.error) {
@@ -68,9 +75,15 @@ async function replayOnce(onCompleted: () => void) {
         await remove(op.id);
         anyDrained = true;
       } catch (err) {
-        // Network failure mid-replay — leave the op in the queue. We'll
-        // hit it again on the next trigger.
-        const msg = err instanceof Error ? err.message : String(err);
+        // Network failure or timeout mid-replay — leave the op in the
+        // queue. We'll hit it again on the next online / visibility
+        // trigger. Timeout specifically prevents one stuck request from
+        // blocking the rest of the queue forever.
+        const msg = isTimeoutError(err)
+          ? "Replay timed out"
+          : err instanceof Error
+          ? err.message
+          : String(err);
         await recordFailure(op.id, msg);
       }
     }

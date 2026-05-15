@@ -27,6 +27,15 @@ import { addWallet } from "@/app/actions/wallets";
 import { addCategory } from "@/app/actions/categories";
 import type { DbWallet, DbCategory } from "@/lib/types";
 import { enqueue, type QueueOpAction } from "@/lib/sync-queue";
+import { withTimeout, isTimeoutError } from "@/lib/with-timeout";
+
+// Hard cap on how long we wait for a server action before deciding the
+// network is unreachable and queuing the op locally. Tuned so that a
+// genuinely slow-but-working cellular connection still completes (4G in a
+// bad signal area: ~2-4s round-trip), while iOS-PWA airplane-mode hangs
+// (which can sit indefinitely because the OS queues the fetch instead of
+// rejecting it) fall through to the queue quickly.
+const SERVER_ACTION_TIMEOUT_MS = 6000;
 
 /** Plain map of FormData entries, dropping any non-string values (File, etc).
  *  For Phase 3 the only FormData we queue is text-only (photo uploads land
@@ -41,13 +50,14 @@ function formDataToPayload(formData: FormData): Record<string, string> {
 
 /** Heuristic for "this was a network failure, not a server-side rejection".
  *  Server actions return `{ error: string }` on validation/auth failures —
- *  they do NOT throw. So anything thrown is a transport-level problem and
- *  belongs in the queue. */
+ *  they do NOT throw. So anything thrown (or timed out) is a transport-level
+ *  problem and belongs in the queue. */
 function isNetworkError(err: unknown): boolean {
   if (!err) return false;
+  if (isTimeoutError(err)) return true;
   if (err instanceof TypeError) return true; // fetch failure shape in modern browsers
   const msg = (err as { message?: string }).message ?? String(err);
-  return /network|fetch|failed|offline|connection/i.test(msg);
+  return /network|fetch|failed|offline|connection|timeout/i.test(msg);
 }
 
 type QueuedResult = { queued: true };
@@ -82,7 +92,7 @@ export async function queuedAddTransaction(
     return queueOp("addTransaction", id, payload);
   }
   try {
-    return await addTransaction(buildFormData(payload));
+    return await withTimeout(addTransaction(buildFormData(payload)), SERVER_ACTION_TIMEOUT_MS);
   } catch (err) {
     if (isNetworkError(err)) {
       return queueOp("addTransaction", id, payload);
@@ -108,7 +118,7 @@ export async function queuedAddWallet(
     return queueOp("addWallet", id, payload);
   }
   try {
-    return await addWallet(buildFormData(payload));
+    return await withTimeout(addWallet(buildFormData(payload)), SERVER_ACTION_TIMEOUT_MS);
   } catch (err) {
     if (isNetworkError(err)) {
       return queueOp("addWallet", id, payload);
@@ -134,7 +144,7 @@ export async function queuedAddCategory(
     return queueOp("addCategory", id, payload);
   }
   try {
-    return await addCategory(buildFormData(payload));
+    return await withTimeout(addCategory(buildFormData(payload)), SERVER_ACTION_TIMEOUT_MS);
   } catch (err) {
     if (isNetworkError(err)) {
       return queueOp("addCategory", id, payload);

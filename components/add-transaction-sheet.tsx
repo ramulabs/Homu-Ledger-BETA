@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Trash2, Camera, ImagePlus, ChevronRight, ArrowRightLeft, Check, Calendar, Repeat, Wallet, Sparkles, Loader2 } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued } from "@/lib/queue-actions";
+import { withTimeout } from "@/lib/with-timeout";
 import { signTransactionPhoto } from "@/app/actions/photos";
 import { addRecurringItem } from "@/app/actions/recurring";
 import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
@@ -271,27 +272,40 @@ export default function AddTransactionSheet({ open, onClose, categories, wallets
   // Watch the description: 600ms after the user stops typing, ask
   // suggestCategory(). If the user hasn't manually picked a category
   // yet, pre-fill with the suggestion. Skipped entirely for transfers
-  // (no category) and edits (reviewing, not entering). Errors from the
-  // server action are swallowed — categorisation is best-effort and
+  // (no category) and edits (reviewing, not entering).
+  //
+  // Offline behaviour: when navigator.onLine === false we skip the call
+  // outright. When the call does run but never comes back (iOS PWA on a
+  // dead network can stall the underlying fetch indefinitely instead of
+  // rejecting), withTimeout caps the wait at 4s — the spinner clears and
+  // the user can pick a category manually instead of staring at a
+  // never-ending sparkle animation. Categorisation is best-effort and
   // must never block the user from saving.
   useEffect(() => {
     if (!open || editing || isTransfer) return;
     if (userTouchedCategory) return;
     const trimmed = name.trim();
     if (trimmed.length < 2) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
     let cancelled = false;
     const timer = setTimeout(async () => {
       if (cancelled) return;
       setAiSuggestingFor(trimmed);
       const kind: "income" | "expense" = type === "income" ? "income" : "expense";
-      const res = await suggestCategory(trimmed, kind);
+      let res: Awaited<ReturnType<typeof suggestCategory>> | null = null;
+      try {
+        res = await withTimeout(suggestCategory(trimmed, kind), 4000);
+      } catch {
+        // Timeout or network error — fall through with res === null so the
+        // spinner clears and the user can pick a category themselves.
+      }
       if (cancelled) return;
       // Re-check user-touched: if they picked a category while the
       // request was in flight, don't overwrite their choice.
       setAiSuggestingFor((current) => (current === trimmed ? null : current));
       if (userTouchedCategoryRef.current) return;
-      if (res.ok) {
+      if (res && res.ok) {
         setCategoryId(res.categoryId);
         setAiSource(res.source);
         aiSuggestedRef.current = res.categoryId;
