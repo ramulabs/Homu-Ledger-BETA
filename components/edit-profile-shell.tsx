@@ -15,10 +15,10 @@
 // password validation failures don't roll back identity changes (and
 // vice versa). They write through different server actions anyway.
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Eye, EyeOff, Lock } from "lucide-react";
-import { updateProfile, updatePassword } from "@/app/actions/auth";
+import { ChevronLeft, Check, Eye, EyeOff, Lock, MailCheck, Loader2 } from "lucide-react";
+import { updateProfile, updatePassword, requestEmailChange, verifyEmailChangeOtp } from "@/app/actions/auth";
 import { cn } from "@/lib/cn";
 
 // Trimmed from 14 → 9 in v1.36.0. Kept the most chromatically distinct
@@ -106,6 +106,27 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
   const [pwError, setPwError] = useState<string | null>(null);
   const [pwSaved, setPwSaved] = useState(false);
 
+  // ── Change-email state (v1.37.0) ────────────────────────────────────
+  // Three steps: idle (read-only email + Change button) → request
+  // (new-email input) → otp (6-digit code) → done (just re-renders
+  // the new value as read-only). Kept inline rather than as a
+  // sub-route so the user stays in Edit Profile context.
+  type EmailStep = "idle" | "request" | "otp" | "done";
+  const [emailStep, setEmailStep] = useState<EmailStep>("idle");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailOtp, setEmailOtp] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailDisplay, setEmailDisplay] = useState(profile.email);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (emailStep === "otp") {
+      const id = requestAnimationFrame(() => otpInputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
+    }
+  }, [emailStep]);
+
   const displayInitials = avatarMode === "emoji" ? selectedEmoji : (initials || profile.initials);
 
   async function handleIdentitySave(e: React.FormEvent) {
@@ -131,6 +152,52 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
     // to its "Save Changes" rest state — the user might want to make
     // another tweak without remounting the page.
     setTimeout(() => setIdentitySaved(false), 1500);
+  }
+
+  // ── Email change handlers ──────────────────────────────────────────
+  async function handleEmailRequest(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailError(null);
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed.includes("@")) {
+      setEmailError("Enter a valid email.");
+      return;
+    }
+    setEmailLoading(true);
+    const res = await requestEmailChange(trimmed);
+    setEmailLoading(false);
+    if (res.error) {
+      setEmailError(res.error);
+      return;
+    }
+    setEmailStep("otp");
+  }
+
+  async function handleEmailVerify(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailError(null);
+    setEmailLoading(true);
+    const res = await verifyEmailChangeOtp(newEmail.trim().toLowerCase(), emailOtp);
+    setEmailLoading(false);
+    if (res.error) {
+      setEmailError(res.error);
+      return;
+    }
+    setEmailDisplay(newEmail.trim().toLowerCase());
+    setEmailStep("done");
+    // Reset transient state — next "Change email" tap starts fresh.
+    setEmailOtp("");
+    setNewEmail("");
+    // After a beat collapse back to idle so the section returns to
+    // its compact resting shape.
+    setTimeout(() => setEmailStep("idle"), 2500);
+  }
+
+  function cancelEmailChange() {
+    setEmailStep("idle");
+    setNewEmail("");
+    setEmailOtp("");
+    setEmailError(null);
   }
 
   async function handlePasswordSave(e: React.FormEvent) {
@@ -377,16 +444,112 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
           Email &amp; Password
         </p>
 
-        {/* Email — read-only in this release. Change-email flow lands
-            in a follow-up PR (needs OTP design). */}
+        {/* Email — three-step inline change flow (v1.37.0).
+            idle: read-only field + "Change" button.
+            request: input for new email + Send code / Cancel.
+            otp: 6-digit code input + Verify / Cancel.
+            done: green success flash, auto-returns to idle. */}
         <div>
           <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">Email</label>
-          <input
-            type="email"
-            value={profile.email}
-            readOnly
-            className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--label-secondary)] outline-none ring-1 ring-black/[0.05] cursor-default"
-          />
+          {emailStep === "idle" || emailStep === "done" ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="email"
+                value={emailDisplay}
+                readOnly
+                className="h-12 flex-1 rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--label-secondary)] outline-none ring-1 ring-black/[0.05] cursor-default"
+              />
+              <button
+                type="button"
+                onClick={() => setEmailStep("request")}
+                className="h-12 shrink-0 rounded-2xl bg-[var(--foreground)] px-4 text-[13px] font-semibold text-[var(--on-foreground)] active:opacity-90 [touch-action:manipulation]"
+              >
+                Change
+              </button>
+            </div>
+          ) : emailStep === "request" ? (
+            <form onSubmit={handleEmailRequest} className="space-y-2">
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="new@example.com"
+                required
+                autoComplete="email"
+                autoFocus
+                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              />
+              <p className="px-1 text-[11px] text-[var(--label-tertiary)]">
+                We&apos;ll send a 6-digit code to the new address to confirm you own it.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={emailLoading || !newEmail.trim()}
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#EE6452] text-[13px] font-semibold text-white disabled:opacity-60"
+                >
+                  {emailLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />}
+                  {emailLoading ? "Sending…" : "Send code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEmailChange}
+                  disabled={emailLoading}
+                  className="h-11 rounded-2xl bg-[var(--background)] px-4 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            // OTP step
+            <form onSubmit={handleEmailVerify} className="space-y-2">
+              <div className="flex items-center gap-2 rounded-xl bg-[var(--background)] px-3 py-2 ring-1 ring-black/[0.05]">
+                <MailCheck className="h-4 w-4 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
+                <p className="text-[12px] text-[var(--label-secondary)]">
+                  Code sent to <span className="font-semibold text-[var(--foreground)]">{newEmail}</span>
+                </p>
+              </div>
+              <input
+                ref={otpInputRef}
+                type="text"
+                inputMode="numeric"
+                maxLength={8}
+                autoComplete="one-time-code"
+                value={emailOtp}
+                onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                required
+                className="h-14 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[22px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={emailLoading || emailOtp.length < 4}
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#EE6452] text-[13px] font-semibold text-white disabled:opacity-60"
+                >
+                  {emailLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />}
+                  {emailLoading ? "Verifying…" : "Verify"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEmailChange}
+                  disabled={emailLoading}
+                  className="h-11 rounded-2xl bg-[var(--background)] px-4 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+          {emailError && (
+            <p className="mt-2 rounded-xl bg-rose-50 px-3 py-2 text-[12px] text-rose-700 ring-1 ring-rose-200">{emailError}</p>
+          )}
+          {emailStep === "done" && (
+            <p className="mt-2 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-[12px] text-emerald-700 ring-1 ring-emerald-200">
+              <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} /> Email updated.
+            </p>
+          )}
         </div>
 
         {hasEmailPassword ? (

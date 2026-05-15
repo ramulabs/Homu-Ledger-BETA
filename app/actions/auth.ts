@@ -622,6 +622,80 @@ export async function verifyPasswordResetOtp(
   return {};
 }
 
+// ── Change-email flow (v1.37.0) ──────────────────────────────────────
+//
+// Two-step in-app flow:
+//   1. `requestEmailChange(newEmail)` calls `supabase.auth.updateUser
+//      ({ email: newEmail })`. Supabase sends a confirmation email to
+//      the NEW address containing a 6-digit token. The PROFILE'S email
+//      is NOT updated yet — only auth.users gets a pending email.
+//   2. `verifyEmailChangeOtp(newEmail, token)` confirms ownership via
+//      `verifyOtp({ type: 'email_change' })`. Supabase rotates the
+//      session and updates `auth.users.email`. We then mirror it onto
+//      `public.profiles.email` so the rest of the app (display, RLS
+//      that reads profile.email) stays consistent.
+//
+// Note on Supabase project setting: with "Secure email change" ON
+// (default), Supabase ALSO requires the OLD email to be confirmed via
+// the magic link in its own message. That second confirmation has to
+// happen in the OLD inbox; we surface a hint to the user about it
+// after step 2 so they know to check. If you toggle Secure email
+// change OFF in Authentication → Email, one OTP is sufficient.
+
+export async function requestEmailChange(
+  newEmail: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const trimmed = (newEmail ?? "").trim().toLowerCase();
+  if (!trimmed || !trimmed.includes("@")) return { error: "Enter a valid email." };
+  if (trimmed === (user.email ?? "").toLowerCase()) {
+    return { error: "That's already your current email." };
+  }
+
+  // updateUser triggers Supabase's email-change email. We deliberately
+  // don't pass emailRedirectTo — the user will type the 6-digit code
+  // into our inline OTP step, not click a link.
+  const { error } = await supabase.auth.updateUser({ email: trimmed });
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function verifyEmailChangeOtp(
+  newEmail: string,
+  token: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const trimmedEmail = (newEmail ?? "").trim().toLowerCase();
+  const trimmedToken = (token ?? "").trim();
+  if (!trimmedEmail || !trimmedToken) return { error: "Enter the code from your email." };
+  if (!/^\d{4,8}$/.test(trimmedToken)) return { error: "Code should be all digits." };
+
+  // `type: 'email_change'` is the branch of verifyOtp for the new-
+  // email confirmation flow. On success Supabase rotates the session
+  // and `auth.users.email` is updated. We then mirror to profiles.
+  const { error: verifyErr } = await supabase.auth.verifyOtp({
+    email: trimmedEmail,
+    token: trimmedToken,
+    type: "email_change",
+  });
+  if (verifyErr) return { error: verifyErr.message };
+
+  // Mirror the new email onto profiles.email — without this the
+  // Settings header / Edit Profile would keep showing the old value
+  // until the next session refresh. We're authenticated as the user
+  // who just verified, so RLS allows the update.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    await supabase.from("profiles").update({ email: trimmedEmail }).eq("id", user.id);
+    revalidatePath("/settings");
+    revalidatePath("/settings/edit-profile");
+  }
+  return {};
+}
+
 export async function updateUserLanguage(language: string): Promise<{ error?: string }> {
   if (!["en", "id"].includes(language)) return { error: "Unsupported language" };
 
