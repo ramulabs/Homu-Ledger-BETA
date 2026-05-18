@@ -7,6 +7,14 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.46.3": {
+    en: "Fixed a rare glitch where the app could load but stop responding to taps after an update — the screen stays fully responsive now.",
+    id: "Memperbaiki gangguan langka di mana aplikasi bisa termuat tetapi berhenti merespons ketukan setelah pembaruan — layar kini tetap responsif sepenuhnya.",
+  },
+  "1.46.2": {
+    en: "Signing up with Google now works smoothly from the welcome screen.",
+    id: "Daftar dengan Google kini berjalan lancar dari layar sambutan.",
+  },
   "1.46.1": {
     en: "Add Transaction looks clean again — no stray box at the bottom, and the Description field no longer leaves a gap above the keyboard.",
     id: "Add Transaction kembali rapi — tanpa kotak nyasar di bagian bawah, dan kolom Deskripsi tidak lagi meninggalkan celah di atas keyboard.",
