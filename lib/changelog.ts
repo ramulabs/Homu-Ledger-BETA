@@ -58,6 +58,21 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.3",
+    date: "May 18, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Fixed a bug where, after an app update, the screen could load but stop responding to taps — including the \"+\" button, so no new transaction could be added. Fully closing and reopening the app worked around it; it no longer happens.",
+        id: "Memperbaiki bug di mana, setelah pembaruan aplikasi, layar bisa termuat tetapi berhenti merespons ketukan — termasuk tombol \"+\", sehingga transaksi baru tidak bisa ditambahkan. Menutup dan membuka ulang aplikasi sepenuhnya menjadi solusi sementara; kini tidak terjadi lagi." },
+      { type: "fix", audience: "dev",
+        en: "Service worker: the navigation (HTML) cache was a fixed, un-versioned name (\"homu-nav-v1\") while the static-asset cache (CACHE_NAME) was bumped every release. On `activate` the old build's _next/static chunks were evicted, but stale page HTML in the un-versioned nav cache survived. A later offline / flaky-network load served that stale HTML, whose referenced JS chunks no longer existed → the chunk fetch failed → React never hydrated → the page rendered but every button (incl. the \"+\" Add Transaction button) was dead.",
+        id: "Service worker: cache navigasi (HTML) memakai nama tetap tanpa versi (\"homu-nav-v1\") sementara cache aset statis (CACHE_NAME) dinaikkan tiap rilis. Saat `activate`, chunk _next/static build lama dihapus, tetapi HTML halaman basi di cache navigasi tanpa versi tetap bertahan. Pemuatan offline / jaringan buruk berikutnya menyajikan HTML basi itu, yang chunk JS-nya sudah tidak ada → fetch chunk gagal → React tidak pernah hydrate → halaman tampil tetapi semua tombol (termasuk tombol \"+\" Tambah Transaksi) mati." },
+      { type: "fix", audience: "dev",
+        en: "Fix: both caches are now derived from a single CACHE_VERSION constant (CACHE_NAME = `homu-${v}`, NAV_CACHE_NAME = `homu-nav-${v}`), so a page's HTML and its JS chunks are always evicted together. Offline-after-deploy now shows the browser's offline page instead of a zombie, un-hydratable page. This release's `activate` also evicts the legacy \"homu-nav-v1\" cache from every device that updates.",
+        id: "Perbaikan: kedua cache kini diturunkan dari satu konstanta CACHE_VERSION (CACHE_NAME = `homu-${v}`, NAV_CACHE_NAME = `homu-nav-${v}`), sehingga HTML halaman dan chunk JS-nya selalu dihapus bersamaan. Offline setelah deploy kini menampilkan halaman offline bawaan browser, bukan halaman zombie yang tidak bisa hydrate. `activate` rilis ini juga menghapus cache lama \"homu-nav-v1\" dari tiap perangkat yang memperbarui." },
+    ],
+  },
+  {
     version: "1.46.2",
     date: "May 17, 2026",
     changes: [

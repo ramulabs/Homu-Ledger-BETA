@@ -1,6 +1,20 @@
-// Bump this version whenever you want to force-evict old caches.
-const CACHE_NAME = "homu-v87";
-const NAV_CACHE_NAME = "homu-nav-v1";
+// Bump CACHE_VERSION on every release. It versions BOTH caches below, so
+// stale page HTML and stale JS chunks are always evicted together.
+//
+// Why this matters (v1.46.3 fix): NAV_CACHE_NAME used to be a fixed
+// "homu-nav-v1" that never changed across releases, while CACHE_NAME was
+// bumped every release. So `activate` deleted the old build's static
+// chunks — but the old page HTML in the un-versioned nav cache SURVIVED.
+// A later offline / flaky-network load then served that stale HTML, whose
+// referenced JS chunks had already been evicted → the chunk fetch failed
+// → React never hydrated → the page rendered but every button was dead,
+// including the "+" Add Transaction button. Versioning both caches in
+// lockstep guarantees a page's HTML and its chunks live and die together:
+// offline-after-deploy now shows the browser's offline page (honest)
+// instead of a zombie, un-hydratable page.
+const CACHE_VERSION = "v88";
+const CACHE_NAME = `homu-${CACHE_VERSION}`;
+const NAV_CACHE_NAME = `homu-nav-${CACHE_VERSION}`;
 const NAV_CACHE_MAX = 30;
 
 self.addEventListener("install", () => {
