@@ -3,5 +3,8 @@
   "project_id": "homu-ledger-beta",
   "name": "Homu-Ledger-BETA",
   "default_branch": "main",
-  "created_at": "2026-05-18T18:30:36.985Z"
+  "created_at": "2026-05-18T18:30:36.985Z",
+  "benchmark_urls": [
+    "https://homu.ramu.app/"
+  ]
 }
