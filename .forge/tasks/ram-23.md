@@ -2,13 +2,13 @@
 id: "ram-23"
 title: "Add Transaction sheet dismisses after creating a new category"
 status: "planned"
-priority: "P2"
+priority: "P1"
 assignee: "ramu-labs"
 project: "homu-ledger-beta"
 labels:
   - "Bug"
-created_at: "2026-05-20T17:31:51.000Z"
-updated_at: "2026-05-20T17:31:51.000Z"
+created_at: "2026-05-20T17:38:09.923171+00:00"
+updated_at: "2026-05-21T05:21:58.489Z"
 ---
 
 Repro:
