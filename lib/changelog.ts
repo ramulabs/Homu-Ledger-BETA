@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.4",
+    date: "May 18, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Fixed the date field in Add Transaction on desktop — clicking the date pill now opens the calendar picker. It always worked on phones; on a computer nothing happened.",
+        id: "Memperbaiki kolom tanggal di Tambah Transaksi pada desktop — mengklik pil tanggal kini membuka pemilih kalender. Di ponsel selalu berfungsi; di komputer tidak terjadi apa-apa." },
+      { type: "fix", audience: "dev",
+        en: "The Date pill's <input type=\"date\"> is opacity:0 (the styled pill above is the visible UI). On touch, tapping anywhere on a date input opens the native picker — so mobile worked. On desktop, a click only opens the picker when it hits the ::-webkit-calendar-picker-indicator, which is invisible at opacity:0 — so clicking the pill just focused the input and showed nothing. Added onClick={(e) => e.currentTarget.showPicker?.()} (wrapped in try/catch) so any click opens the picker explicitly. Same input is used for the recurring start date, so that's fixed too.",
+        id: "Elemen <input type=\"date\"> pada pil Tanggal memakai opacity:0 (pil bergaya di atasnya adalah UI yang terlihat). Pada layar sentuh, mengetuk di mana saja pada input tanggal membuka pemilih native — jadi mobile berfungsi. Di desktop, klik hanya membuka pemilih jika mengenai ::-webkit-calendar-picker-indicator, yang tidak terlihat saat opacity:0 — jadi mengklik pil hanya memfokuskan input dan tidak menampilkan apa pun. Menambahkan onClick={(e) => e.currentTarget.showPicker?.()} (dibungkus try/catch) agar klik mana pun membuka pemilih secara eksplisit. Input yang sama dipakai untuk tanggal mulai berulang, jadi itu ikut diperbaiki." },
+    ],
+  },
+  {
     version: "1.46.3",
     date: "May 18, 2026",
     changes: [

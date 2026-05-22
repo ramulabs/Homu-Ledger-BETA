@@ -935,6 +935,21 @@ export default function AddTransactionSheet({
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
+                    // v1.46.4 — the input is opacity:0 (the visible pill
+                    // above is the real UI). On a phone, tapping anywhere
+                    // on a date input opens the native picker — so it
+                    // worked. On desktop, a click only opens the picker
+                    // when it lands on the (now invisible) calendar
+                    // indicator, so clicking the pill did nothing.
+                    // showPicker() opens it explicitly on any click.
+                    onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker?.();
+                      } catch {
+                        /* showPicker unsupported / not allowed — the
+                           input still focuses; keyboard entry works. */
+                      }
+                    }}
                     aria-label={recurringMode ? tr("recurring.startingDate") : tr("tx.date")}
                     className="h-full w-full cursor-pointer rounded-full border-0 bg-transparent opacity-0 [color-scheme:light]"
                   />
