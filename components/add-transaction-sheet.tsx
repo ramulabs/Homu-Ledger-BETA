@@ -292,32 +292,33 @@ export default function AddTransactionSheet({
   // The picker flips this back synchronously via onCloseStart.
   const [pickerVisible, setPickerVisible] = useState(false);
 
-  // ── Native-keyboard lift (no visualViewport-sized wrapper) ──────────
-  // The sheet is anchored with plain CSS — `position: fixed; bottom: 0` —
-  // so its bottom edge is ALWAYS the real screen edge. CSS viewport units
-  // (dvh) and env(safe-area-inset-*) are reliable in an installed,
-  // standalone PWA; `window.visualViewport`'s absolute height is NOT — it
-  // under-reports there by roughly the bottom safe-area inset, which
-  // mis-placed the sheet and left the stray "white box" at the bottom.
-  // That box regressed across v1.45.3 / v1.45.4 / v1.46.1 because each
-  // fix kept positioning the sheet from a measured number; tested in a
-  // browser tab (where visualViewport is reliable) it always looked fixed.
+  // ── Viewport-tracking wrapper (v1.46.1 rewrite) ─────────────────────
+  // The sheet lives inside a `position: fixed` wrapper that is sized and
+  // offset to EXACTLY overlay window.visualViewport — the *visible* area,
+  // i.e. the screen minus the on-screen keyboard. The sheet itself is
+  // then simply `position: absolute; bottom: 0` inside that wrapper, so
+  // it is always flush against the bottom of the visible area:
+  //   • keyboard down → wrapper = full screen   → sheet at screen bottom
+  //   • keyboard up   → wrapper = area above kb → sheet sits on the kb
   //
-  // visualViewport is now used ONLY to lift the sheet over the native
-  // keyboard, and ONLY as a DELTA from the keyboard-down baseline taken
-  // when the sheet opens (it always opens keyboard-down — amount entry
-  // uses the in-app keypad, not the native keyboard). The resting state
-  // is therefore kbHeight = 0 and depends on no measurement at all. The
-  // native keyboard only ever appears for the Description field.
-  const [kbHeight, setKbHeight] = useState(0);
+  // This replaces the old `bottom: kbInset` hack. That hack lifted the
+  // sheet by a SELF-CALIBRATED keyboard height; on iOS Chrome PWA the
+  // calibration drifted, leaving the sheet a few px off — which showed
+  // up as the stray "cream box" at the bottom (the mis-placed sheet /
+  // keypad surface peeking out from behind a picker that hadn't fully
+  // slid the sheet off-screen) and as a gap that widened on every
+  // re-focus. Reading visualViewport directly on every event — no
+  // baseline, no accumulation — removes the drift entirely.
+  const [vvHeight, setVvHeight] = useState<number | null>(null);
+  const [vvOffsetTop, setVvOffsetTop] = useState(0);
   useEffect(() => {
     if (!open) return;
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
     if (!vv) return;
-    const baseline = vv.height;
     function update() {
       if (!vv) return;
-      setKbHeight(Math.max(0, baseline - vv.height));
+      setVvHeight(vv.height);
+      setVvOffsetTop(vv.offsetTop);
     }
     update();
     vv.addEventListener("resize", update);
@@ -328,9 +329,9 @@ export default function AddTransactionSheet({
     };
   }, [open]);
 
-  // True only while the Description native keyboard is up. Drives the
-  // keyboard lift (`bottom: kbHeight`) and trims the action row's bottom
-  // padding (the keyboard already covers the home indicator).
+  // True only while the Description native keyboard is up — used purely
+  // to trim the action row's bottom padding (the keyboard already covers
+  // the home indicator, so the safe-area inset would be dead space).
   const [descFocused, setDescFocused] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -770,26 +771,39 @@ export default function AddTransactionSheet({
         onClick={onClose}
       />
 
-      {/* Sheet — anchored with plain CSS (`position: fixed; bottom: 0`),
-          so it always rests on the REAL screen edge, in a browser tab AND
-          an installed PWA. `bottom` is raised only while the Description
-          native keyboard is up; otherwise it is a literal 0. */}
+      {/* Sheet — mounted only while open. It lives inside a wrapper that
+          is sized + offset to overlay the visual viewport (see the
+          viewport-tracking effect above), so the sheet — anchored to the
+          wrapper's bottom — is always flush at the bottom of the visible
+          area, whether or not the native keyboard is up. The wrapper is
+          pointer-events:none so taps above the sheet fall through to the
+          backdrop and dismiss. */}
       {open && (
         <div
-          ref={sheetRef}
-          className="fixed inset-x-0 bottom-0 z-[70] mx-auto flex w-full max-w-md flex-col rounded-t-3xl bg-[var(--surface)] [touch-action:pan-y]"
+          className="fixed left-0 top-0 z-[70] w-full"
           style={{
-            // 92dvh leaves an 8% backdrop sliver at the top. dvh is
-            // reliable in a standalone PWA; visualViewport is not.
-            maxHeight: descFocused ? `calc(92dvh - ${kbHeight}px)` : "92dvh",
+            height: vvHeight != null ? `${vvHeight}px` : "100dvh",
+            transform: `translateY(${vvOffsetTop}px)`,
+            pointerEvents: "none",
+          }}
+        >
+        <div
+          ref={sheetRef}
+          className="absolute inset-x-0 bottom-0 mx-auto flex w-full max-w-md flex-col rounded-t-3xl bg-[var(--surface)] [touch-action:pan-y]"
+          style={{
+            pointerEvents: "auto",
+            // The wrapper already tracks the visible viewport, so 92%
+            // leaves an 8% backdrop sliver at the top in every state.
+            maxHeight: "92%",
             boxShadow: "0 -10px 30px rgba(0,0,0,0.18)",
-            // Lift over the native keyboard — Description field only.
-            bottom: descFocused ? `${kbHeight}px` : 0,
-            // Picker open → slide fully off-screen. Anchored to the real
-            // screen bottom, translateY(100%) genuinely clears it now —
-            // no sheet surface peeking behind the picker backdrop.
+            // Picker open → slide the whole sheet off-screen so no white
+            // sliver shows behind the floating bento picker. Because the
+            // sheet genuinely sits at the wrapper's bottom edge,
+            // translateY(100%) now moves it FULLY off-screen.
+            // v1.45.3 — durations doubled (280→560ms): animations slowed
+            // to half speed at the user's request.
             transform: pickerVisible ? "translateY(100%)" : "translateY(0)",
-            transition: "transform 560ms cubic-bezier(0.32,0.72,0,1), bottom 240ms ease",
+            transition: "transform 560ms cubic-bezier(0.32,0.72,0,1)",
             animation: pickerVisible
               ? "none"
               : "sheet-slide-up 560ms cubic-bezier(0.32,0.72,0,1) both",
@@ -1186,6 +1200,7 @@ export default function AddTransactionSheet({
               <NumericKeypad onDigit={pushDigit} onBackspace={backspaceAmount} />
             )}
           </form>
+        </div>
         </div>
       )}
 

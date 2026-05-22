@@ -6,8 +6,8 @@
 // rounded card with 10px side / 18px bottom margins, a blurred backdrop,
 // a double-RAF slide-up and the same 560ms cubic-bezier motion. The form
 // is curated to fit with NO internal scroll while the keyboard is down
-// (24 icons, 4 rows). The bento is anchored with plain CSS and lifted
-// above the on-screen keyboard via a backdrop bottom-padding offset.
+// (24 icons, 4 rows); a visualViewport-tracked wrapper keeps the bento
+// above the on-screen keyboard while the Name field is focused.
 //
 // ram-23: this sheet never dismisses the Add Transaction flow. On a
 // successful add it calls onAdded() then onClose() — onClose is scoped to
@@ -91,21 +91,19 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
     return () => cancelAnimationFrame(r);
   }, [open]);
 
-  // ── Native-keyboard lift. The bento is anchored with plain CSS; the
-  //    only use of visualViewport is to measure the keyboard as a DELTA
-  //    from the keyboard-down baseline captured on open. The resting
-  //    state is kbHeight = 0, so the bento's position never depends on
-  //    visualViewport's absolute height — which under-reports in an
-  //    installed standalone PWA and left a stray box at the screen edge.
-  const [kbHeight, setKbHeight] = useState(0);
+  // ── Keep the bento flush above the on-screen keyboard. The wrapper is
+  //    sized + offset to overlay window.visualViewport (the visible area
+  //    minus the keyboard); the bento is bottom-anchored inside it.
+  const [vvHeight, setVvHeight] = useState<number | null>(null);
+  const [vvOffsetTop, setVvOffsetTop] = useState(0);
   useEffect(() => {
     if (!open) return;
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
     if (!vv) return;
-    const baseline = vv.height;
     function update() {
       if (!vv) return;
-      setKbHeight(Math.max(0, baseline - vv.height));
+      setVvHeight(vv.height);
+      setVvOffsetTop(vv.offsetTop);
     }
     update();
     vv.addEventListener("resize", update);
@@ -162,32 +160,34 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
   const canSave = !loading && !!name.trim() && !!currentSymbol;
 
   return (
-    // Backdrop — also the fixed full-screen flex container, anchored
-    // with pure CSS (no visualViewport-sized wrapper).
     <div
-      onClick={handleClose}
-      className="fixed inset-0 z-[100] flex items-end justify-center"
+      className="fixed left-0 top-0 z-[100] w-full"
       style={{
-        background: visible ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0)",
-        backdropFilter: visible ? "blur(2px)" : "blur(0px)",
-        WebkitBackdropFilter: visible ? "blur(2px)" : "blur(0px)",
-        transition: visible
-          ? "background 560ms ease, backdrop-filter 560ms ease, padding 240ms ease"
-          : "background 280ms ease, backdrop-filter 280ms ease, padding 240ms ease",
-        paddingLeft: 10,
-        paddingRight: 10,
-        // 18px resting margin; lifts above the keyboard when a field is
-        // focused (kbHeight is a delta — 0 with the keyboard down).
-        paddingBottom: `calc(18px + ${kbHeight}px)`,
+        height: vvHeight != null ? `${vvHeight}px` : "100dvh",
+        transform: `translateY(${vvOffsetTop}px)`,
         pointerEvents: open ? "auto" : "none",
       }}
     >
+      {/* Backdrop — dim + blur, animates in/out with the bento. */}
+      <div
+        onClick={handleClose}
+        className="absolute inset-0 flex items-end justify-center"
+        style={{
+          background: visible ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0)",
+          backdropFilter: visible ? "blur(2px)" : "blur(0px)",
+          WebkitBackdropFilter: visible ? "blur(2px)" : "blur(0px)",
+          transition: visible
+            ? "background 560ms ease, backdrop-filter 560ms ease"
+            : "background 280ms ease, backdrop-filter 280ms ease",
+          padding: "0 10px 18px",
+        }}
+      >
         {/* Bento card */}
         <div
           onClick={(e) => e.stopPropagation()}
           className="flex w-full max-w-md flex-col bg-[var(--surface)] text-[var(--foreground)]"
           style={{
-            maxHeight: `calc(92dvh - ${kbHeight}px)`,
+            maxHeight: "92%",
             borderRadius: 28,
             boxShadow: "0 10px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
             transform: visible ? "translateY(0)" : "translateY(110%)",
@@ -375,6 +375,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
             </div>
           </form>
         </div>
+      </div>
     </div>
   );
 }
