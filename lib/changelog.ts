@@ -58,6 +58,21 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.5",
+    date: "May 18, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Fixed the cream-coloured box that appeared at the bottom of the Add Transaction sheet, the Category picker, the Wallet picker and the New Category sheet — but only in the installed home-screen app. It now sits flush against the bottom of the screen.",
+        id: "Memperbaiki kotak warna krem yang muncul di bagian bawah lembar Tambah Transaksi, pemilih Kategori, pemilih Dompet, dan lembar Kategori Baru — tetapi hanya di aplikasi home-screen yang terpasang. Kini rapat dengan bagian bawah layar." },
+      { type: "fix", audience: "dev",
+        en: "Root cause (this box has been mis-diagnosed several times): AddTransactionSheet's body-scroll lock set `body { position: fixed }` (the v1.26.0 trick). In an iOS *standalone* PWA, a position:fixed <body> makes WebKit size nested position:fixed overlays to the fixed <body> box instead of the screen — so the backdrop, the sheet and every picker stopped short of the bottom edge and the page canvas (cream) showed through. Safari and the Chrome tab size fixed overlays correctly regardless, so it only ever reproduced on the home-screen app. It also explains why the identical AddCategorySheet was clean from Settings but boxed from inside Add Transaction — only Add Transaction held <body> fixed underneath.",
+        id: "Akar masalah (kotak ini sudah salah didiagnosis beberapa kali): kunci scroll body di AddTransactionSheet menetapkan `body { position: fixed }` (trik v1.26.0). Pada PWA iOS *standalone*, <body> position:fixed membuat WebKit mengukur overlay position:fixed bersarang terhadap kotak <body> fixed itu, bukan layar — jadi backdrop, lembar, dan tiap picker berhenti sebelum tepi bawah dan kanvas halaman (krem) tampak. Safari dan tab Chrome mengukur overlay fixed dengan benar, jadi ini hanya muncul di aplikasi home-screen. Ini juga menjelaskan kenapa AddCategorySheet yang sama bersih dari Settings tapi berkotak dari dalam Add Transaction — hanya Add Transaction yang menahan <body> fixed di bawahnya." },
+      { type: "fix", audience: "dev",
+        en: "Fix: the scroll lock no longer touches `body.position` / `top` / `width`. Scroll stays locked via overflow:hidden + touch-action:none + overscroll-behavior:none on <html>/<body> plus the existing touchmove handler that preventDefaults gestures outside [data-scroll]. Not shifting <body> also preserves scroll position for free (the scrollY save/restore is gone).",
+        id: "Perbaikan: kunci scroll tidak lagi menyentuh `body.position` / `top` / `width`. Scroll tetap terkunci via overflow:hidden + touch-action:none + overscroll-behavior:none pada <html>/<body> plus handler touchmove yang sudah ada yang preventDefault gestur di luar [data-scroll]. Tidak menggeser <body> juga mempertahankan posisi scroll secara gratis (simpan/pulihkan scrollY dihapus)." },
+    ],
+  },
+  {
     version: "1.46.4",
     date: "May 18, 2026",
     changes: [
