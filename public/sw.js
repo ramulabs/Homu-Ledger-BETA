@@ -12,7 +12,7 @@
 // lockstep guarantees a page's HTML and its chunks live and die together:
 // offline-after-deploy now shows the browser's offline page (honest)
 // instead of a zombie, un-hydratable page.
-const CACHE_VERSION = "v91";
+const CACHE_VERSION = "v92";
 const CACHE_NAME = `homu-${CACHE_VERSION}`;
 const NAV_CACHE_NAME = `homu-nav-${CACHE_VERSION}`;
 const NAV_CACHE_MAX = 30;

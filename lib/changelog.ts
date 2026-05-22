@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.7",
+    date: "May 18, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Fixed a brief flicker when moving from the amount to the Description field in Add Transaction — the sheet now glides up with the keyboard instead of jumping.",
+        id: "Memperbaiki kedipan singkat saat berpindah dari jumlah ke kolom Deskripsi di Tambah Transaksi — lembar kini meluncur naik bersama keyboard alih-alih melompat." },
+      { type: "fix", audience: "dev",
+        en: "The Add Transaction sheet sits inside a wrapper sized to window.visualViewport.height. When the Description keyboard opens, visualViewport.height drops in one (or few) steps — and the wrapper had no transition, so its height (and the sheet anchored to its bottom) jumped a frame ahead of the keyboard slide, showing as a ~0.3s blink. Fix: added `transition: height 300ms / transform 300ms cubic-bezier(0.32,0.72,0,1)` to the wrapper, so the sheet eases in sync with the keyboard and with the keypad's 300ms collapse. A transition smooths the move regardless of how many resize events iOS fires.",
+        id: "Lembar Tambah Transaksi berada di dalam pembungkus yang berukuran window.visualViewport.height. Saat keyboard Deskripsi terbuka, visualViewport.height turun dalam satu (atau beberapa) langkah — dan pembungkus tidak punya transisi, jadi tingginya (dan lembar yang berlabuh di dasarnya) melompat satu frame mendahului geseran keyboard, tampak sebagai kedipan ~0,3 detik. Perbaikan: menambahkan `transition: height 300ms / transform 300ms cubic-bezier(0.32,0.72,0,1)` pada pembungkus, sehingga lembar bergerak halus selaras dengan keyboard dan dengan penciutan keypad 300ms. Transisi menghaluskan perpindahan berapa pun jumlah event resize yang dipicu iOS." },
+    ],
+  },
+  {
     version: "1.46.6",
     date: "May 18, 2026",
     changes: [
