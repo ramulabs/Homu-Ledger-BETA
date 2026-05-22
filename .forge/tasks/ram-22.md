@@ -1,15 +1,16 @@
 ---
 id: "ram-22"
 title: "Redesign 'New category' UI inside Add Transaction — inconsistent design + bugs"
-status: "planned"
+status: "in_progress"
 priority: "P2"
 assignee: "ramu-labs"
 project: "homu-ledger-beta"
 labels:
   - "Design & Polish"
   - "Bug"
-created_at: "2026-05-20T17:31:51.000Z"
-updated_at: "2026-05-20T17:31:51.000Z"
+started_at: "2026-05-22T11:19:18.136Z"
+created_at: "2026-05-20T17:38:09.923171+00:00"
+updated_at: "2026-05-22T11:19:18.862Z"
 ---
 
 The "New category" affordance launched from inside Add Transaction looks inconsistent with the rest of the sheet system (spacing, header style, button treatment) and has bugs in the flow (see ram-23 for one specific failure).
