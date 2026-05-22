@@ -1,5 +1,20 @@
 "use client";
 
+// Edit Category — floating-bento redesign.
+//
+// Re-skinned to match add-category-sheet (RAM-22) and the
+// category-picker bento family: floats as a rounded card with 10px
+// side / 18px bottom margins, a blurred backdrop, a double-RAF
+// slide-up and the same 560ms cubic-bezier motion. The form is
+// curated to fit with NO internal scroll while the keyboard is down
+// (24 icons, 4 rows); a visualViewport-tracked wrapper keeps the
+// bento above the on-screen keyboard while the Name field is focused.
+//
+// Behaviour is unchanged: the update flow (updateCategory), the
+// two-tap delete flow with its 3s auto-disarm (deleteCategory), and
+// the open/category/onClose/onUpdated/onDeleted props are all kept so
+// categories-shell is unaffected.
+
 import { useState, useEffect } from "react";
 import { X, Trash2 } from "lucide-react";
 import { updateCategory, deleteCategory } from "@/app/actions/categories";
@@ -14,13 +29,22 @@ const SOFT_PALETTE = [
   "#ec4899", "#eab308", "#14b8a6", "#22c55e", "#6b7280",
 ];
 
+// Curated 24-emoji set — 4 rows × 6, sized so the bento needs no scroll.
 const SYMBOLS = [
-  "🏠","🏡","🚗","🚌","✈️","🚂",
-  "🍔","🍕","🍜","☕","🛒","👕",
-  "💊","🏋️","📚","🎬","🎮","🎵",
-  "💼","💰","🏦","🎁","🐾","🌿",
-  "⚡","🔧","📱","🏥","🎓","💡",
+  "🏠","🚗","🚌","✈️","🍔","🍕",
+  "🍜","☕","🛒","👕","💊","🏋️",
+  "📚","🎬","🎮","🎵","💼","💰",
+  "🏦","🎁","🐾","⚡","📱","🎓",
 ];
+
+// Curated 24 Lucide icons (2D icon style) — same coverage as SYMBOLS.
+const LUCIDE_PICKER_IDS = new Set([
+  "home", "building-2", "car", "bus", "plane", "fuel",
+  "utensils-crossed", "coffee", "shopping-cart", "shopping-bag", "shirt", "pill",
+  "heart-pulse", "dumbbell", "book-open", "graduation-cap", "film", "gamepad-2",
+  "music", "briefcase", "gift", "paw-print", "zap", "smartphone",
+]);
+const LUCIDE_PICKER = CATEGORY_LUCIDE_ICONS.filter((i) => LUCIDE_PICKER_IDS.has(i.id));
 
 type Props = {
   open: boolean;
@@ -41,6 +65,8 @@ export default function EditCategorySheet({
   onUpdated,
   onDeleted,
 }: Props) {
+  const firstSymbol = iconStyle === "2d" ? makeLucideSymbol(LUCIDE_PICKER[0]?.id ?? "home") : SYMBOLS[0];
+
   const [name, setName] = useState("");
   const [iconMode, setIconMode] = useState<IconMode>("symbol");
   const [emoji, setEmoji] = useState("");
@@ -51,30 +77,77 @@ export default function EditCategorySheet({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const currentSymbol = iconMode === "emoji" ? emoji : selectedSymbol;
+
+  // ── Hydrate the form from the category each time the sheet opens.
   useEffect(() => {
     if (!open || !category) return;
-    setName(category.name);
-    setSelectedColor(category.color);
-    setError(null);
-    setLoading(false);
-    setDeleting(false);
-    setConfirmDelete(false);
-    // Detect symbol type:
-    //   - "lu:foo" (Lucide id)  -> symbol mode (Icons grid in 2D)
-    //   - emoji in our grid     -> symbol mode (emoji grid in 3D)
-    //   - free emoji            -> custom (emoji input)
-    if (isLucideSymbol(category.symbol) || SYMBOLS.includes(category.symbol)) {
-      setIconMode("symbol");
-      setSelectedSymbol(category.symbol);
-      setEmoji("");
-    } else {
-      setIconMode("emoji");
-      setEmoji(category.symbol);
-      setSelectedSymbol("");
+    function hydrate(cat: DbCategory) {
+      setName(cat.name);
+      setSelectedColor(cat.color);
+      setError(null);
+      setLoading(false);
+      setDeleting(false);
+      setConfirmDelete(false);
+      // Detect symbol type:
+      //   - "lu:foo" (Lucide id)  -> symbol mode (Icons grid in 2D)
+      //   - emoji in our grid     -> symbol mode (emoji grid in 3D)
+      //   - free emoji            -> custom (emoji input)
+      if (isLucideSymbol(cat.symbol) || SYMBOLS.includes(cat.symbol)) {
+        setIconMode("symbol");
+        setSelectedSymbol(cat.symbol);
+        setEmoji("");
+      } else {
+        setIconMode("emoji");
+        setEmoji(cat.symbol);
+        setSelectedSymbol("");
+      }
     }
+    hydrate(category);
   }, [open, category]);
 
-  const currentSymbol = iconMode === "emoji" ? emoji : selectedSymbol;
+  // ── Bento enter/exit — double-RAF so the slide-up transition always
+  //    has a previous state and never gets batched into an instant pop.
+  //    Both branches flip `visible` inside a RAF callback (never
+  //    synchronously in the effect body).
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (open) {
+      let r2: number | null = null;
+      const r1 = requestAnimationFrame(() => {
+        r2 = requestAnimationFrame(() => setVisible(true));
+      });
+      return () => {
+        cancelAnimationFrame(r1);
+        if (r2) cancelAnimationFrame(r2);
+      };
+    }
+    const r = requestAnimationFrame(() => setVisible(false));
+    return () => cancelAnimationFrame(r);
+  }, [open]);
+
+  // ── Keep the bento flush above the on-screen keyboard. The wrapper is
+  //    sized + offset to overlay window.visualViewport (the visible area
+  //    minus the keyboard); the bento is bottom-anchored inside it.
+  const [vvHeight, setVvHeight] = useState<number | null>(null);
+  const [vvOffsetTop, setVvOffsetTop] = useState(0);
+  useEffect(() => {
+    if (!open) return;
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!vv) return;
+    function update() {
+      if (!vv) return;
+      setVvHeight(vv.height);
+      setVvOffsetTop(vv.offsetTop);
+    }
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [open]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -117,96 +190,127 @@ export default function EditCategorySheet({
     }
   }
 
+  const canSave = !loading && !deleting && !!name.trim() && !!currentSymbol;
+
   return (
-    <>
+    <div
+      className="fixed left-0 top-0 z-[100] w-full"
+      style={{
+        height: vvHeight != null ? `${vvHeight}px` : "100dvh",
+        transform: `translateY(${vvOffsetTop}px)`,
+        pointerEvents: open ? "auto" : "none",
+      }}
+    >
+      {/* Backdrop — dim + blur, animates in/out with the bento. */}
       <div
-        className={cn(
-          "fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300",
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        )}
         onClick={onClose}
-      />
-      <div
-        className={cn(
-          "fixed bottom-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 flex flex-col rounded-t-3xl bg-[var(--surface)] transition-transform duration-300",
-          open ? "translate-y-0" : "translate-y-full"
-        )}
+        className="absolute inset-0 flex items-end justify-center"
+        style={{
+          background: visible ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0)",
+          backdropFilter: visible ? "blur(2px)" : "blur(0px)",
+          WebkitBackdropFilter: visible ? "blur(2px)" : "blur(0px)",
+          transition: visible
+            ? "background 560ms ease, backdrop-filter 560ms ease"
+            : "background 280ms ease, backdrop-filter 280ms ease",
+          padding: "0 10px 18px",
+        }}
       >
-        <div className="flex shrink-0 justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-black/10" />
-        </div>
+        {/* Bento card */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex w-full max-w-md flex-col bg-[var(--surface)] text-[var(--foreground)]"
+          style={{
+            maxHeight: "92%",
+            borderRadius: 28,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+            transform: visible ? "translateY(0)" : "translateY(110%)",
+            transition: "transform 560ms cubic-bezier(0.32, 0.72, 0, 1)",
+          }}
+        >
+          {/* Drag handle */}
+          <div className="flex shrink-0 justify-center pb-2 pt-1.5">
+            <div className="h-1 w-9 rounded-full bg-black/[0.16]" />
+          </div>
 
-        <div className="flex shrink-0 items-center justify-between px-5 pb-3">
-          <h2 className="text-[17px] font-semibold text-[var(--foreground)]">Edit Category</h2>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
-          >
-            <X className="h-4 w-4" strokeWidth={2.25} />
-          </button>
-        </div>
+          {/* Header */}
+          <div className="flex shrink-0 items-center justify-between px-[18px] pb-2.5 pt-1">
+            <span className="text-[15px] font-bold">Edit Category</span>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+          </div>
 
-        <form onSubmit={handleSave} className="flex flex-col overflow-hidden">
-          <div className="overflow-y-auto px-5 pb-4 space-y-4" style={{ maxHeight: "70dvh" }}>
-
-            {/* Preview */}
-            <div className="flex items-center gap-3 rounded-2xl bg-[var(--background)] px-4 py-3 ring-1 ring-black/[0.06]">
-              <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: `${selectedColor}22` }}
-              >
-                {currentSymbol ? (
-                  <CategoryIcon
-                    symbol={currentSymbol}
-                    iconStyle={iconStyle}
-                    size={22}
-                    emojiSize="22px"
-                    color={iconStyle === "2d" ? selectedColor : undefined}
-                  />
-                ) : (
-                  <span className="text-[22px]">?</span>
-                )}
+          <form onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col overflow-hidden">
+            {/* Fixed top — live preview + name */}
+            <div className="shrink-0 px-[18px]">
+              <div className="mb-2.5 flex items-center gap-2.5 rounded-[20px] bg-[var(--background)] px-3 py-2.5 ring-1 ring-black/[0.06]">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: `${selectedColor}26` }}
+                >
+                  {currentSymbol ? (
+                    <CategoryIcon
+                      symbol={currentSymbol}
+                      iconStyle={iconStyle}
+                      size={18}
+                      emojiSize="18px"
+                      color={iconStyle === "2d" ? selectedColor : undefined}
+                    />
+                  ) : (
+                    <span className="text-[18px] text-[var(--label-tertiary)]">?</span>
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-[14px] font-semibold",
+                    !name && "text-[var(--label-tertiary)]"
+                  )}
+                >
+                  {name || "Category name"}
+                </span>
               </div>
-              <p className="text-[15px] font-medium text-[var(--foreground)]">{name || "Category name"}</p>
-            </div>
 
-            {/* Name */}
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                placeholder="Category name"
+                aria-label="Category name"
+                className="h-11 w-full rounded-[16px] border border-[var(--separator)] bg-[var(--background)] px-4 text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
               />
             </div>
 
-            {/* Icon mode toggle */}
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">Icon</label>
-              <div className="flex gap-1 rounded-full bg-black/[0.05] p-1 mb-3">
+            {/* Flexible middle — icon picker + colour. Fits with no scroll
+                while the keyboard is down; scrolls only once a focused
+                Name field shrinks the viewport. */}
+            <div className="mt-2.5 flex min-h-0 flex-auto flex-col overflow-y-auto px-[18px]">
+              {/* Icon mode toggle */}
+              <div className="mb-2 flex shrink-0 gap-1 rounded-full bg-black/[0.05] p-1">
                 {(["symbol", "emoji"] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => {
                       setIconMode(m);
-                      // When switching to symbol mode, ensure we have a valid choice for the current iconStyle
-                      if (m === "symbol" && !selectedSymbol) {
-                        setSelectedSymbol(
-                          iconStyle === "2d" ? makeLucideSymbol(CATEGORY_LUCIDE_ICONS[0].id) : SYMBOLS[0]
-                        );
-                      }
+                      // Switching to symbol mode while nothing is chosen
+                      // (the category was on a free emoji) needs a default
+                      // grid selection for the current icon style.
+                      if (m === "symbol" && !selectedSymbol) setSelectedSymbol(firstSymbol);
                     }}
                     className={cn(
-                      "flex-1 rounded-full py-1.5 text-[13px] font-medium transition-all min-h-[32px]",
+                      "min-h-[32px] flex-1 rounded-full py-1.5 text-[12.5px] font-semibold transition-all",
                       iconMode === m
                         ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
                         : "text-[var(--label-secondary)]"
                     )}
                   >
-                    {m === "emoji" ? "Custom" : (iconStyle === "2d" ? "Icons" : "Symbol")}
+                    {m === "emoji" ? "Custom" : iconStyle === "2d" ? "Icons" : "Symbols"}
                   </button>
                 ))}
               </div>
@@ -217,114 +321,114 @@ export default function EditCategorySheet({
                   value={emoji}
                   onChange={(e) => setEmoji(e.target.value.slice(0, 4))}
                   placeholder="Paste an emoji"
-                  className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[22px] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                  aria-label="Custom emoji"
+                  className="h-11 w-full shrink-0 rounded-[14px] border border-[var(--separator)] bg-[var(--background)] px-4 text-center text-[18px] outline-none focus:border-[var(--foreground)]/30"
                 />
-              ) : iconStyle === "2d" ? (
-                /* 2D mode: Lucide icon grid */
-                <div className="grid grid-cols-6 gap-2">
-                  {CATEGORY_LUCIDE_ICONS.map(({ id, icon: Icon }) => {
-                    const sym = makeLucideSymbol(id);
-                    const isActive = selectedSymbol === sym;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        onClick={() => setSelectedSymbol(sym)}
-                        className={cn(
-                          "flex aspect-square items-center justify-center rounded-xl transition-all",
-                          isActive
-                            ? "ring-2 ring-[var(--foreground)]/30 scale-95"
-                            : "bg-[var(--background)] ring-1 ring-black/[0.06]"
-                        )}
-                        style={isActive ? { backgroundColor: `${selectedColor}22`, color: selectedColor } : undefined}
-                      >
-                        <Icon
-                          size={20}
-                          strokeWidth={2}
-                          style={{ color: isActive ? selectedColor : undefined }}
-                          className={isActive ? "" : "text-[var(--label-secondary)]"}
-                        />
-                      </button>
-                    );
-                  })}
-                </div>
               ) : (
-                /* 3D mode: emoji grid */
-                <div className="grid grid-cols-6 gap-2">
-                  {SYMBOLS.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setSelectedSymbol(s)}
-                      className={cn(
-                        "flex aspect-square items-center justify-center rounded-xl text-[20px] transition-all",
-                        selectedSymbol === s
-                          ? "bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/30 scale-95"
-                          : "bg-[var(--background)] ring-1 ring-black/[0.06]"
-                      )}
-                    >
-                      {s}
-                    </button>
-                  ))}
+                <div className="grid shrink-0 grid-cols-6 gap-1.5">
+                  {iconStyle === "2d"
+                    ? LUCIDE_PICKER.map(({ id, icon: Icon }) => {
+                        const sym = makeLucideSymbol(id);
+                        const active = selectedSymbol === sym;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => setSelectedSymbol(sym)}
+                            className="flex aspect-square items-center justify-center rounded-[14px] transition-transform active:scale-95"
+                            style={{
+                              border: active ? `1.5px solid ${selectedColor}` : "1px solid var(--separator)",
+                              backgroundColor: active ? `${selectedColor}1f` : "var(--background)",
+                            }}
+                          >
+                            <Icon
+                              size={19}
+                              strokeWidth={2}
+                              style={{ color: active ? selectedColor : "var(--label-secondary)" }}
+                            />
+                          </button>
+                        );
+                      })
+                    : SYMBOLS.map((s) => {
+                        const active = selectedSymbol === s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setSelectedSymbol(s)}
+                            className="flex aspect-square items-center justify-center rounded-[14px] text-[19px] transition-transform active:scale-95"
+                            style={{
+                              border: active ? `1.5px solid ${selectedColor}` : "1px solid var(--separator)",
+                              backgroundColor: active ? `${selectedColor}1f` : "var(--background)",
+                            }}
+                          >
+                            {s}
+                          </button>
+                        );
+                      })}
                 </div>
               )}
-            </div>
 
-            {/* Color */}
-            <div>
-              <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">Color</label>
-              <div className="flex gap-2 flex-wrap">
-                {SOFT_PALETTE.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setSelectedColor(c)}
-                    className={cn(
-                      "h-9 w-9 rounded-full transition-all",
-                      selectedColor === c ? "ring-2 ring-offset-2 ring-[var(--foreground)]/50 scale-110" : ""
-                    )}
-                    style={{ backgroundColor: c }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {error && (
-              <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-[13px] text-rose-700 ring-1 ring-rose-200">
-                {error}
+              {/* Colour */}
+              <p className="mb-1.5 mt-3 shrink-0 text-[12px] font-semibold text-[var(--label-secondary)]">
+                Color
               </p>
-            )}
-          </div>
+              <div className="flex shrink-0 flex-wrap gap-2 pb-0.5">
+                {SOFT_PALETTE.map((c) => {
+                  const active = selectedColor === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      aria-label={`Color ${c}`}
+                      className="h-8 w-8 rounded-full transition-transform"
+                      style={{
+                        backgroundColor: c,
+                        transform: active ? "scale(1.12)" : "scale(1)",
+                        boxShadow: active ? `0 0 0 2px var(--surface), 0 0 0 4px ${c}` : "none",
+                      }}
+                    />
+                  );
+                })}
+              </div>
 
-          <div className="shrink-0 border-t border-[var(--separator)] bg-[var(--surface)] px-5 pt-3 pb-8 space-y-2">
-            <button
-              type="submit"
-              disabled={loading || deleting}
-              className="flex h-13 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
-            >
-              {loading ? "Saving…" : "Save Changes"}
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={loading || deleting}
-              className={cn(
-                "flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-[14px] font-medium disabled:opacity-60 transition-colors",
-                confirmDelete
-                  ? "bg-rose-600 text-white"
-                  : "text-rose-600"
+              {error && (
+                <p className="mt-2.5 shrink-0 rounded-[12px] bg-rose-50 px-3.5 py-2 text-[12.5px] text-rose-700 ring-1 ring-rose-200">
+                  {error}
+                </p>
               )}
-            >
-              <Trash2 className="h-4 w-4" strokeWidth={2} />
-              {deleting
-                ? "Deleting…"
-                : confirmDelete
-                ? "Tap again to confirm"
-                : "Delete Category"}
-            </button>
-          </div>
-        </form>
+            </div>
+
+            {/* Footer — save + two-tap delete */}
+            <div className="shrink-0 space-y-2 px-[18px] pb-4 pt-3">
+              <button
+                type="submit"
+                disabled={!canSave}
+                className="flex h-12 w-full items-center justify-center rounded-[18px] bg-[var(--foreground)] text-[14.5px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-50"
+              >
+                {loading ? "Saving…" : "Save Changes"}
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading || deleting}
+                className={cn(
+                  "flex h-11 w-full items-center justify-center gap-2 rounded-[16px] text-[14px] font-semibold transition-colors disabled:opacity-50",
+                  confirmDelete ? "bg-rose-600 text-white" : "text-rose-600"
+                )}
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2} />
+                {deleting
+                  ? "Deleting…"
+                  : confirmDelete
+                  ? "Tap again to confirm"
+                  : "Delete Category"}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
