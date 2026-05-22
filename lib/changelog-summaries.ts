@@ -7,6 +7,10 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.46.7": {
+    en: "Fixed a brief flicker when tapping into the Description field in Add Transaction.",
+    id: "Memperbaiki kedipan singkat saat mengetuk kolom Deskripsi di Tambah Transaksi.",
+  },
   "1.46.6": {
     en: "Add Transaction feels smoother — the number pad and the sheet now slide in and out instead of vanishing.",
     id: "Tambah Transaksi terasa lebih halus — papan angka dan lembarnya kini menggeser masuk dan keluar alih-alih menghilang.",

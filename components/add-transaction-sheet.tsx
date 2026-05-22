@@ -810,6 +810,15 @@ export default function AddTransactionSheet({
           style={{
             height: vvHeight != null ? `${vvHeight}px` : "100dvh",
             transform: `translateY(${vvOffsetTop}px)`,
+            // v1.46.7 — ease the height/offset changes. When the
+            // Description keyboard opens, visualViewport.height drops in
+            // one step; with no transition the wrapper (and the sheet
+            // anchored to its bottom) JUMPED up a frame before the
+            // keyboard had finished sliding in — the visible "blink".
+            // Easing it over 300ms keeps the sheet gliding in sync with
+            // the keyboard and with the keypad's own 300ms collapse.
+            transition:
+              "height 300ms cubic-bezier(0.32,0.72,0,1), transform 300ms cubic-bezier(0.32,0.72,0,1)",
             pointerEvents: "none",
           }}
         >
