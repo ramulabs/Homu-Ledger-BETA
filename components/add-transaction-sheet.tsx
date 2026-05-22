@@ -292,6 +292,22 @@ export default function AddTransactionSheet({
   // The picker flips this back synchronously via onCloseStart.
   const [pickerVisible, setPickerVisible] = useState(false);
 
+  // ── Exit animation (v1.46.6) ────────────────────────────────────────
+  // `open` is the parent's intent; `mounted` keeps the sheet in the DOM
+  // for the 560ms its slide-down (translateY 100%) takes — so closing
+  // the sheet animates out instead of vanishing instantly. The backdrop
+  // already fades over 600ms; this syncs the sheet's exit to it.
+  const [mounted, setMounted] = useState(open);
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      return;
+    }
+    if (!mounted) return;
+    const t = setTimeout(() => setMounted(false), 560);
+    return () => clearTimeout(t);
+  }, [open, mounted]);
+
   // ── Viewport-tracking wrapper (v1.46.1 rewrite) ─────────────────────
   // The sheet lives inside a `position: fixed` wrapper that is sized and
   // offset to EXACTLY overlay window.visualViewport — the *visible* area,
@@ -781,14 +797,14 @@ export default function AddTransactionSheet({
         onClick={onClose}
       />
 
-      {/* Sheet — mounted only while open. It lives inside a wrapper that
-          is sized + offset to overlay the visual viewport (see the
-          viewport-tracking effect above), so the sheet — anchored to the
-          wrapper's bottom — is always flush at the bottom of the visible
-          area, whether or not the native keyboard is up. The wrapper is
-          pointer-events:none so taps above the sheet fall through to the
-          backdrop and dismiss. */}
-      {open && (
+      {/* Sheet — kept mounted through its slide-down exit (see `mounted`).
+          It lives inside a wrapper that is sized + offset to overlay the
+          visual viewport (see the viewport-tracking effect above), so the
+          sheet — anchored to the wrapper's bottom — is always flush at
+          the bottom of the visible area, whether or not the native
+          keyboard is up. The wrapper is pointer-events:none so taps above
+          the sheet fall through to the backdrop and dismiss. */}
+      {mounted && (
         <div
           className="fixed left-0 top-0 z-[70] w-full"
           style={{
@@ -806,15 +822,16 @@ export default function AddTransactionSheet({
             // leaves an 8% backdrop sliver at the top in every state.
             maxHeight: "92%",
             boxShadow: "0 -10px 30px rgba(0,0,0,0.18)",
-            // Picker open → slide the whole sheet off-screen so no white
-            // sliver shows behind the floating bento picker. Because the
-            // sheet genuinely sits at the wrapper's bottom edge,
-            // translateY(100%) now moves it FULLY off-screen.
+            // Picker open OR sheet closing → slide the whole sheet
+            // off-screen (translateY 100%). Because the sheet genuinely
+            // sits at the wrapper's bottom edge, translateY(100%) moves
+            // it FULLY off-screen. On close (`mounted && !open`) this is
+            // the exit animation; `mounted` then unmounts it after 560ms.
             // v1.45.3 — durations doubled (280→560ms): animations slowed
             // to half speed at the user's request.
-            transform: pickerVisible ? "translateY(100%)" : "translateY(0)",
+            transform: pickerVisible || !open ? "translateY(100%)" : "translateY(0)",
             transition: "transform 560ms cubic-bezier(0.32,0.72,0,1)",
-            animation: pickerVisible
+            animation: pickerVisible || !open
               ? "none"
               : "sheet-slide-up 560ms cubic-bezier(0.32,0.72,0,1) both",
           }}
@@ -1205,10 +1222,29 @@ export default function AddTransactionSheet({
             {/* In-app numeric keypad — the sheet's bottom section while
                 the amount field is active. Replaces the native numeric
                 keyboard entirely (which always carries the un-removable
-                iOS ‹ › Done accessory bar). */}
-            {amountActive && (
-              <NumericKeypad onDigit={pushDigit} onBackspace={backspaceAmount} />
-            )}
+                iOS ‹ › Done accessory bar).
+                v1.46.6 — kept mounted and animated: when the Description
+                field takes focus the keypad slides DOWN and the slot
+                collapses (max-height) over 300ms instead of vanishing
+                instantly; it slides back up when the amount is tapped. */}
+            <div
+              aria-hidden={!amountActive}
+              className="shrink-0 overflow-hidden"
+              style={{
+                maxHeight: amountActive ? 320 : 0,
+                transition: "max-height 300ms cubic-bezier(0.32,0.72,0,1)",
+                pointerEvents: amountActive ? "auto" : "none",
+              }}
+            >
+              <div
+                style={{
+                  transform: amountActive ? "translateY(0)" : "translateY(100%)",
+                  transition: "transform 300ms cubic-bezier(0.32,0.72,0,1)",
+                }}
+              >
+                <NumericKeypad onDigit={pushDigit} onBackspace={backspaceAmount} />
+              </div>
+            </div>
           </form>
         </div>
         </div>
