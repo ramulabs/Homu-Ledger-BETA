@@ -344,27 +344,41 @@ export default function AddTransactionSheet({
   // call showPicker() on it the moment the user flips to "On date".
   const endDateRef = useRef<HTMLInputElement>(null);
 
-  // ── Body-scroll lock (unchanged from v1.26.0) ───────────────────────
+  // ── Body-scroll lock ────────────────────────────────────────────────
+  // v1.46.5 — this NO LONGER sets `position: fixed` on <body>.
+  //
+  // That classic trick (here since v1.26.0) was the real cause of the
+  // persistent "cream box" at the bottom of the sheet AND of every
+  // picker — but only in iOS *standalone* (home-screen) PWA mode. Once
+  // <body> is position:fixed, iOS standalone sizes nested position:fixed
+  // overlays to that fixed <body> box instead of to the screen, so the
+  // backdrop / sheet / pickers stop short of the bottom edge and the
+  // page canvas (cream) shows through underneath. In Safari and the
+  // Chrome tab, fixed overlays are sized correctly either way — which is
+  // exactly why the bug only ever appeared on the installed app.
+  //
+  // It also explains why the SAME AddCategorySheet looked clean from
+  // Settings but had the box from inside Add Transaction: only Add
+  // Transaction was holding <body> position:fixed underneath it.
+  //
+  // Scroll stays fully locked without it: overflow:hidden +
+  // touch-action:none + overscroll-behavior:none on <html>/<body>, plus
+  // the touchmove handler below that preventDefaults every scroll
+  // gesture outside a [data-scroll] region. Not shifting <body> also
+  // means the page keeps its scroll position for free (no save/restore).
   useEffect(() => {
     if (!open) return;
-    const scrollY = window.scrollY;
     const html = document.documentElement;
     const body = document.body;
     const prev = {
       htmlOverflow: html.style.overflow,
       bodyOverflow: body.style.overflow,
       htmlTouchAction: html.style.touchAction,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyWidth: body.style.width,
       bodyOverscroll: body.style.overscrollBehavior,
     };
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
     html.style.touchAction = "none";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
     body.style.overscrollBehavior = "none";
     function onTouchMove(e: TouchEvent) {
       const sheet = sheetRef.current;
@@ -378,11 +392,7 @@ export default function AddTransactionSheet({
       html.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
       html.style.touchAction = prev.htmlTouchAction;
-      body.style.position = prev.bodyPosition;
-      body.style.top = prev.bodyTop;
-      body.style.width = prev.bodyWidth;
       body.style.overscrollBehavior = prev.bodyOverscroll;
-      window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);
