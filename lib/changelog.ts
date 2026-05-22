@@ -58,6 +58,24 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.6",
+    date: "May 18, 2026",
+    changes: [
+      { type: "improvement", audience: "user",
+        en: "Add Transaction motion is smoother: moving from the amount to the Description field now slides the number pad down instead of making it vanish, and closing the sheet slides it down instead of disappearing instantly.",
+        id: "Gerakan Tambah Transaksi lebih halus: berpindah dari jumlah ke kolom Deskripsi kini menggeser papan angka turun alih-alih menghilang, dan menutup lembar menggesernya turun alih-alih hilang seketika." },
+      { type: "improvement", audience: "dev",
+        en: "Keypad exit: the NumericKeypad is now kept mounted and animated — focusing Description collapses its slot (max-height 320→0) and slides it down (translateY 100%) over 300ms, instead of the old `{amountActive && <NumericKeypad/>}` instant unmount. Tapping the amount reverses it.",
+        id: "Keluar keypad: NumericKeypad kini tetap ter-mount dan dianimasikan — memfokuskan Deskripsi menciutkan slotnya (max-height 320→0) dan menggesernya turun (translateY 100%) selama 300ms, alih-alih unmount seketika `{amountActive && <NumericKeypad/>}` yang lama. Mengetuk jumlah membalikkannya." },
+      { type: "improvement", audience: "dev",
+        en: "Sheet exit: a `mounted` state keeps AddTransactionSheet in the DOM for 560ms after `open` flips false, during which it animates translateY(100%) (animation:none so the transform transition runs). Syncs with the backdrop's existing 600ms fade — the sheet no longer unmounts instantly on close/save.",
+        id: "Keluar lembar: state `mounted` mempertahankan AddTransactionSheet di DOM selama 560ms setelah `open` jadi false, selama itu ia menganimasikan translateY(100%) (animation:none agar transisi transform berjalan). Sinkron dengan fade 600ms backdrop yang sudah ada — lembar tidak lagi unmount seketika saat tutup/simpan." },
+      { type: "fix", audience: "dev",
+        en: "Note: the iOS keyboard accessory bar (the ‹ ›  ✓ strip above the on-screen keyboard) on the Description field cannot be removed — it is WKWebView system chrome drawn for every native editable element, with no web API to suppress it. The amount field avoids it by using the in-app keypad; a free-text field genuinely needs the OS keyboard.",
+        id: "Catatan: bilah aksesori keyboard iOS (strip ‹ ›  ✓ di atas keyboard layar) pada kolom Deskripsi tidak dapat dihapus — itu chrome sistem WKWebView yang digambar untuk tiap elemen editable native, tanpa API web untuk menyembunyikannya. Kolom jumlah menghindarinya dengan keypad dalam-aplikasi; kolom teks bebas memang membutuhkan keyboard OS." },
+    ],
+  },
+  {
     version: "1.46.5",
     date: "May 18, 2026",
     changes: [
