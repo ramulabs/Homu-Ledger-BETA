@@ -1,7 +1,7 @@
 ---
 id: "ram-18"
 title: "Dev analytics dashboard — usage, adoption & retention (Phase 1)"
-status: "in_progress"
+status: "done"
 priority: "P2"
 assignee: "ramu-labs"
 project: "homu-ledger-beta"
@@ -12,7 +12,8 @@ linear_id: "RAM-18"
 linear_url: "https://linear.app/ramulabs/issue/RAM-18/dev-analytics-dashboard-usage-adoption-and-retention-phase-1"
 started_at: "2026-05-17T12:32:20.696Z"
 created_at: "2026-05-17T12:10:12.944Z"
-updated_at: "2026-05-17T12:46:21.807Z"
+updated_at: "2026-05-22T10:21:49.000Z"
+completed_at: "2026-05-22T10:21:49.000Z"
 ---
 
 Developer-only analytics screen for early-stage validation. From the Homu Analytics Dashboard PRD (v1.0), Phase 1 — **aggregate metrics only; friction-point event tracking is deferred to its own issue.**

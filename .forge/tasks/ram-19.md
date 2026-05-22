@@ -1,7 +1,7 @@
 ---
 id: "ram-19"
 title: "Event-tracking infrastructure — friction-point funnels"
-status: "in_progress"
+status: "done"
 priority: "P2"
 assignee: "ramu-labs"
 project: "homu-ledger-beta"
@@ -11,7 +11,8 @@ linear_id: "RAM-19"
 linear_url: "https://linear.app/ramulabs/issue/RAM-19/event-tracking-infrastructure-friction-point-funnels"
 started_at: "2026-05-17T15:52:44.766Z"
 created_at: "2026-05-17T12:11:28.384Z"
-updated_at: "2026-05-17T16:03:49.492Z"
+updated_at: "2026-05-22T10:24:44.000Z"
+completed_at: "2026-05-22T10:24:44.000Z"
 ---
 
 Net-new instrumentation to capture UI events for drop-off / funnel analysis. Split out of the Homu Analytics Dashboard PRD (§5.6) — it is **not** a dashboard section, it is its own infrastructure project.
