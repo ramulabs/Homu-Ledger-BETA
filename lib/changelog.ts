@@ -58,6 +58,27 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.10",
+    date: "May 23, 2026",
+    changes: [
+      { type: "improvement", audience: "user",
+        en: "Privacy mode is now on by default for everyone, and the Settings → Privacy toggle is right there in the Settings list — one tap to flip on or off, no separate page.",
+        id: "Mode privasi kini aktif secara default untuk semua orang, dan sakelar Pengaturan → Privasi langsung ada di daftar Pengaturan — sekali ketuk untuk hidup atau mati, tanpa halaman terpisah." },
+      { type: "improvement", audience: "user",
+        en: "Colour comes back when privacy is off (or you're peeking): the Total Balance shows in red with a minus sign for a negative balance, the Income icon is green, the Expense icon is red. When privacy is on, everything is neutral black — no semantic colour leaking through the mask.",
+        id: "Warna kembali ketika privasi mati (atau saat sedang mengintip): Total Saldo muncul merah dengan tanda minus untuk saldo negatif, ikon Pemasukan hijau, ikon Pengeluaran merah. Saat privasi aktif, semuanya hitam netral — tidak ada warna semantik yang bocor melalui topeng." },
+      { type: "improvement", audience: "dev",
+        en: "Privacy is now default-on. The `homu-hide-amounts` localStorage key flipped from opt-in (`'1'` = on, missing = off) to opt-out (`'0'` = explicit off, missing/`'1'` = on). Bootstrap script in app/layout.tsx now sets `<html data-hide-amounts=\"1\">` unless the value is `'0'`. Existing users with no key set pick up the new default on next load; existing `'1'` users keep the same behaviour. No `'0'` users exist (the value was never written), so no migration needed.",
+        id: "Privasi kini aktif secara default. Kunci localStorage `homu-hide-amounts` beralih dari opt-in (`'1'` = aktif, tidak ada = mati) menjadi opt-out (`'0'` = mati eksplisit, tidak ada/`'1'` = aktif). Skrip bootstrap di app/layout.tsx kini memasang `<html data-hide-amounts=\"1\">` kecuali nilainya `'0'`. Pengguna lama tanpa kunci yang tersimpan mengambil default baru pada pemuatan berikutnya; pengguna `'1'` lama tetap sama. Tidak ada pengguna `'0'` (nilai itu tidak pernah ditulis), jadi tidak perlu migrasi." },
+      { type: "improvement", audience: "dev",
+        en: "BalanceCard restores `formatAmountWithSign` and the `balance < 0 ? --color-expense : --foreground` conditional for the Total Balance text, and re-adds `bg-[var(--tint-success-bg)]` / `bg-[var(--tint-warning-bg)]` tints on the Income/Expense icon circles. New `[data-privacy-mono]` and `[data-privacy-mono-icon]` markers on those elements, plus CSS rules under `html[data-hide-amounts=\"1\"]:not([data-privacy-revealed])` in app/globals.css, force them to neutral foreground when the mask is active — so the semantic colour comes back automatically when the toggle is off or the user is peeking. !important is scoped to that selector only.",
+        id: "BalanceCard mengembalikan `formatAmountWithSign` dan kondisi `balance < 0 ? --color-expense : --foreground` untuk teks Total Saldo, dan menambahkan kembali tint `bg-[var(--tint-success-bg)]` / `bg-[var(--tint-warning-bg)]` pada lingkaran ikon Pemasukan/Pengeluaran. Penanda `[data-privacy-mono]` dan `[data-privacy-mono-icon]` baru pada elemen-elemen tersebut, ditambah aturan CSS di bawah `html[data-hide-amounts=\"1\"]:not([data-privacy-revealed])` di app/globals.css, memaksanya ke foreground netral saat topeng aktif — sehingga warna semantik kembali otomatis saat sakelar mati atau pengguna sedang mengintip. !important hanya berlaku pada selektor tersebut." },
+      { type: "improvement", audience: "dev",
+        en: "The dedicated `/settings/privacy` page is gone; the toggle is a small client island (`components/privacy-toggle-row.tsx`) mounted inline inside the server-rendered Settings list, with an iOS-style switch thumb and `role=\"switch\"` / `aria-checked`. The page directory was deleted.",
+        id: "Halaman khusus `/settings/privacy` sudah tidak ada; sakelar adalah pulau klien kecil (`components/privacy-toggle-row.tsx`) yang dipasang sebaris di daftar Pengaturan yang dirender di server, dengan thumb sakelar bergaya iOS dan `role=\"switch\"` / `aria-checked`. Direktori halaman dihapus." },
+    ],
+  },
+  {
     version: "1.46.9",
     date: "May 23, 2026",
     changes: [

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatAmount } from "@/lib/format";
+import { formatAmount, formatAmountWithSign } from "@/lib/format";
 import { ArrowDownLeft, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
+import { cn } from "@/lib/cn";
 import SurfaceCard from "@/components/ui/surface-card";
 import { maskAmount, togglePrivacyReveal } from "@/lib/privacy";
 
@@ -52,16 +53,23 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
     <section className="px-5 pt-4 pb-2 space-y-3">
       {/* Total Balance — full-width bento, same chrome as Income/Expense
           below so all three read as one bento stack. Label + amount both
-          centered for hierarchy: it's the headline number. Always rendered
-          in the neutral foreground colour and without a sign — negative
-          balances show as a plain magnitude (e.g. `Rp 50.000`). */}
+          centered for hierarchy: it's the headline number. Negative
+          balances render in --color-expense with a minus sign; the privacy
+          mask state forces foreground via CSS so the mask itself is always
+          neutral. */}
       <SurfaceCard className="relative px-4 py-3.5 text-center">
         <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
           {t("tx.totalBalance")}
         </p>
-        <p className="mt-1.5 truncate text-[28px] font-semibold leading-tight tracking-tight tabular-nums text-[var(--foreground)]">
+        <p
+          data-privacy-mono
+          className={cn(
+            "mt-1.5 truncate text-[28px] font-semibold leading-tight tracking-tight tabular-nums",
+            balance < 0 ? "text-[var(--color-expense)]" : "text-[var(--foreground)]"
+          )}
+        >
           <PrivacyAmount
-            real={formatAmount(animatedBalance, currency)}
+            real={formatAmountWithSign(animatedBalance, currency)}
             hidden={mask}
           />
         </p>
@@ -139,7 +147,7 @@ function SummaryPill({
   return (
     <SurfaceCard className="px-3.5 py-3">
       <div className="flex items-center gap-2">
-        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${iconTint}`}>
+        <span data-privacy-mono-icon className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${iconTint}`}>
           {icon}
         </span>
         <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
