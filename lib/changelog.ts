@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.8",
+    date: "May 23, 2026",
+    changes: [
+      { type: "new", audience: "user",
+        en: "Privacy: a new Settings → Privacy toggle hides Total Balance, Income and Expenses on the home screen, with an eye icon on the Balance card to peek when you need to.",
+        id: "Privasi: sakelar baru di Pengaturan → Privasi menyembunyikan Total Saldo, Pemasukan, dan Pengeluaran di layar utama, dengan ikon mata di kartu Saldo untuk mengintip saat butuh." },
+      { type: "new", audience: "dev",
+        en: "New Settings → Privacy page writes a single `homu-hide-amounts` flag to localStorage (mirroring the `homu-theme` pattern — no DB migration). The existing theme-bootstrap script in app/layout.tsx reads it before paint and sets `<html data-hide-amounts=\"1\">`; CSS in app/globals.css swaps a `data-privacy-real` span for a masked `data-privacy-hidden` sibling, so the real number never paints on cold load and there's no hydration mismatch. The eye button on BalanceCard toggles an in-session `data-privacy-revealed` attribute that is intentionally not persisted, so every reload starts hidden per the setting. Mask preserves the currency symbol, separators and sign (e.g. `Rp 1.500.000` → `Rp •.•••.•••`) to keep layout fixed.",
+        id: "Halaman Pengaturan → Privasi yang baru menulis satu flag `homu-hide-amounts` ke localStorage (mengikuti pola `homu-theme` — tanpa migrasi DB). Skrip theme-bootstrap di app/layout.tsx membacanya sebelum render dan memasang `<html data-hide-amounts=\"1\">`; CSS di app/globals.css menukar span `data-privacy-real` dengan saudara `data-privacy-hidden` yang tersamar, sehingga angka asli tidak pernah terlukis saat cold load dan tidak ada hydration mismatch. Tombol mata di BalanceCard memutar atribut `data-privacy-revealed` dalam sesi yang sengaja tidak dipertahankan, jadi tiap reload memulai dalam keadaan tersembunyi sesuai pengaturan. Mask mempertahankan simbol mata uang, pemisah dan tanda (mis. `Rp 1.500.000` → `Rp •.•••.•••`) agar tata letak tetap." },
+    ],
+  },
+  {
     version: "1.46.7",
     date: "May 18, 2026",
     changes: [

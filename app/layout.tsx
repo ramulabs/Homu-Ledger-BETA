@@ -74,6 +74,7 @@ if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t;}
 var resolved=(t==='light'||t==='dark')?t:'light';
 var raw=localStorage.getItem('homu-design-overrides');
 if(raw){var o=JSON.parse(raw);for(var k in o){var parts=k.split(':');if(parts.length===2&&parts[1]===resolved){document.documentElement.style.setProperty(parts[0],o[k]);}}}
+if(localStorage.getItem('homu-hide-amounts')==='1'){document.documentElement.dataset.hideAmounts='1';}
 }catch(e){}`}</Script>
         <SplashScreen />
         {children}

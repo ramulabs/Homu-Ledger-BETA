@@ -442,3 +442,26 @@ input[type="date"]::-webkit-clear-button {
 @media (prefers-reduced-motion: reduce) {
   .voice-row-fly { animation: none !important; opacity: 0 !important; }
 }
+
+/* Privacy mask — see RAM-15. Both the real and masked spans live in the DOM
+   so the swap is CSS-only: no React re-render, no first-paint flash even
+   before hydration (bootstrap script in app/layout.tsx sets data-hide-amounts
+   on <html> before paint). data-privacy-revealed is the in-session "peek"
+   set by the eye button; it is intentionally NOT persisted to localStorage,
+   so it resets on every app reload. */
+[data-privacy-amount] > [data-privacy-real],
+[data-privacy-amount] > [data-privacy-hidden] { display: inline; }
+[data-privacy-amount] > [data-privacy-hidden] { display: none; }
+html[data-hide-amounts="1"] [data-privacy-amount] > [data-privacy-real]   { display: none; }
+html[data-hide-amounts="1"] [data-privacy-amount] > [data-privacy-hidden] { display: inline; }
+html[data-hide-amounts="1"][data-privacy-revealed] [data-privacy-amount] > [data-privacy-real]   { display: inline; }
+html[data-hide-amounts="1"][data-privacy-revealed] [data-privacy-amount] > [data-privacy-hidden] { display: none; }
+
+/* Eye-button visibility — only show when the setting is on. */
+[data-privacy-eye] { display: none; }
+html[data-hide-amounts="1"] [data-privacy-eye] { display: inline-flex; }
+
+/* Eye/EyeOff icon swap inside the eye button. */
+[data-privacy-eye] [data-eye-icon="revealed"] { display: none; }
+html[data-privacy-revealed] [data-privacy-eye] [data-eye-icon="hidden"]  { display: none; }
+html[data-privacy-revealed] [data-privacy-eye] [data-eye-icon="revealed"] { display: inline-block; }
