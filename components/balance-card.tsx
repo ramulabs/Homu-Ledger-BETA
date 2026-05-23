@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatAmount, formatAmountWithSign } from "@/lib/format";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Eye, EyeOff } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/cn";
 import SurfaceCard from "@/components/ui/surface-card";
+import { maskAmount, togglePrivacyReveal } from "@/lib/privacy";
 
 type Props = {
   balance: number;
@@ -45,12 +46,16 @@ function useCountUp(target: number, duration = 600) {
 export default function BalanceCard({ balance, income, expenses, currency = "IDR" }: Props) {
   const t = useT();
   const animatedBalance = useCountUp(balance);
+  // Mask of the *settled* balance — using the final value (not the animated
+  // tick) keeps the masked width stable while a count-up plays in the hidden
+  // real span behind it.
+  const balanceMask = maskAmount(formatAmountWithSign(balance, currency));
   return (
     <section className="px-5 pt-4 pb-2 space-y-3">
       {/* Total Balance — full-width bento, same chrome as Income/Expense
           below so all three read as one bento stack. Label + amount both
           centered for hierarchy: it's the headline number. */}
-      <SurfaceCard className="px-4 py-3.5 text-center">
+      <SurfaceCard className="relative px-4 py-3.5 text-center">
         <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
           {t("tx.totalBalance")}
         </p>
@@ -60,8 +65,12 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
             balance < 0 ? "text-[var(--color-expense)]" : "text-[var(--foreground)]"
           )}
         >
-          {formatAmountWithSign(animatedBalance, currency)}
+          <PrivacyAmount
+            real={formatAmountWithSign(animatedBalance, currency)}
+            hidden={balanceMask}
+          />
         </p>
+        <PrivacyEyeButton t={t} />
       </SurfaceCard>
 
       {/* Income + Expense — 2-col bento row, unchanged */}
@@ -80,6 +89,34 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
         />
       </div>
     </section>
+  );
+}
+
+function PrivacyAmount({ real, hidden }: { real: string; hidden: string }) {
+  return (
+    <span data-privacy-amount>
+      <span data-privacy-real>{real}</span>
+      <span data-privacy-hidden aria-hidden="true">{hidden}</span>
+    </span>
+  );
+}
+
+function PrivacyEyeButton({ t }: { t: ReturnType<typeof useT> }) {
+  // CSS in app/globals.css hides this button entirely when the user hasn't
+  // turned on "Hide amounts on home screen", so it never appears for users
+  // who don't use the feature. data-privacy-revealed lives on <html> and is
+  // not persisted, so a reload always re-hides per the setting.
+  return (
+    <button
+      type="button"
+      data-privacy-eye
+      onClick={togglePrivacyReveal}
+      aria-label={t("settings.privacy.peek")}
+      className="absolute right-2 top-2 h-8 w-8 items-center justify-center rounded-full text-[var(--label-secondary)] active:bg-black/[0.04] transition-colors [touch-action:manipulation]"
+    >
+      <Eye data-eye-icon="hidden"   className="h-[18px] w-[18px]" strokeWidth={2} />
+      <EyeOff data-eye-icon="revealed" className="h-[18px] w-[18px]" strokeWidth={2} />
+    </button>
   );
 }
 
@@ -109,7 +146,7 @@ function SummaryPill({
         </p>
       </div>
       <p className="mt-1.5 truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
-        {value}
+        <PrivacyAmount real={value} hidden={maskAmount(value)} />
       </p>
     </SurfaceCard>
   );
