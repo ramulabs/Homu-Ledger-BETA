@@ -58,6 +58,21 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.9",
+    date: "May 23, 2026",
+    changes: [
+      { type: "improvement", audience: "user",
+        en: "Privacy mask is cleaner: when home-screen totals are hidden they now show as a uniform row of eight big dots (e.g. `Rp ••••••••`) instead of a mix of bullets and decimal separators. The eye icon also swaps the right way around — a crossed-out eye while hidden, a plain eye when revealed.",
+        id: "Tampilan privasi lebih rapi: ketika total di layar utama disembunyikan, kini muncul sebagai delapan titik besar yang seragam (mis. `Rp ••••••••`) alih-alih campuran bulatan dan titik desimal. Ikon mata pun bertukar arah — mata tercoret saat tersembunyi, mata polos saat terbuka." },
+      { type: "improvement", audience: "user",
+        en: "Total Balance is now neutral black whether the balance is positive or negative — no more red — and negative balances show as a plain amount without the minus sign.",
+        id: "Total Saldo kini berwarna hitam netral baik saldo positif maupun negatif — tanpa warna merah — dan saldo negatif tampil sebagai jumlah polos tanpa tanda minus." },
+      { type: "improvement", audience: "dev",
+        en: "`maskAmount` now takes a currency code and returns a fixed `${symbol}${space?}••••••••` (eight U+2022 bullets) regardless of the underlying amount, so Income, Expense and Total Balance all render an identical privacy mask. BalanceCard now uses `formatAmount` (absolute value) instead of `formatAmountWithSign` for Total Balance, and drops the `balance < 0 ? --color-expense : --foreground` conditional in favour of the neutral foreground for every state. The eye-button JSX swaps `Eye` ↔ `EyeOff` so `data-eye-icon=\"hidden\"` is now `EyeOff` and `data-eye-icon=\"revealed\"` is `Eye` — CSS rules in app/globals.css were unchanged.",
+        id: "`maskAmount` kini menerima kode mata uang dan mengembalikan `${symbol}${space?}••••••••` tetap (delapan bulatan U+2022) terlepas dari jumlah aslinya, sehingga Pemasukan, Pengeluaran dan Total Saldo menampilkan mask privasi yang identik. BalanceCard kini memakai `formatAmount` (nilai absolut) alih-alih `formatAmountWithSign` untuk Total Saldo, dan membuang kondisi `balance < 0 ? --color-expense : --foreground` demi foreground netral untuk segala kondisi. JSX tombol mata menukar `Eye` ↔ `EyeOff` sehingga `data-eye-icon=\"hidden\"` kini `EyeOff` dan `data-eye-icon=\"revealed\"` adalah `Eye` — aturan CSS di app/globals.css tidak berubah." },
+    ],
+  },
+  {
     version: "1.46.8",
     date: "May 23, 2026",
     changes: [
