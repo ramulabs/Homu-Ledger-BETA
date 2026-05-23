@@ -111,16 +111,22 @@ function formatChipDate(value: string) {
 // appends digits to the value.
 //
 // `onActivate` tells the parent the field was tapped → show the keypad.
+// On desktop, `onDigit` / `onBackspace` let the focused field accept
+// physical-keyboard input directly so the in-app keypad isn't needed.
 function HeroAmountInput({
   value,
   focused,
   fieldRef,
   onActivate,
+  onDigit,
+  onBackspace,
 }: {
   value: string;
   focused: boolean;
   fieldRef: React.RefObject<HTMLDivElement | null>;
   onActivate: () => void;
+  onDigit?: (d: string) => void;
+  onBackspace?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
@@ -137,6 +143,29 @@ function HeroAmountInput({
 
   const empty = !value;
   const display = empty ? "0" : value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  // Physical-keyboard input. The amount field has no native HTMLInputElement
+  // (see comment above on the iOS form-accessory bar) — wiring keydown on
+  // the focusable overlay div lets a real keyboard type digits and erase.
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    // Let browser shortcuts (Cmd+R, Cmd+W, etc.) pass through unhandled.
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key.length === 1 && e.key >= "0" && e.key <= "9") {
+      e.preventDefault();
+      onDigit?.(e.key);
+    } else if (e.key === "Backspace") {
+      e.preventDefault();
+      onBackspace?.();
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    if (!onDigit) return;
+    const digits = (e.clipboardData.getData("text") || "").replace(/\D/g, "");
+    if (!digits) return;
+    e.preventDefault();
+    for (const d of digits) onDigit(d);
+  }
 
   return (
     <div
@@ -183,13 +212,17 @@ function HeroAmountInput({
           />
         )}
       </div>
-      {/* Plain focusable div — NO keyboard, NO iOS accessory bar.
-          The keypad is the only input path. Focus drives the caret. */}
+      {/* Focusable overlay — drives the caret + accepts physical-keyboard
+          digits / backspace via onKeyDown. The native virtual keyboard
+          is NOT summoned (this is a div, not an input) — that's the whole
+          point: iOS's form-accessory bar can't be removed from inputs. */}
       <div
         ref={fieldRef}
         tabIndex={0}
         role="textbox"
         aria-label="Amount"
+        onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         className="absolute inset-0 h-full w-full"
         style={{ opacity: 0, outline: "none" }}
       />
@@ -286,6 +319,23 @@ export default function AddTransactionSheet({
   // (keypad auto-shows on +). Focusing the Description flips it false
   // so the native keyboard can take over for text.
   const [amountActive, setAmountActive] = useState(false);
+
+  // ── Desktop detection ───────────────────────────────────────────────
+  // Fine pointer = mouse / trackpad → laptop or desktop. The amount
+  // accepts physical-keyboard input directly there (see HeroAmountInput's
+  // onKeyDown) and the in-app numeric keypad is hidden — that keypad is
+  // iPhone on-screen UX and is pointless with a real keyboard.
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(pointer: fine)");
+    function update() {
+      setIsDesktop(mq.matches);
+    }
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   // `pickerVisible` drives the coordinated motion: while a bento picker
   // is open the sheet slides fully off-screen and the picker takes over.
@@ -519,6 +569,14 @@ export default function AddTransactionSheet({
     setUserTouchedCategory(!!editing);
     aiSuggestedRef.current = null;
   }, [open, editing, wallets, defaultRecurring]);
+
+  // Desktop: focus the amount field on open so the user can type with
+  // their physical keyboard immediately, without an extra click.
+  useEffect(() => {
+    if (!open || editing || !isDesktop) return;
+    const r = requestAnimationFrame(() => amountRef.current?.focus());
+    return () => cancelAnimationFrame(r);
+  }, [open, editing, isDesktop]);
 
   // ── Funnel: transaction_started (RAM-19) ────────────────────────────
   // Fires when the sheet opens for a NEW transaction. Paired with
@@ -909,6 +967,8 @@ export default function AddTransactionSheet({
               focused={amountActive}
               fieldRef={amountRef}
               onActivate={activateAmount}
+              onDigit={pushDigit}
+              onBackspace={backspaceAmount}
             />
 
             {/* Body — natural height, scrolls if it overflows. */}
@@ -1129,7 +1189,7 @@ export default function AddTransactionSheet({
                 // covers the home bar). Otherwise clear it with the
                 // safe-area inset.
                 paddingBottom:
-                  amountActive || descFocused
+                  (amountActive && !isDesktop) || descFocused
                     ? "10px"
                     : "max(16px, env(safe-area-inset-bottom))",
               }}
@@ -1237,17 +1297,17 @@ export default function AddTransactionSheet({
                 collapses (max-height) over 300ms instead of vanishing
                 instantly; it slides back up when the amount is tapped. */}
             <div
-              aria-hidden={!amountActive}
+              aria-hidden={!amountActive || isDesktop}
               className="shrink-0 overflow-hidden"
               style={{
-                maxHeight: amountActive ? 320 : 0,
+                maxHeight: amountActive && !isDesktop ? 320 : 0,
                 transition: "max-height 300ms cubic-bezier(0.32,0.72,0,1)",
-                pointerEvents: amountActive ? "auto" : "none",
+                pointerEvents: amountActive && !isDesktop ? "auto" : "none",
               }}
             >
               <div
                 style={{
-                  transform: amountActive ? "translateY(0)" : "translateY(100%)",
+                  transform: amountActive && !isDesktop ? "translateY(0)" : "translateY(100%)",
                   transition: "transform 300ms cubic-bezier(0.32,0.72,0,1)",
                 }}
               >
