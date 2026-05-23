@@ -7,6 +7,10 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.46.9": {
+    en: "Privacy mask is uniform eight big dots now, the eye icon swaps the natural way, and the Total Balance always reads in neutral black without a minus sign.",
+    id: "Topeng privasi kini delapan titik besar yang seragam, ikon mata berganti dengan cara alami, dan Total Saldo selalu hitam netral tanpa tanda minus.",
+  },
   "1.46.8": {
     en: "New Privacy setting hides home-screen totals so a glance at your phone doesn't reveal your balance — tap the eye icon to peek.",
     id: "Pengaturan Privasi baru menyembunyikan total di layar utama supaya sekilas pandang ke ponselmu tidak membongkar saldo — ketuk ikon mata untuk mengintip.",
