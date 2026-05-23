@@ -1,4 +1,5 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, EyeOff } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity } from "lucide-react";
+import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
 import { signOut } from "@/app/actions/auth";
@@ -226,11 +227,7 @@ export default async function SettingsPage() {
           label={t("settings.language")}
           value={languageLabel}
         />
-        <RowLink
-          href="/settings/privacy"
-          icon={<EyeOff className="h-[18px] w-[18px]" strokeWidth={2} />}
-          label={t("settings.privacy")}
-        />
+        <PrivacyToggleRow />
         <Row icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.notifications")} />
       </Group>
 

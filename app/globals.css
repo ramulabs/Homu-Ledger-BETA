@@ -465,3 +465,17 @@ html[data-hide-amounts="1"] [data-privacy-eye] { display: inline-flex; }
 [data-privacy-eye] [data-eye-icon="revealed"] { display: none; }
 html[data-privacy-revealed] [data-privacy-eye] [data-eye-icon="hidden"]  { display: none; }
 html[data-privacy-revealed] [data-privacy-eye] [data-eye-icon="revealed"] { display: inline-block; }
+
+/* Monochrome state — when the privacy mask is on and the user is NOT
+   peeking, the Total Balance and the Income/Expense icon tints all drop
+   their semantic colour (red for negative balance, green for income, warning
+   for expense) and render in neutral foreground. When the user peeks via
+   the eye button, data-privacy-revealed is set and the normal colours come
+   back automatically (these selectors stop matching). */
+html[data-hide-amounts="1"]:not([data-privacy-revealed]) [data-privacy-mono] {
+  color: var(--foreground) !important;
+}
+html[data-hide-amounts="1"]:not([data-privacy-revealed]) [data-privacy-mono-icon] {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  color: var(--foreground) !important;
+}
