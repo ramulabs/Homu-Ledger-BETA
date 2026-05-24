@@ -7,6 +7,10 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.46.11": {
+    en: "Privacy mask shows the eight big dots again on the home screen — a brief regression in v1.46.10 made it show the currency code instead.",
+    id: "Topeng privasi menampilkan delapan titik besar kembali di layar utama — regresi singkat di v1.46.10 sempat membuatnya menampilkan kode mata uang.",
+  },
   "1.46.10": {
     en: "Privacy mode is on by default and lives as an inline toggle in Settings — and the green/red colours come back the moment you turn it off or peek.",
     id: "Mode privasi aktif secara default dan tampil sebagai sakelar sebaris di Pengaturan — warna hijau/merah pun kembali begitu kamu mematikannya atau mengintip.",

@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.11",
+    date: "May 23, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Privacy mask now shows the eight big dots again on Total Balance, Income and Expense when privacy is on — a regression in v1.46.10 made it show the currency code instead.",
+        id: "Topeng privasi kini menampilkan delapan titik besar kembali pada Total Saldo, Pemasukan, dan Pengeluaran saat privasi aktif — regresi di v1.46.10 sempat membuatnya menampilkan kode mata uang." },
+      { type: "fix", audience: "dev",
+        en: "`maskAmount(currencyCode)` was accidentally reverted to the v1.46.8 per-digit signature (`maskAmount(formatted)`) during v1.46.10's conflict resolution. BalanceCard still called it with a currency code, so the regex `formatted.replace(/\\d/g, \"•\")` ran against \"IDR\" and produced \"IDR\" (no digits to replace). Restored the v1.46.9 fixed `${symbol}${space?}••••••••` implementation. Single-file fix; no other call sites changed.",
+        id: "`maskAmount(currencyCode)` tanpa sengaja kembali ke signature per-digit dari v1.46.8 (`maskAmount(formatted)`) saat penyelesaian konflik v1.46.10. BalanceCard tetap memanggilnya dengan kode mata uang, jadi regex `formatted.replace(/\\d/g, \"•\")` berjalan terhadap \"IDR\" dan menghasilkan \"IDR\" (tidak ada digit untuk diganti). Mengembalikan implementasi tetap `${symbol}${space?}••••••••` dari v1.46.9. Perbaikan satu file; tidak ada pemanggil lain yang berubah." },
+    ],
+  },
+  {
     version: "1.46.10",
     date: "May 23, 2026",
     changes: [

@@ -9,14 +9,21 @@
 // users who never visited the toggle still pick up the default-on
 // behaviour on the next reload, without a migration.
 
+import { getCurrency } from "./currencies";
+
 export const HIDE_AMOUNTS_STORAGE_KEY = "homu-hide-amounts";
 const OPT_OUT_VALUE = "0";
 
-/** Replace every digit in a formatted amount with •, keeping the currency
- *  symbol, separators and sign so the row width barely changes when toggled.
- *  Example: "Rp 1.500.000" → "Rp •.•••.•••", "-Rp 50.000" → "-Rp ••.•••". */
-export function maskAmount(formatted: string): string {
-  return formatted.replace(/\d/g, "•");
+/** Fixed mask: currency symbol + eight big dots, regardless of the amount.
+ *  Using a constant width (rather than digit-per-dot) gives uniform "big
+ *  dots only" rendering — no mix of bullets and decimal separators showing
+ *  through, and identical width across Total Balance, Income and Expense.
+ *  Example: `Rp ••••••••`. */
+const MASK_DOTS = "••••••••";
+
+export function maskAmount(currencyCode: string = "IDR"): string {
+  const cur = getCurrency(currencyCode);
+  return cur.spaceBefore ? `${cur.symbol} ${MASK_DOTS}` : `${cur.symbol}${MASK_DOTS}`;
 }
 
 /** True when the user has the privacy mask on — the default for everyone
