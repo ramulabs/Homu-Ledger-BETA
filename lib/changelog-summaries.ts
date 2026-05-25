@@ -7,6 +7,10 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.46.12": {
+    en: "On the desktop / web app, opening Add Transaction now focuses the amount field for instant typing, and the sheet stays put when you move to the Description field.",
+    id: "Di aplikasi desktop / web, membuka Tambah Transaksi kini memfokuskan kolom jumlah agar bisa langsung diketik, dan lembar tetap di tempat saat kamu berpindah ke kolom Deskripsi.",
+  },
   "1.46.11": {
     en: "Privacy mask shows the eight big dots again on the home screen — a brief regression in v1.46.10 made it show the currency code instead.",
     id: "Topeng privasi menampilkan delapan titik besar kembali di layar utama — regresi singkat di v1.46.10 sempat membuatnya menampilkan kode mata uang.",
