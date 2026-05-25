@@ -572,10 +572,25 @@ export default function AddTransactionSheet({
 
   // Desktop: focus the amount field on open so the user can type with
   // their physical keyboard immediately, without an extra click.
+  //
+  // v1.46.12 — DOUBLE rAF. `mounted` (the v1.46.6 exit-animation state)
+  // starts false and only flips true via a setState inside another
+  // useEffect, so on first open the sheet renders one frame *after*
+  // this effect runs. A single rAF was racing that re-commit — when it
+  // lost, amountRef.current was still null and .focus() silently
+  // no-op'd. The user saw the coral caret (driven by `amountActive`,
+  // not real DOM focus) but typing went nowhere. A second rAF skips
+  // past the React commit, guaranteeing the ref is attached.
   useEffect(() => {
     if (!open || editing || !isDesktop) return;
-    const r = requestAnimationFrame(() => amountRef.current?.focus());
-    return () => cancelAnimationFrame(r);
+    let r2: number | null = null;
+    const r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => amountRef.current?.focus());
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      if (r2) cancelAnimationFrame(r2);
+    };
   }, [open, editing, isDesktop]);
 
   // ── Funnel: transaction_started (RAM-19) ────────────────────────────
@@ -1188,8 +1203,18 @@ export default function AddTransactionSheet({
                 // Description keyboard up → also small (the keyboard
                 // covers the home bar). Otherwise clear it with the
                 // safe-area inset.
+                //
+                // v1.46.12 — both conditions are gated on !isDesktop. On
+                // desktop there is no on-screen keypad AND no software
+                // keyboard, so the action row IS the sheet's bottom and
+                // always needs the safe-area pad. The old condition was
+                // `(amountActive && !isDesktop) || descFocused`, which on
+                // desktop went 16px (initial, amountActive=true) → 10px
+                // (after Description focus, descFocused=true). That 6px
+                // shrink in the action row pulled the whole sheet's TOP
+                // edge 6px downward — the "slight" shift the user saw.
                 paddingBottom:
-                  (amountActive && !isDesktop) || descFocused
+                  !isDesktop && (amountActive || descFocused)
                     ? "10px"
                     : "max(16px, env(safe-area-inset-bottom))",
               }}

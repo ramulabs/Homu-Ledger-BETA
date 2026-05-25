@@ -58,6 +58,24 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.12",
+    date: "May 24, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "On the desktop / web app, opening Add Transaction now reliably focuses the amount field so you can start typing numbers right away — no need to click first.",
+        id: "Di aplikasi desktop / web, membuka Tambah Transaksi kini secara andal memfokuskan kolom jumlah sehingga kamu bisa langsung mengetik angka — tidak perlu klik dulu." },
+      { type: "fix", audience: "user",
+        en: "Also on desktop, the sheet no longer shifts down a few pixels when you click into the Description field — it stays put.",
+        id: "Masih di desktop, lembar tidak lagi bergeser turun beberapa piksel saat kamu mengklik kolom Deskripsi — tetap di tempat." },
+      { type: "fix", audience: "dev",
+        en: "Issue 1 — auto-focus race: PR #73 added `requestAnimationFrame(() => amountRef.current?.focus())` for the desktop open. But `mounted` (the v1.46.6 exit-animation state, declared with `useState(open)`) starts false and only flips true via a `setMounted` inside another effect, so on first open the sheet renders one frame *after* the auto-focus effect runs. A single rAF was racing that re-commit; when it lost, amountRef.current was still null and `.focus()` silently no-op'd. The user saw the coral caret (driven by `amountActive`, not real DOM focus) but typing went nowhere — and only `activateAmount` (click → direct `.focus()`) recovered it. Wrapped in double rAF so the focus call lands after React has committed the mount.",
+        id: "Masalah 1 — race auto-focus: PR #73 menambahkan `requestAnimationFrame(() => amountRef.current?.focus())` untuk pembukaan desktop. Tapi `mounted` (state animasi-keluar v1.46.6, dideklarasikan dengan `useState(open)`) dimulai false dan baru flip true via `setMounted` di dalam effect lain, jadi pada pembukaan pertama lembar dirender satu frame *setelah* effect auto-focus berjalan. Satu rAF saja kalah balapan dengan re-commit itu; saat kalah, amountRef.current masih null dan `.focus()` diam-diam no-op. Pengguna melihat caret coral (digerakkan oleh `amountActive`, bukan focus DOM nyata) tapi ketikan tidak ke mana-mana — hanya `activateAmount` (klik → `.focus()` langsung) yang memulihkannya. Dibungkus dalam double rAF supaya panggilan focus mendarat setelah React selesai meng-commit mount." },
+      { type: "fix", audience: "dev",
+        en: "Issue 2 — 6 px desktop shift: the action row's paddingBottom was `(amountActive && !isDesktop) || descFocused ? \"10px\" : \"max(16px, env(safe-area-inset-bottom))\"`. The `|| descFocused` clause wasn't gated on `!isDesktop`, so on desktop the pad went 16 px (initial, amountActive=true → first branch false) → 10 px (after Description focus, descFocused=true). The 6 px shrink pulled the bottom-anchored sheet's TOP edge 6 px downward — the \"slight\" shift the user felt. Fix: `!isDesktop && (amountActive || descFocused) ? \"10px\" : ...`. Mobile behavior unchanged; desktop padding is stable.",
+        id: "Masalah 2 — pergeseran 6 px di desktop: paddingBottom action row adalah `(amountActive && !isDesktop) || descFocused ? \"10px\" : \"max(16px, env(safe-area-inset-bottom))\"`. Klausa `|| descFocused` tidak digerbangi `!isDesktop`, jadi di desktop pad berubah 16 px (awal, amountActive=true → cabang pertama false) → 10 px (setelah focus Description, descFocused=true). Penyusutan 6 px itu menarik tepi ATAS lembar yang berlabuh di bawah 6 px ke bawah — pergeseran \"sedikit\" yang dirasakan pengguna. Perbaikan: `!isDesktop && (amountActive || descFocused) ? \"10px\" : ...`. Perilaku mobile tidak berubah; padding desktop stabil." },
+    ],
+  },
+  {
     version: "1.46.11",
     date: "May 23, 2026",
     changes: [
