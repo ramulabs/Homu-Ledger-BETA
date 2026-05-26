@@ -1,6 +1,6 @@
 // Inbox address helpers — RAM-25 Phase 1.
 //
-// Each opted-in user gets a personal `<local_part>@inbox.homu.app`
+// Each opted-in user gets a personal `<local_part>@homuinbox.ramu.app`
 // address. Generated server-side on first opt-in, idempotent thereafter.
 // The local-part shape is `lower(username[0..7]) + "-" + 6 base32 random`
 // — short enough to copy/paste comfortably and globally unique by
@@ -70,7 +70,7 @@ export async function ensureInboxAddress(
 }
 
 export function addressFor(localPart: string): string {
-  return `${localPart}@inbox.homu.app`;
+  return `${localPart}@homuinbox.ramu.app`;
 }
 
 /**
