@@ -81,3 +81,132 @@ export async function ensureInboxAddressAction(): Promise<
     };
   }
 }
+
+// ── Accept / reject ───────────────────────────────────────────────────
+//
+// One-tap accept turns a pending inbox row into a real transaction using
+// the user's current household + default wallet. Available only when the
+// row has a `parsed` payload (`parse_method` is set) — raw-only rows
+// will need the Add Transaction edit flow (sub-PR 5). Transfer-type
+// parses also bounce out to the edit flow since they need both a source
+// and a destination wallet.
+
+type AcceptResult =
+  | { ok: true; transaction_id: string }
+  | { ok: false; error: string; needs_edit?: boolean };
+
+export async function acceptInboxItemAction(
+  formData: FormData
+): Promise<AcceptResult> {
+  const { user, profile } = await requireSession();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { ok: false, error: "Missing inbox item id." };
+
+  const admin = getAdminClient();
+  const { data: item } = await admin
+    .from("inbox_items")
+    .select("id, user_id, parsed, status")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!item) return { ok: false, error: "Item not found." };
+  if (item.status !== "pending") {
+    return { ok: false, error: `Item is already ${item.status}.` };
+  }
+
+  const parsed = item.parsed as
+    | { amount?: number; type?: string; name?: string; date?: string }
+    | null;
+  if (!parsed) {
+    return { ok: false, error: "Item has no parsed data yet.", needs_edit: true };
+  }
+  const { amount, type, name, date } = parsed;
+  if (
+    typeof amount !== "number" ||
+    !amount ||
+    typeof name !== "string" ||
+    !name ||
+    typeof date !== "string" ||
+    !date
+  ) {
+    return { ok: false, error: "Parsed data is incomplete.", needs_edit: true };
+  }
+  if (type !== "expense" && type !== "income") {
+    // Transfers need both source + destination wallets — defer to the
+    // full Add Transaction flow.
+    return { ok: false, error: "Transfers can't be one-tap accepted.", needs_edit: true };
+  }
+
+  const householdId = profile?.household_id;
+  if (!householdId) return { ok: false, error: "No active household." };
+
+  // Pick the user's default wallet for this household. Fall back to the
+  // first wallet if none is flagged default.
+  const { data: defaultWallet } = await admin
+    .from("wallets")
+    .select("id")
+    .eq("household_id", householdId)
+    .eq("is_default", true)
+    .maybeSingle();
+  let walletId = defaultWallet?.id ?? null;
+  if (!walletId) {
+    const { data: anyWallet } = await admin
+      .from("wallets")
+      .select("id")
+      .eq("household_id", householdId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    walletId = anyWallet?.id ?? null;
+  }
+
+  const { data: tx, error: txError } = await admin
+    .from("transactions")
+    .insert({
+      household_id: householdId,
+      created_by: user.id,
+      type,
+      amount,
+      name,
+      date,
+      wallet_id: walletId,
+    })
+    .select("id")
+    .single();
+  if (txError) return { ok: false, error: txError.message };
+
+  await admin
+    .from("inbox_items")
+    .update({
+      status: "accepted",
+      accepted_transaction_id: tx.id,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  revalidatePath("/transactions");
+  return { ok: true, transaction_id: tx.id };
+}
+
+export async function rejectInboxItemAction(
+  formData: FormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { user } = await requireSession();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { ok: false, error: "Missing inbox item id." };
+
+  const admin = getAdminClient();
+  const { error } = await admin
+    .from("inbox_items")
+    .update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/transactions");
+  return { ok: true };
+}

@@ -20,6 +20,7 @@ import type { DbTransaction, DbCategory, DbWallet, DbMember, DbHouseholdMembersh
 import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
 import SpeakToAddFab from "@/components/speak-to-add-fab";
+import InboxChip from "@/components/inbox-chip";
 
 type SubTab = "history" | "recurring";
 type DateFilter = "all" | "30d" | "this_month" | "custom";
@@ -499,6 +500,10 @@ export default function TransactionsShell({
             expenses={filteredExpenses}
             currency={currency}
           />
+
+          {/* RAM-25 — chip surfaces pending Email Inbox items. Self-fetches
+              + hides when there's nothing pending, so no prop wiring needed. */}
+          <InboxChip />
 
           {/* Filter active banner */}
           {isFiltering && (
