@@ -1,6 +1,11 @@
 name = "homu-inbox-email-worker"
 main = "src/index.ts"
 compatibility_date = "2026-05-26"
+account_id = "a684c8f126623f4c6a4e8dad6d13d0bb"   # Ramu Labs
+
+# Email Workers are invoked by Cloudflare Email Routing, not over HTTP,
+# so the public workers.dev URL is unnecessary.
+workers_dev = false
 
 [vars]
 HOMU_WEBHOOK_URL = "https://homu.ramu.app/api/inbox/email"
