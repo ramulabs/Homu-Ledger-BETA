@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+# Subprojects (e.g. cloudflare/inbox-email-worker)
+**/node_modules/
+.wrangler/
 /.pnp
 .pnp.*
 .yarn/*
