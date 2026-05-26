@@ -1,0 +1,11 @@
+name = "homu-inbox-email-worker"
+main = "src/index.ts"
+compatibility_date = "2026-05-26"
+
+[vars]
+HOMU_WEBHOOK_URL = "https://homu.ramu.app/api/inbox/email"
+
+# HOMU_WEBHOOK_SECRET is intentionally NOT here. It's set out-of-band:
+#   npx wrangler secret put HOMU_WEBHOOK_SECRET
+# The same value goes into Vercel's CF_EMAIL_WEBHOOK_SECRET so the
+# HOMU endpoint can verify the signature.

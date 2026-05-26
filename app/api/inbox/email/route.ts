@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
   // ── 3. Resolve recipient → user ────────────────────────────────────
   const to = (payload.to ?? "").toLowerCase();
-  const m = /^([^@]+)@inbox\.homu\.app$/i.exec(to);
+  const m = /^([^@]+)@homuinbox\.ramu\.app$/i.exec(to);
   if (!m) {
     return NextResponse.json({ error: "Unknown recipient" }, { status: 404 });
   }
