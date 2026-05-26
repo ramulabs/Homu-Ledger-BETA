@@ -12,7 +12,18 @@ import { Mailbox, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import InboxBento, { type InboxRow } from "@/components/inbox-bento";
 
-export default function InboxChip() {
+type Props = {
+  /** Optional: when set, the bento shows an Edit button on each row
+   *  that hands the inbox item to the parent (typically to open the
+   *  Add Transaction sheet pre-filled). */
+  onEdit?: (item: InboxRow) => void;
+  /** Optional: parent bumps this to force a refetch after an
+   *  out-of-band change (e.g. the edit-via-Add-Transaction flow
+   *  finishing). */
+  refreshSignal?: number;
+};
+
+export default function InboxChip({ onEdit, refreshSignal = 0 }: Props) {
   const [items, setItems] = useState<InboxRow[]>([]);
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -32,7 +43,7 @@ export default function InboxChip() {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, refreshSignal]);
 
   // Refresh when the page becomes visible again (user came back from
   // somewhere else — e.g. swiped between PWAs).
@@ -72,6 +83,7 @@ export default function InboxChip() {
           items={items}
           onClose={() => setOpen(false)}
           onChange={refresh}
+          onEdit={onEdit}
         />
       )}
     </>

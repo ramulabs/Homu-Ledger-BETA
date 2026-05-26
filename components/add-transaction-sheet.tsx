@@ -64,6 +64,21 @@ type Props = {
   /** v1.44.0 — pre-tick the Recurring toggle. Set when the sheet is
    *  opened from the Recurring tab / "Add recurring item" button. */
   defaultRecurring?: boolean;
+  /** RAM-25 — pre-fill the form from an inbox item being edited.
+   *  Applied only for NEW transactions (when `editing` is null).
+   *  Stabilise in the parent (useMemo on the inbox item's id) so the
+   *  reset effect doesn't re-run on every parent render. */
+  prefill?: {
+    type?: "expense" | "income";
+    amount?: string;
+    name?: string;
+    date?: string;
+  } | null;
+  /** RAM-25 — fires before onClose() on each successful SAVE (not on
+   *  cancel / dismiss / delete / move). The inbox edit flow uses this
+   *  to flip the matching inbox row to `accepted`. Only pass it when
+   *  there's actually an inbox item to mark. */
+  onSaved?: () => void;
 };
 
 // Transfer accent stays coral; expense/income pull from the app's
@@ -279,6 +294,8 @@ export default function AddTransactionSheet({
   currentHouseholdId,
   iconStyle = "3d",
   defaultRecurring = false,
+  prefill = null,
+  onSaved,
 }: Props) {
   const tr = useT();
   const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
@@ -531,13 +548,15 @@ export default function AddTransactionSheet({
       }
       setRecurringMode(false);
     } else {
-      setType("expense");
-      setAmount("");
-      setName("");
+      // Defaults for a fresh "+" tap, overlaid with `prefill` when the
+      // sheet was opened from an inbox-item Edit (RAM-25).
+      setType(prefill?.type ?? "expense");
+      setAmount(prefill?.amount ?? "");
+      setName(prefill?.name ?? "");
       setCategoryId(null);
       setWalletId(defaultWallet?.id ?? null);
       setToWalletId(altWallet?.id ?? null);
-      setDate(todayString());
+      setDate(prefill?.date ?? todayString());
       setPhotoPreview(null);
       // Recurring is pre-ticked when opened from the Recurring tab.
       setRecurringMode(!!defaultRecurring);
@@ -568,7 +587,7 @@ export default function AddTransactionSheet({
     setAiSource(null);
     setUserTouchedCategory(!!editing);
     aiSuggestedRef.current = null;
-  }, [open, editing, wallets, defaultRecurring]);
+  }, [open, editing, wallets, defaultRecurring, prefill]);
 
   // Desktop: focus the amount field on open so the user can type with
   // their physical keyboard immediately, without an extra click.
@@ -698,6 +717,7 @@ export default function AddTransactionSheet({
         setLoading(false);
       } else {
         void recordCategoryUsage(name, categoryId);
+        onSaved?.();
         onClose();
       }
       return;
@@ -725,6 +745,7 @@ export default function AddTransactionSheet({
         setError(result.error);
         setLoading(false);
       } else {
+        onSaved?.();
         onClose();
       }
       return;
@@ -767,6 +788,7 @@ export default function AddTransactionSheet({
     if (result && isQueued(result)) {
       void recordCategoryUsage(name, categoryId);
       if (!editing) logEvent("transaction_completed", { queued: true });
+      onSaved?.();
       onClose();
       return;
     }
@@ -776,6 +798,7 @@ export default function AddTransactionSheet({
     } else {
       void recordCategoryUsage(name, categoryId);
       if (!editing) logEvent("transaction_completed", { queued: false });
+      onSaved?.();
       onClose();
     }
   }

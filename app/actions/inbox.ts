@@ -210,3 +210,40 @@ export async function rejectInboxItemAction(
   revalidatePath("/transactions");
   return { ok: true };
 }
+
+/**
+ * Flip a pending inbox item to `accepted` without going through the
+ * one-tap path. Used by the Edit flow: the user opens the row in
+ * AddTransactionSheet, edits + saves a real transaction via the
+ * existing queued path, and then we mark the inbox row done.
+ *
+ * `accepted_transaction_id` is optional — the offline queue doesn't
+ * synchronously hand back a tx id, and the link is for traceability
+ * only.
+ */
+export async function markInboxAcceptedAction(
+  formData: FormData
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { user } = await requireSession();
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { ok: false, error: "Missing inbox item id." };
+
+  const txRaw = String(formData.get("transaction_id") ?? "").trim();
+  const transactionId = txRaw.length > 0 ? txRaw : null;
+
+  const admin = getAdminClient();
+  const { error } = await admin
+    .from("inbox_items")
+    .update({
+      status: "accepted",
+      accepted_transaction_id: transactionId,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/transactions");
+  return { ok: true };
+}

@@ -21,6 +21,8 @@ import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
 import SpeakToAddFab from "@/components/speak-to-add-fab";
 import InboxChip from "@/components/inbox-chip";
+import { type InboxRow } from "@/components/inbox-bento";
+import { markInboxAcceptedAction } from "@/app/actions/inbox";
 
 type SubTab = "history" | "recurring";
 type DateFilter = "all" | "30d" | "this_month" | "custom";
@@ -140,6 +142,12 @@ export default function TransactionsShell({
 
   // Transaction sheet
   const [showSheet, setShowSheet] = useState(false);
+  // RAM-25 — when set, the next "open" of AddTransactionSheet pre-fills
+  // from this inbox item and onSaved flips its inbox row to accepted.
+  const [inboxEdit, setInboxEdit] = useState<InboxRow | null>(null);
+  // Bump this to force InboxChip to refetch (after the edit-via-sheet
+  // flow completes — the chip otherwise refreshes only on visibility).
+  const [inboxRefresh, setInboxRefresh] = useState(0);
   const [editingTx, setEditingTx] = useState<DbTransaction | null>(null);
   // v1.44.0 — true when the unified sheet was opened to create a
   // recurring item (from the Recurring tab / "Add recurring" button).
@@ -381,10 +389,38 @@ export default function TransactionsShell({
     setShowSheet(false);
     setEditingTx(null);
     setSheetRecurring(false);
+    setInboxEdit(null);
     if (typeof window !== "undefined" && window.location.search.includes("new=1")) {
       window.history.replaceState({}, "", "/transactions");
     }
   }
+
+  // RAM-25 — Edit on an inbox row opens AddTransactionSheet with the
+  // parsed fields pre-filled. The sheet's onSaved hook flips the row.
+  function handleInboxEdit(item: InboxRow) {
+    setInboxEdit(item);
+    setEditingTx(null);
+    setSheetRecurring(false);
+    setShowSheet(true);
+  }
+  async function handleInboxSaved() {
+    if (!inboxEdit) return;
+    const fd = new FormData();
+    fd.set("id", inboxEdit.id);
+    await markInboxAcceptedAction(fd);
+    setInboxRefresh((n) => n + 1);
+  }
+  const inboxPrefill = useMemo(() => {
+    if (!inboxEdit?.parsed) return null;
+    const p = inboxEdit.parsed;
+    const type: "expense" | "income" = p.type === "income" ? "income" : "expense";
+    return {
+      type,
+      amount: typeof p.amount === "number" ? String(p.amount) : "",
+      name: typeof p.name === "string" ? p.name : "",
+      date: typeof p.date === "string" ? p.date : "",
+    };
+  }, [inboxEdit]);
 
   // v1.44.0 — "Add recurring item" no longer opens a separate sheet.
   // It opens the SAME AddTransactionSheet with the Recurring toggle
@@ -502,8 +538,10 @@ export default function TransactionsShell({
           />
 
           {/* RAM-25 — chip surfaces pending Email Inbox items. Self-fetches
-              + hides when there's nothing pending, so no prop wiring needed. */}
-          <InboxChip />
+              + hides when there's nothing pending. onEdit hands the row
+              off to AddTransactionSheet pre-filled; refreshSignal makes
+              the chip re-fetch after that save completes. */}
+          <InboxChip onEdit={handleInboxEdit} refreshSignal={inboxRefresh} />
 
           {/* Filter active banner */}
           {isFiltering && (
@@ -579,6 +617,8 @@ export default function TransactionsShell({
         currentHouseholdId={householdId}
         iconStyle={iconStyle}
         defaultRecurring={sheetRecurring}
+        prefill={inboxPrefill}
+        onSaved={inboxEdit ? handleInboxSaved : undefined}
       />
 
       <AddRecurringSheet
