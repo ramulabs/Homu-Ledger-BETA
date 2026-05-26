@@ -1,5 +1,5 @@
 // AUTO-GENERATED — do not edit by hand.
-// Regenerated via Supabase MCP after migration 0026_device_nicknames.
+// Regenerated via Supabase MCP after migration 0033_email_inbox.
 export type Json =
   | string
   | number
@@ -9,6 +9,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -216,6 +218,30 @@ export type Database = {
           keyword?: string
           kind?: string
           lang?: string
+        }
+        Relationships: []
+      }
+      device_nicknames: {
+        Row: {
+          created_at: string
+          nickname: string
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          nickname: string
+          session_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          nickname?: string
+          session_id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -449,6 +475,134 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      inbox_items: {
+        Row: {
+          accepted_transaction_id: string | null
+          created_at: string
+          id: string
+          message_id: string
+          parse_confidence: number | null
+          parse_error: string | null
+          parse_method: string | null
+          parsed: Json | null
+          raw_body: string
+          raw_body_format: string
+          raw_subject: string | null
+          received_at: string
+          reviewed_at: string | null
+          sender_email: string
+          source_domain: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          accepted_transaction_id?: string | null
+          created_at?: string
+          id?: string
+          message_id: string
+          parse_confidence?: number | null
+          parse_error?: string | null
+          parse_method?: string | null
+          parsed?: Json | null
+          raw_body: string
+          raw_body_format: string
+          raw_subject?: string | null
+          received_at: string
+          reviewed_at?: string | null
+          sender_email: string
+          source_domain: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          accepted_transaction_id?: string | null
+          created_at?: string
+          id?: string
+          message_id?: string
+          parse_confidence?: number | null
+          parse_error?: string | null
+          parse_method?: string | null
+          parsed?: Json | null
+          raw_body?: string
+          raw_body_format?: string
+          raw_subject?: string | null
+          received_at?: string
+          reviewed_at?: string | null
+          sender_email?: string
+          source_domain?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_items_accepted_transaction_id_fkey"
+            columns: ["accepted_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbox_sender_patterns: {
+        Row: {
+          created_at: string
+          failed_uses: number
+          id: string
+          last_used_at: string | null
+          pattern: Json
+          sender_domain: string
+          successful_uses: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          failed_uses?: number
+          id?: string
+          last_used_at?: string | null
+          pattern: Json
+          sender_domain: string
+          successful_uses?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          failed_uses?: number
+          id?: string
+          last_used_at?: string | null
+          pattern?: Json
+          sender_domain?: string
+          successful_uses?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inbox_sender_patterns_seed: {
+        Row: {
+          created_at: string
+          id: string
+          pattern: Json
+          sender_domain: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pattern: Json
+          sender_domain: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pattern?: Json
+          sender_domain?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -727,6 +881,60 @@ export type Database = {
           },
         ]
       }
+      user_api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          revoked_at: string | null
+          scopes: string[]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          revoked_at?: string | null
+          scopes?: string[]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          revoked_at?: string | null
+          scopes?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_inbox_addresses: {
+        Row: {
+          created_at: string
+          local_part: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          local_part: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          local_part?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           client_op_id: string | null
@@ -862,10 +1070,6 @@ export type Database = {
           user_agent: string
         }[]
       }
-      rename_device_session: {
-        Args: { p_nickname: string; p_session_id: string }
-        Returns: undefined
-      }
       log_api_usage: {
         Args: {
           p_cache_status: string
@@ -898,12 +1102,12 @@ export type Database = {
           tier: string
         }[]
       }
-      save_app_setting: {
-        Args: { p_key: string; p_value: string }
+      rename_device_session: {
+        Args: { p_nickname: string; p_session_id: string }
         Returns: undefined
       }
-      seed_default_category_hints: {
-        Args: { p_household_id: string }
+      save_app_setting: {
+        Args: { p_key: string; p_value: string }
         Returns: undefined
       }
       sign_out_session: { Args: { p_session_id: string }; Returns: undefined }
