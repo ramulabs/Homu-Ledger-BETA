@@ -9,7 +9,7 @@
 // sub-PR 5.
 
 import { useEffect, useState } from "react";
-import { X, Mailbox, Check, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { X, Mailbox, Check, Trash2, Pencil, AlertTriangle, Loader2 } from "lucide-react";
 import {
   acceptInboxItemAction,
   rejectInboxItemAction,
@@ -41,6 +41,11 @@ type Props = {
   /** Called after a row is accepted or rejected so the caller can
    *  refresh its data. */
   onChange?: () => void;
+  /** Optional: when provided, each row shows an Edit button that hands
+   *  the inbox item off to the caller (typically AddTransactionSheet
+   *  with the parsed fields pre-filled). The bento closes immediately
+   *  after the hand-off so the sheet can take over the screen. */
+  onEdit?: (item: InboxRow) => void;
 };
 
 export default function InboxBento({
@@ -48,6 +53,7 @@ export default function InboxBento({
   onClose,
   onCloseStart,
   onChange,
+  onEdit,
 }: Props) {
   // Double-RAF enter — same trick as category-picker so the slide-up
   // never gets batched into an instant pop.
@@ -67,6 +73,11 @@ export default function InboxBento({
     setVisible(false);
     onCloseStart?.();
     setTimeout(onClose, 560);
+  }
+
+  function handleEditRow(item: InboxRow) {
+    onEdit?.(item);
+    startClose();
   }
 
   return (
@@ -131,7 +142,12 @@ export default function InboxBento({
             </div>
           ) : (
             items.map((it) => (
-              <InboxRowCard key={it.id} item={it} onChange={onChange} />
+              <InboxRowCard
+                key={it.id}
+                item={it}
+                onChange={onChange}
+                onEdit={onEdit ? () => handleEditRow(it) : undefined}
+              />
             ))
           )}
         </div>
@@ -143,9 +159,11 @@ export default function InboxBento({
 function InboxRowCard({
   item,
   onChange,
+  onEdit,
 }: {
   item: InboxRow;
   onChange?: () => void;
+  onEdit?: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -239,7 +257,7 @@ function InboxRowCard({
       )}
 
       <div className="mt-2 flex items-center gap-1.5">
-        {canConfirm ? (
+        {canConfirm && (
           <button
             type="button"
             onClick={handleConfirm}
@@ -253,7 +271,23 @@ function InboxRowCard({
             )}
             Confirm
           </button>
-        ) : (
+        )}
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            disabled={busy}
+            className={
+              canConfirm
+                ? "inline-flex h-8 items-center gap-1 rounded-full bg-black/[0.05] px-3 text-[12px] font-semibold text-[var(--foreground)] transition-opacity disabled:opacity-60"
+                : "inline-flex h-8 items-center gap-1 rounded-full bg-[var(--foreground)] px-3 text-[12px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
+            }
+          >
+            <Pencil className="h-3 w-3" strokeWidth={2.25} />
+            Edit
+          </button>
+        )}
+        {!canConfirm && !onEdit && (
           <span className="inline-flex h-8 items-center rounded-full bg-black/[0.05] px-3 text-[12px] font-medium text-[var(--label-secondary)]">
             Needs editing
           </span>
@@ -263,7 +297,7 @@ function InboxRowCard({
           onClick={handleReject}
           disabled={busy}
           aria-label="Reject"
-          className="inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-semibold text-rose-600 transition-opacity disabled:opacity-60"
+          className="ml-auto inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-[12px] font-semibold text-rose-600 transition-opacity disabled:opacity-60"
         >
           <Trash2 className="h-3 w-3" strokeWidth={2} />
           Reject
