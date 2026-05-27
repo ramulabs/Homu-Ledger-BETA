@@ -29,7 +29,7 @@
 // changed; only the presentation did.
 
 import { useState, useEffect, useRef } from "react";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2 } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, ScanLine } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
@@ -37,6 +37,8 @@ import { withTimeout } from "@/lib/with-timeout";
 import { signTransactionPhoto } from "@/app/actions/photos";
 import { addRecurringItem } from "@/app/actions/recurring";
 import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
+import { parseReceiptPhoto } from "@/app/actions/receipt-ocr";
+import { captureReceiptPhoto } from "@/lib/capture";
 import CategoryPicker from "@/components/category-picker";
 import NumericKeypad from "@/components/numeric-keypad";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
@@ -79,6 +81,14 @@ type Props = {
    *  to flip the matching inbox row to `accepted`. Only pass it when
    *  there's actually an inbox item to mark. */
   onSaved?: () => void;
+  /** RAM-6 — show the "Scan Receipt" chip in the action row. Same
+   *  server-side gate as voice (dev + gemini_api_key configured); the
+   *  consumer passes it down only when both hold. The chip is purely
+   *  additive — when false, nothing changes. */
+  ocrEnabled?: boolean;
+  /** RAM-6 — bilingual prompt hint for the OCR call. Same household
+   *  `ai_language` field that voice + auto-categorise already use. */
+  ocrLanguageHint?: "auto" | "en" | "id";
 };
 
 // Transfer accent stays coral; expense/income pull from the app's
@@ -296,6 +306,8 @@ export default function AddTransactionSheet({
   defaultRecurring = false,
   prefill = null,
   onSaved,
+  ocrEnabled = false,
+  ocrLanguageHint = "auto",
 }: Props) {
   const tr = useT();
   const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
@@ -330,6 +342,24 @@ export default function AddTransactionSheet({
   const aiSuggestedRef = useRef<string | null>(null);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const previewObjectUrlRef = useRef<string | null>(null);
+
+  // RAM-6 — Receipt OCR state.
+  //   • `ocrScanning` drives the loading state on the Scan chip + a
+  //     non-blocking overlay; the form remains interactive while the
+  //     scan runs (the user can start typing if they're impatient).
+  //   • `ocrFilled` tracks which fields the LAST scan pre-filled — used
+  //     to render a sparkle next to each AI-filled cell. The user
+  //     manually editing a field clears that field's flag.
+  //   • `ocrHintLow` is set when the scan returned a low-confidence
+  //     read for at least one field; the inline hint nudges the user
+  //     to double-check before saving. Bilingual.
+  const [ocrScanning, setOcrScanning] = useState(false);
+  const [ocrFilled, setOcrFilled] = useState<{ amount: boolean; name: boolean; date: boolean }>({
+    amount: false,
+    name: false,
+    date: false,
+  });
+  const [ocrHintLow, setOcrHintLow] = useState(false);
 
   // v1.45.4 — true when the in-app numeric keypad is showing (the
   // amount field is "active"). For a NEW transaction it starts true
@@ -507,9 +537,12 @@ export default function AddTransactionSheet({
       // Strip leading zeros so "0" → "" and "05" → "5".
       return (prev + d).replace(/^0+/, "");
     });
+    // RAM-6 — any manual digit clears the OCR sparkle on amount.
+    clearOcrFlag("amount");
   }
   function backspaceAmount() {
     setAmount((prev) => prev.slice(0, -1));
+    clearOcrFlag("amount");
   }
 
   function openWalletPicker(slot: "wallet" | "from" | "to") {
@@ -587,6 +620,11 @@ export default function AddTransactionSheet({
     setAiSource(null);
     setUserTouchedCategory(!!editing);
     aiSuggestedRef.current = null;
+    // RAM-6 — clear last-scan flags so a fresh sheet doesn't carry
+    // stale sparkles. Reset before any scan can fire.
+    setOcrScanning(false);
+    setOcrFilled({ amount: false, name: false, date: false });
+    setOcrHintLow(false);
   }, [open, editing, wallets, defaultRecurring, prefill]);
 
   // Desktop: focus the amount field on open so the user can type with
@@ -687,6 +725,141 @@ export default function AddTransactionSheet({
     setPhotoPreview(null);
     if (fileRef.current) fileRef.current.value = "";
     if (cameraRef.current) cameraRef.current.value = "";
+  }
+
+  // ── RAM-6 — Receipt OCR ─────────────────────────────────────────────
+  // Capture → compress → send to Gemini Vision → pre-fill the form +
+  // attach the captured image. The capture step is abstracted behind
+  // lib/capture.ts so the iOS-Capacitor build can swap in the native
+  // camera plugin without touching this component.
+  //
+  // Pre-fill rules (mirrors the spec):
+  //   • Per-field confidence threshold 0.6 — under that, leave the
+  //     field empty + show the bilingual low-confidence hint.
+  //   • The CAPTURED IMAGE is reused as the transaction's photo
+  //     attachment (no second capture needed). Goes through the same
+  //     compressPhoto + uploadTransactionPhoto pipeline as the manual
+  //     Camera / Gallery chips.
+  //   • Sparkle stays on each filled field until the user touches it
+  //     (clearOcrFlag) — same affordance the AI category suggestion uses.
+  async function handleScanReceipt() {
+    if (ocrScanning) return;
+    setError(null);
+    setOcrHintLow(false);
+
+    let captured: File | null;
+    try {
+      captured = await captureReceiptPhoto({ source: "camera" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("ocr.error"));
+      return;
+    }
+    if (!captured) return; // user cancelled
+
+    setOcrScanning(true);
+    try {
+      // Compress for the upload AND the OCR payload. Same pipeline the
+      // manual photo flow already uses — keeps a snapped receipt under
+      // ~400 KB even from a 12 MP rear camera, well below the 8 MB cap
+      // in the OCR action.
+      const compressed = await compressPhoto(captured);
+
+      // Attach the compressed image as the transaction photo first so
+      // the preview shows immediately while OCR is in flight — the
+      // visible feedback matters more than the field pre-fill speed.
+      if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current);
+      const previewUrl = URL.createObjectURL(compressed);
+      previewObjectUrlRef.current = previewUrl;
+      setPhotoPreview(previewUrl);
+      setPhoto(compressed);
+
+      const fd = new FormData();
+      fd.set("photo", compressed, compressed.name || "receipt.jpg");
+      if (ocrLanguageHint && ocrLanguageHint !== "auto") {
+        fd.set("language_hint", ocrLanguageHint);
+      }
+
+      const result = await parseReceiptPhoto(fd);
+      if (!result.ok) {
+        setError(result.unconfigured ? tr("ocr.unconfigured") : tr("ocr.error"));
+        return;
+      }
+      if (!result.parse.isReceipt) {
+        setError(tr("ocr.notReceipt"));
+        return;
+      }
+
+      // Pre-fill expense by default — receipts are nearly always
+      // expenses. Don't flip the user's chosen type if they've already
+      // picked transfer or income before scanning.
+      if (type === "transfer") {
+        setType("expense");
+      }
+
+      const next: { amount: boolean; name: boolean; date: boolean } = {
+        amount: false,
+        name: false,
+        date: false,
+      };
+      let sawLow = false;
+
+      const p = result.parse;
+      if (p.amount.value !== null) {
+        if (p.amount.confidence >= 0.6) {
+          setAmount(String(p.amount.value));
+          next.amount = true;
+        } else {
+          sawLow = true;
+        }
+      } else {
+        sawLow = true;
+      }
+
+      if (p.merchant.value) {
+        if (p.merchant.confidence >= 0.6) {
+          setName(p.merchant.value);
+          next.name = true;
+          // Description was set from OCR — let the AI category
+          // suggester kick in based on the merchant name. The existing
+          // effect handles that automatically by watching `name`.
+        } else {
+          sawLow = true;
+        }
+      } else {
+        sawLow = true;
+      }
+
+      if (p.date.value) {
+        if (p.date.confidence >= 0.6) {
+          setDate(p.date.value);
+          next.date = true;
+        } else {
+          sawLow = true;
+        }
+      } else {
+        sawLow = true;
+      }
+
+      setOcrFilled(next);
+      setOcrHintLow(sawLow);
+
+      // Activate the amount field so the in-app keypad opens and the
+      // caret blinks, in case the user wants to correct the AI value.
+      // Skip on desktop where we don't summon the keypad.
+      if (next.amount && !isDesktop) {
+        setAmountActive(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : tr("ocr.error"));
+    } finally {
+      setOcrScanning(false);
+    }
+  }
+
+  // Manual edits on an AI-filled field clear that field's sparkle.
+  // Mirrors the userTouchedCategory pattern for AI auto-categorise.
+  function clearOcrFlag(field: "amount" | "name" | "date") {
+    setOcrFilled((prev) => (prev[field] ? { ...prev, [field]: false } : prev));
   }
 
   // ── Submit ──────────────────────────────────────────────────────────
@@ -999,31 +1172,62 @@ export default function AddTransactionSheet({
 
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-col overflow-hidden">
             {/* Hero amount — driven by the in-app keypad (NumericKeypad
-                below), not the native keyboard. */}
-            <HeroAmountInput
-              value={amount}
-              focused={amountActive}
-              fieldRef={amountRef}
-              onActivate={activateAmount}
-              onDigit={pushDigit}
-              onBackspace={backspaceAmount}
-            />
+                below), not the native keyboard.
+                RAM-6 — wrap in a relative container so a sparkle pill
+                can sit at top-right when the amount was OCR-filled. */}
+            <div className="relative">
+              <HeroAmountInput
+                value={amount}
+                focused={amountActive}
+                fieldRef={amountRef}
+                onActivate={activateAmount}
+                onDigit={pushDigit}
+                onBackspace={backspaceAmount}
+              />
+              {ocrFilled.amount && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#EE6452]/10 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide text-[#EE6452]"
+                  style={{ animation: "ai-sparkle-blink 2.8s ease-in-out infinite" }}
+                >
+                  <Sparkles className="h-3 w-3" strokeWidth={2.5} />
+                  AI
+                </span>
+              )}
+            </div>
 
             {/* Body — natural height, scrolls if it overflows. */}
             <div data-scroll className="flex flex-[0_1_auto] flex-col gap-2.5 overflow-y-auto px-5 pb-3" style={{ minHeight: 0 }}>
               {/* Description (expense/income + transfer notes).
                   Focusing it hides the in-app keypad so the native
-                  keyboard can take over for text entry. */}
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onFocus={() => { setAmountActive(false); setDescFocused(true); }}
-                onBlur={() => setDescFocused(false)}
-                placeholder={isTransfer ? tr("tx.note") : tr("tx.descriptionPlaceholder")}
-                aria-label={tr("tx.description")}
-                className="h-12 w-full rounded-full border border-[var(--separator)] bg-[var(--background)] px-[18px] text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
-              />
+                  keyboard can take over for text entry.
+                  RAM-6 — wrapper renders an OCR sparkle outside the
+                  pill when the merchant was AI-filled. Editing the
+                  text clears the sparkle (clearOcrFlag). */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); clearOcrFlag("name"); }}
+                  onFocus={() => { setAmountActive(false); setDescFocused(true); }}
+                  onBlur={() => setDescFocused(false)}
+                  placeholder={isTransfer ? tr("tx.note") : tr("tx.descriptionPlaceholder")}
+                  aria-label={tr("tx.description")}
+                  className={cn(
+                    "h-12 w-full rounded-full border bg-[var(--background)] px-[18px] text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30",
+                    ocrFilled.name ? "border-[#EE6452]/40 pr-10" : "border-[var(--separator)]"
+                  )}
+                />
+                {ocrFilled.name && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-y-0 right-3 inline-flex items-center text-[#EE6452]"
+                    style={{ animation: "ai-sparkle-blink 2.8s ease-in-out infinite" }}
+                  >
+                    <Sparkles className="h-4 w-4" strokeWidth={2.25} />
+                  </span>
+                )}
+              </div>
 
               {/* Account row */}
               {isTransfer ? (
@@ -1057,18 +1261,32 @@ export default function AddTransactionSheet({
               {/* Date + Recurring toggle */}
               <div className="flex items-stretch gap-2">
                 <div className="relative h-12 min-w-0 flex-1">
-                  <div className="pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--background)] px-4">
+                  <div
+                    className={cn(
+                      "pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border bg-[var(--background)] px-4",
+                      ocrFilled.date ? "border-[#EE6452]/40" : "border-[var(--separator)]"
+                    )}
+                  >
                     <Calendar className="h-[18px] w-[18px] shrink-0 text-[var(--label-secondary)]" strokeWidth={2} />
                     <span className="flex-1 truncate text-left text-[14.5px] font-medium text-[var(--foreground)]">
                       {recurringMode && <span className="text-[var(--label-secondary)]">{tr("recurring.startingPrefix")} </span>}
                       {dateLabel}
                     </span>
+                    {ocrFilled.date && (
+                      <span
+                        aria-hidden
+                        className="inline-flex items-center text-[#EE6452]"
+                        style={{ animation: "ai-sparkle-blink 2.8s ease-in-out infinite" }}
+                      >
+                        <Sparkles className="h-3.5 w-3.5" strokeWidth={2.25} />
+                      </span>
+                    )}
                     <ChevronDown className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
                   </div>
                   <input
                     type="date"
                     value={date}
-                    onChange={(e) => setDate(e.target.value)}
+                    onChange={(e) => { setDate(e.target.value); clearOcrFlag("date"); }}
                     // v1.46.4 — the input is opacity:0 (the visible pill
                     // above is the real UI). On a phone, tapping anywhere
                     // on a date input opens the native picker — so it
@@ -1146,6 +1364,19 @@ export default function AddTransactionSheet({
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelected(f); }} />
               <input ref={fileRef} type="file" accept="image/*" className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelected(f); }} />
+
+              {/* RAM-6 — bilingual low-confidence nudge. Shown after a
+                  scan when at least one field came back below the 0.6
+                  threshold. Dismisses implicitly when the user types
+                  in the missing field (the field's clearOcrFlag path
+                  doesn't clear this — it's a one-time hint that scrolls
+                  out of view as the user fills the form). */}
+              {ocrHintLow && !error && (
+                <p className="flex items-center gap-2 rounded-xl bg-[#EE6452]/10 px-4 py-2.5 text-[13px] text-[#EE6452] ring-1 ring-[#EE6452]/20">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                  <span>{tr("ocr.lowConfidence")}</span>
+                </p>
+              )}
 
               {error && (
                 <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-[13px] text-rose-700 ring-1 ring-rose-200">
@@ -1310,9 +1541,21 @@ export default function AddTransactionSheet({
                     />
                   </div>
                 )}
-                {/* Photo chips (create mode, no photo yet) */}
+                {/* Photo chips (create mode, no photo yet).
+                    RAM-6 — Scan chip is the AI-affordance sibling of
+                    Camera + Gallery. It captures via the same camera
+                    plumbing, then runs the receipt through Gemini
+                    Vision and pre-fills the form. Server-gated by
+                    `ocrEnabled` (dev + Gemini key, same as voice). */}
                 {!editing && !isTransfer && !recurringMode && !photoPreview && (
                   <>
+                    {ocrEnabled && (
+                      <ScanReceiptChip
+                        label={ocrScanning ? tr("ocr.scanning") : tr("ocr.scanReceipt")}
+                        scanning={ocrScanning}
+                        onClick={handleScanReceipt}
+                      />
+                    )}
                     <PhotoChip icon="camera" label="Camera" onClick={() => cameraRef.current?.click()} />
                     <PhotoChip icon="gallery" label="Gallery" onClick={() => fileRef.current?.click()} />
                   </>
@@ -1493,6 +1736,41 @@ function PhotoChip({ icon, label, onClick }: { icon: "camera" | "gallery"; label
       className="inline-flex h-[34px] items-center gap-1.5 rounded-full border border-[var(--separator)] bg-transparent pl-[11px] pr-[13px] text-[13px] font-semibold text-[var(--label-secondary)]"
     >
       {icon === "camera" ? <Camera className="h-[15px] w-[15px]" strokeWidth={2} /> : <ImagePlus className="h-[15px] w-[15px]" strokeWidth={2} />}
+      {label}
+    </button>
+  );
+}
+
+// RAM-6 — Scan Receipt chip. AI affordance (tinted coral to match the
+// other AI surfaces in the app — sparkle FAB, AI category badge). The
+// scanning state swaps the icon for a spinner and dims the chip; the
+// label changes to "Reading…" / "Membaca…" via the parent's i18n.
+function ScanReceiptChip({
+  label,
+  scanning,
+  onClick,
+}: {
+  label: string;
+  scanning: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={scanning}
+      className="inline-flex h-[34px] items-center gap-1.5 rounded-full pl-[11px] pr-[13px] text-[13px] font-semibold transition-opacity disabled:opacity-70"
+      style={{
+        background: "rgba(238,100,82,0.10)",
+        color: "#EE6452",
+        border: "1px solid rgba(238,100,82,0.25)",
+      }}
+    >
+      {scanning ? (
+        <Loader2 className="h-[15px] w-[15px] animate-spin" strokeWidth={2.25} />
+      ) : (
+        <ScanLine className="h-[15px] w-[15px]" strokeWidth={2.25} />
+      )}
       {label}
     </button>
   );

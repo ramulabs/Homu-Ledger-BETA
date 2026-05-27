@@ -83,7 +83,7 @@ export default async function TransactionsPage() {
 
   const { data: household } = await supabase
     .from("households")
-    .select("id, name, opening_balance, currency, symbol")
+    .select("id, name, opening_balance, currency, symbol, ai_language")
     .eq("id", profile.household_id)
     .single();
 
@@ -110,8 +110,18 @@ export default async function TransactionsPage() {
     .select("value")
     .eq("key", "voice_input_enabled")
     .maybeSingle();
+  // RAM-6 — the OCR feature reuses the gemini_api_key (read by the
+  // server action) and the same dev-only gate as voice. The chip only
+  // appears when both hold; otherwise the manual photo flow is the
+  // sole entry point. Fetched in parallel so the page render isn't
+  // chained on a third sequential round-trip.
+  const geminiKeyPromise = supabase
+    .from("app_settings")
+    .select("value")
+    .eq("key", "gemini_api_key")
+    .maybeSingle();
 
-  const [{ data: categoriesRaw }, { data: walletsRaw }, { data: membersRaw }, txRaw, { data: membershipsRaw }, { data: recurringRaw }, { data: invitationsRaw }, totals, { data: voiceFlagRow }] = await Promise.all([
+  const [{ data: categoriesRaw }, { data: walletsRaw }, { data: membersRaw }, txRaw, { data: membershipsRaw }, { data: recurringRaw }, { data: invitationsRaw }, totals, { data: voiceFlagRow }, { data: geminiKeyRow }] = await Promise.all([
     supabase
       .from("categories")
       .select("id, name, symbol, color, type")
@@ -145,12 +155,24 @@ export default async function TransactionsPage() {
       .order("created_at", { ascending: false }),
     fetchLedgerTotalRows(supabase, household.id),
     voiceFlagPromise,
+    geminiKeyPromise,
   ]);
   // v1.41.1: voice is dev-only for now. The flag still has to be flipped
   // in app_settings AND the viewing profile has to be a developer. This
   // narrows the blast radius while we shake out edge cases on real
   // hardware before opening to everyone.
   const voiceEnabled = voiceFlagRow?.value === "true" && profile.is_developer === true;
+  // RAM-6: gate the Scan Receipt chip identically — dev profile + a
+  // configured Gemini key. (No separate feature flag for now; both AI
+  // surfaces share the same beta blast radius.)
+  const ocrEnabled =
+    profile.is_developer === true && !!geminiKeyRow?.value && geminiKeyRow.value.trim().length > 0;
+  const ocrLanguageHint =
+    (household as { ai_language?: string | null }).ai_language === "id"
+      ? "id"
+      : (household as { ai_language?: string | null }).ai_language === "en"
+        ? "en"
+        : "auto";
 
   const categories: DbCategory[] = categoriesRaw ?? [];
   const wallets: DbWallet[] = (walletsRaw ?? []).map((w) => ({
@@ -230,6 +252,8 @@ export default async function TransactionsPage() {
       recurringItems={recurringItems}
       iconStyle={profile.icon_style ?? "3d"}
       voiceEnabled={voiceEnabled}
+      ocrEnabled={ocrEnabled}
+      ocrLanguageHint={ocrLanguageHint}
     />
   );
 }
