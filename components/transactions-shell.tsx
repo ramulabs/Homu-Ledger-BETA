@@ -77,6 +77,14 @@ type Props = {
    *  app_settings.voice_input_enabled; the FAB component itself also
    *  greys out when navigator.onLine is false. */
   voiceEnabled?: boolean;
+  /** RAM-6 — render the "Scan Receipt" chip in the Add Transaction
+   *  sheet? Server-rendered gate; for now the same dev-only blast
+   *  radius as voice (both share the Gemini key). */
+  ocrEnabled?: boolean;
+  /** RAM-6 — household ai_language passed straight through to the OCR
+   *  prompt. 'auto' lets Gemini guess; 'en' / 'id' biases the prompt
+   *  toward the right number format (Rp45.000 vs $45.00). */
+  ocrLanguageHint?: "auto" | "en" | "id";
 };
 
 export default function TransactionsShell({
@@ -97,6 +105,8 @@ export default function TransactionsShell({
   recurringItems,
   iconStyle = "3d",
   voiceEnabled = false,
+  ocrEnabled = false,
+  ocrLanguageHint = "auto",
 }: Props) {
   const t = useT();
   const [tab, setTab] = useState<SubTab>("history");
@@ -619,6 +629,8 @@ export default function TransactionsShell({
         defaultRecurring={sheetRecurring}
         prefill={inboxPrefill}
         onSaved={inboxEdit ? handleInboxSaved : undefined}
+        ocrEnabled={ocrEnabled}
+        ocrLanguageHint={ocrLanguageHint}
       />
 
       <AddRecurringSheet
