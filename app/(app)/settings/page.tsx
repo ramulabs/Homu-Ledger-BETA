@@ -230,7 +230,11 @@ export default async function SettingsPage() {
           value={languageLabel}
         />
         <PrivacyToggleRow />
-        <Row icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.notifications")} />
+        <RowLink
+          href="/settings/notifications"
+          icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />}
+          label={t("settings.notifications")}
+        />
       </Group>
 
       {/* Data — export, future backup/restore. Lives between Account and
@@ -293,20 +297,6 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
         {children}
       </ul>
     </section>
-  );
-}
-
-function Row({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <li>
-      <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left min-h-[52px] active:bg-black/[0.02] transition-colors">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
-          {icon}
-        </span>
-        <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{label}</p>
-        <ChevronRight className="h-[18px] w-[18px] text-[var(--label-tertiary)]" strokeWidth={2} />
-      </button>
-    </li>
   );
 }
 
