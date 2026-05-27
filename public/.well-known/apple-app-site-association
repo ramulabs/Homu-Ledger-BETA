@@ -1,0 +1,22 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["TEAMID.app.ramu.homu"],
+        "components": [
+          { "/": "/login", "exclude": true },
+          { "/": "/login/*", "exclude": true },
+          { "/": "/signup", "exclude": true },
+          { "/": "/signup/*", "exclude": true },
+          { "/": "/auth/*", "exclude": true },
+          { "/": "/privacy", "exclude": true },
+          { "/": "/*" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.app.ramu.homu"]
+  }
+}
