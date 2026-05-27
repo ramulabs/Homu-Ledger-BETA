@@ -43,6 +43,39 @@ export type DbPendingInvitation = {
   inviter: { id: string; name: string; initials: string; avatar_color: string } | null;
 };
 
+/**
+ * RAM-5 — per-category monthly budget.
+ *
+ * One row per (household_id, category_id). `amount` is in the same natural
+ * units as transactions (numeric(14,2)); `spent` is filled in on read by the
+ * `get_budget_spent_this_month` RPC and is NOT a DB column. The spent value
+ * resets implicitly on the 1st of each calendar month because the RPC is
+ * date-scoped — no rollover, no cron job.
+ *
+ * `crossedPct` (0–1) is a convenience client-side derived value: 0.8 = amber,
+ * 1.0 = red "Over budget". Stored only in memory.
+ */
+export type DbBudget = {
+  id: string;
+  category_id: string;
+  amount: number;
+  currency: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Budget joined with the category metadata + this-month's spent total. */
+export type BudgetWithProgress = {
+  budget: DbBudget;
+  category: DbCategory;
+  spent: number;
+  /** spent / amount, clamped to ≥ 0 (can exceed 1 when over budget). */
+  ratio: number;
+  /** "neutral" < 0.8 ≤ "warning" < 1.0 ≤ "over" */
+  state: "neutral" | "warning" | "over";
+};
+
 export type DbCategory = {
   id: string;
   name: string;

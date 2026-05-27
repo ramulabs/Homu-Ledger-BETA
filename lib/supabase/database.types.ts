@@ -108,6 +108,61 @@ export type Database = {
           },
         ]
       }
+      budgets: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          household_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          household_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          household_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           client_op_id: string | null
@@ -1042,6 +1097,13 @@ export type Database = {
         }[]
       }
       generate_promo_code_string: { Args: never; Returns: string }
+      get_budget_spent_this_month: {
+        Args: never
+        Returns: {
+          category_id: string
+          spent: number
+        }[]
+      }
       get_email_by_username: { Args: { p_username: string }; Returns: string }
       get_ledger_totals: {
         Args: never

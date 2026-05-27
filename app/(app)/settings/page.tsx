@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Target } from "lucide-react";
 import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
@@ -210,6 +210,7 @@ export default async function SettingsPage() {
       <Group title={t("settings.account")}>
         <RowLink href="/settings/wallets" icon={<Wallet className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.wallets")} />
         <RowLink href="/settings/categories" icon={<Tag className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.categories")} />
+        <RowLink href="/settings/budgets" icon={<Target className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("budgets.settingsLabel")} />
         <RowLink href="/settings/integrations" icon={<Mailbox className="h-[18px] w-[18px]" strokeWidth={2} />} label="Integrations" />
         <RowLink
           href={`/settings/style?current=${iconStyle}`}
