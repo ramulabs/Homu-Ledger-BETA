@@ -7,6 +7,10 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.47.0": {
+    en: "New Settings → Export transactions lets you download or share a CSV or PDF of your transactions for any date range — for tax records, your accountant, or just keeping a copy.",
+    id: "Baru di Pengaturan → Ekspor transaksi: unduh atau bagikan CSV atau PDF transaksi untuk rentang tanggal apa pun — untuk catatan pajak, akuntan, atau sekadar arsip.",
+  },
   "1.46.12": {
     en: "On the desktop / web app, opening Add Transaction now focuses the amount field for instant typing, and the sheet stays put when you move to the Description field.",
     id: "Di aplikasi desktop / web, membuka Tambah Transaksi kini memfokuskan kolom jumlah agar bisa langsung diketik, dan lembar tetap di tempat saat kamu berpindah ke kolom Deskripsi.",
