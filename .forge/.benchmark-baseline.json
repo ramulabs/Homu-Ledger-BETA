@@ -1,5 +1,6 @@
 {
-  "_note": "Lighthouse baseline not yet populated — first run was in a headless-browser-free environment. Run again with Lighthouse available to establish scores.",
+  "_note": "Lighthouse scores unavailable — production servers return 403 from this headless environment. Establish scores from a browser-accessible environment.",
   "created_at": "2026-05-20T17:55:00Z",
+  "updated_at": "2026-05-27T19:15:00Z",
   "scores": {}
 }
