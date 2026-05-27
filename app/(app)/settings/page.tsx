@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Download } from "lucide-react";
 import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
@@ -230,6 +230,13 @@ export default async function SettingsPage() {
         />
         <PrivacyToggleRow />
         <Row icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.notifications")} />
+      </Group>
+
+      {/* Data — export, future backup/restore. Lives between Account and
+          Support because it's the user's data and is a power-user / "I
+          own this" affordance, not a support escalation. */}
+      <Group title={t("settings.data")}>
+        <RowLink href="/settings/export" icon={<Download className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.export")} />
       </Group>
 
       <Group title={t("settings.support")}>
