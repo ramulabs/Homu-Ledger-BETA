@@ -1,5 +1,5 @@
 // AUTO-GENERATED — do not edit by hand.
-// Regenerated via Supabase MCP after migration 0033_email_inbox.
+// Regenerated via Supabase MCP after migration 0034_push_subscriptions.
 export type Json =
   | string
   | number
@@ -604,6 +604,27 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_dedup: {
+        Row: {
+          fired_at: string
+          id: string
+          key: string
+          user_id: string
+        }
+        Insert: {
+          fired_at?: string
+          id?: string
+          key: string
+          user_id: string
+        }
+        Update: {
+          fired_at?: string
+          id?: string
+          key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_color: string
@@ -665,6 +686,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string | null
+          created_at: string
+          device_token: string | null
+          enabled: boolean
+          endpoint: string | null
+          id: string
+          last_used_at: string | null
+          p256dh: string | null
+          prefs: Json
+          provider: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth?: string | null
+          created_at?: string
+          device_token?: string | null
+          enabled?: boolean
+          endpoint?: string | null
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string | null
+          prefs?: Json
+          provider?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string | null
+          created_at?: string
+          device_token?: string | null
+          enabled?: boolean
+          endpoint?: string | null
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string | null
+          prefs?: Json
+          provider?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       promo_codes: {
         Row: {

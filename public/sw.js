@@ -12,7 +12,7 @@
 // lockstep guarantees a page's HTML and its chunks live and die together:
 // offline-after-deploy now shows the browser's offline page (honest)
 // instead of a zombie, un-hydratable page.
-const CACHE_VERSION = "v93";
+const CACHE_VERSION = "v94";
 const CACHE_NAME = `homu-${CACHE_VERSION}`;
 const NAV_CACHE_NAME = `homu-nav-${CACHE_VERSION}`;
 const NAV_CACHE_MAX = 30;
@@ -128,4 +128,111 @@ self.addEventListener("fetch", (event) => {
   // /api/*, RSC payloads, images, fonts: network-only passthrough.
   // We intentionally don't cache these in Phase 1 — they need the freshest
   // possible answer and Phase 3 will introduce the write-queue layer.
+});
+
+// ─── RAM-9: Web Push handlers ──────────────────────────────────────────
+//
+// `push` fires when the push service (autopush / FCM / Mozilla / Apple)
+// delivers a payload to this client. Our server (lib/notify.ts) always
+// sends JSON with { title, body, url, tag? } — we render it as a system
+// notification. Apple Safari requires a `title` and a registered icon,
+// so don't skip those fields even if `body` is empty.
+self.addEventListener("push", (event) => {
+  /** @type {{ title?: string, body?: string, url?: string, tag?: string }} */
+  let payload = {};
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch {
+      // Fallback for plain-text payloads (we never send these, but the
+      // browser doesn't know that — better a usable notification than a
+      // dropped one).
+      payload = { title: "Homu", body: event.data.text() };
+    }
+  }
+
+  const title = payload.title || "Homu";
+  const options = {
+    body: payload.body || "",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    // `tag` lets us collapse repeat notifications (e.g. a budget that
+    // crossed 80% then 100% should overwrite, not stack). The server
+    // sets it; if missing, the browser stacks each.
+    tag: payload.tag,
+    data: { url: payload.url || "/transactions" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// `notificationclick` fires when the user taps the notification. We
+// focus an existing tab pointing at our origin if there is one (jumping
+// to the target URL), else open a new tab. Closing the notification is
+// the OS's job; we just have to dismiss it explicitly so it doesn't
+// linger after the user clicked.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || "/transactions";
+
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      // Prefer focusing an already-open HOMU tab and navigating it.
+      for (const client of allClients) {
+        try {
+          const url = new URL(client.url);
+          if (url.origin === self.location.origin) {
+            await client.focus();
+            if ("navigate" in client) {
+              await client.navigate(targetUrl);
+            }
+            return;
+          }
+        } catch {
+          // Malformed client.url — skip and keep looking.
+        }
+      }
+      // Nothing open → cold-open a new tab.
+      if (self.clients.openWindow) {
+        await self.clients.openWindow(targetUrl);
+      }
+    })()
+  );
+});
+
+// `pushsubscriptionchange` fires when the browser invalidates the
+// current subscription (auth keys rotated, push service migrated, etc.)
+// and hands us a new one. We POST it to the server so the row gets
+// updated; otherwise our next dispatch silently 404s.
+//
+// Some browsers fire this without providing the new subscription on
+// `event.newSubscription` — we re-subscribe explicitly in that case.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        let newSub = event.newSubscription;
+        if (!newSub && event.oldSubscription) {
+          newSub = await self.registration.pushManager.subscribe(
+            event.oldSubscription.options
+          );
+        }
+        if (!newSub) return;
+        await fetch("/api/push/resubscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            oldEndpoint: event.oldSubscription ? event.oldSubscription.endpoint : null,
+            subscription: newSub.toJSON(),
+          }),
+        });
+      } catch {
+        // Best-effort — if this fails the server will eventually clean
+        // up the dead row when web-push returns 410 Gone on next send.
+      }
+    })()
+  );
 });
