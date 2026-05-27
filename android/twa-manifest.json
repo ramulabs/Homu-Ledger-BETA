@@ -1,0 +1,58 @@
+{
+  "//": "Bubblewrap manifest for the HOMU Ledger Android Trusted Web Activity.",
+  "//generate": "Run scripts/native-android-bootstrap.md → `bubblewrap init --manifest=android/twa-manifest.json` on a machine with Android SDK + JDK 17 installed.",
+  "packageId": "app.ramu.homu.twa",
+  "host": "homu.ramu.app",
+  "name": "HOMU Ledger",
+  "launcherName": "HOMU",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#f6f1e9",
+  "themeColorDark": "#1a1a1a",
+  "navigationColor": "#f6f1e9",
+  "navigationColorDark": "#1a1a1a",
+  "navigationDividerColor": "#f6f1e9",
+  "navigationDividerColorDark": "#1a1a1a",
+  "backgroundColor": "#f6f1e9",
+  "enableNotifications": true,
+  "startUrl": "/transactions",
+  "iconUrl": "https://homu.ramu.app/icons/icon-512.png",
+  "maskableIconUrl": "https://homu.ramu.app/icons/icon-maskable-512.png",
+  "monochromeIconUrl": "https://homu.ramu.app/icons/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Add transaction",
+      "shortName": "Add",
+      "url": "/transactions?action=add",
+      "chosenIconUrl": "https://homu.ramu.app/icons/icon-192.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://homu.ramu.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": { "enabled": false },
+    "playBilling": { "enabled": false }
+  },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://homu.ramu.app/",
+  "minSdkVersion": 23,
+  "orientationLock": "portrait",
+  "//rationale": [
+    "packageId uses the `.twa` suffix so it never collides with a future first-class Android Capacitor build at `app.ramu.homu`.",
+    "themeColor matches the PWA manifest (public/manifest.webmanifest).",
+    "minSdkVersion 23 = Android 6.0 — TWA requires Chrome 72+ which itself requires Android 6.0+.",
+    "playBilling stays disabled until a Premium tier ships (see RAM-13 follow-up + payment ADR).",
+    "signingKey path is relative to the Bubblewrap project dir; the actual keystore must NOT be committed (see .gitignore)."
+  ]
+}
