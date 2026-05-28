@@ -61,7 +61,7 @@ type IconMode = "emoji" | "symbol";
 export default function EditCategorySheet({
   open,
   category,
-  iconStyle = "3d",
+  iconStyle = "2d",
   onClose,
   onUpdated,
   onDeleted,

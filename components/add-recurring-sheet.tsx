@@ -35,7 +35,7 @@ export default function AddRecurringSheet({
   editing,
   currency = "IDR",
   onCategoryAdded,
-  iconStyle = "3d",
+  iconStyle = "2d",
 }: Props) {
   const t = useT();
   const lang = useLang();

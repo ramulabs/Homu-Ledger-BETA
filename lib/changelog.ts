@@ -58,6 +58,24 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.14",
+    date: "May 28, 2026",
+    changes: [
+      { type: "improvement", audience: "user",
+        en: "Fresh ledgers now start with three wallets — Cash, Savings, Credit — instead of six. Previously the seed_default_wallet SQL trigger added Cash / Savings / Credit AND the JS-side applyHouseholdPresets added Cash / Bank Card / Credit Card on top, so every new household got six wallets and a duplicate Cash row.",
+        id: "Buku baru kini dimulai dengan tiga dompet — Cash, Savings, Credit — bukan enam. Sebelumnya trigger SQL seed_default_wallet menambahkan Cash / Savings / Credit DAN applyHouseholdPresets di sisi JS menambahkan Cash / Bank Card / Credit Card di atasnya, jadi tiap household baru mendapat enam dompet dan satu baris Cash duplikat." },
+      { type: "improvement", audience: "user",
+        en: "Default icon style for new sign-ups is now the cleaner 2D line icons instead of 3D emoji. Existing users keep whatever they had — flip in Settings → Icon Style anytime.",
+        id: "Gaya ikon default untuk pendaftar baru kini ikon garis 2D yang lebih bersih, bukan emoji 3D. Pengguna lama tetap dengan pilihannya — bisa diganti kapan saja di Pengaturan → Gaya Ikon." },
+      { type: "improvement", audience: "user",
+        en: "Tweaked the example name and username on the sign-up and Google-setup screens (Marcel/marcel123 → Dustin/dustin007).",
+        id: "Mengganti contoh nama dan username di layar pendaftaran dan setup Google (Marcel/marcel123 → Dustin/dustin007)." },
+      { type: "improvement", audience: "dev",
+        en: "applyHouseholdPresets() no longer inserts wallets — the seed_default_wallet trigger from migration 0008 is the single source of truth (Cash default + Savings + Credit). `DEFAULT_WALLETS` and `WalletPreset` removed from lib/onboarding-presets.ts (no other consumers). New migration 0034 flips `profiles.icon_style` default from '3d' to '2d' for new rows; CHECK constraint and existing rows untouched. Every JS fallback (`iconStyle = \"3d\"`, `?? \"3d\"`) across 22 files swept to `\"2d\"` to match.",
+        id: "applyHouseholdPresets() tidak lagi memasukkan wallet — trigger seed_default_wallet dari migrasi 0008 menjadi satu-satunya sumber kebenaran (Cash default + Savings + Credit). `DEFAULT_WALLETS` dan `WalletPreset` dihapus dari lib/onboarding-presets.ts (tidak ada konsumen lain). Migrasi 0034 baru membalik default `profiles.icon_style` dari '3d' ke '2d' untuk baris baru; CHECK constraint dan baris lama tidak disentuh. Setiap fallback JS (`iconStyle = \"3d\"`, `?? \"3d\"`) di 22 file diubah jadi `\"2d\"` agar selaras." },
+    ],
+  },
+  {
     version: "1.46.13",
     date: "May 26, 2026",
     changes: [

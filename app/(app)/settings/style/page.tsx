@@ -22,7 +22,7 @@ function StylePageInner() {
   const t = useT();
   const router = useRouter();
   const params = useSearchParams();
-  const initial = (params.get("current") as IconStyle | null) ?? "3d";
+  const initial = (params.get("current") as IconStyle | null) ?? "2d";
   const [, startTransition] = useTransition();
   // `selected` shows the *currently saved* style. `pending` is what the user
   // tapped but hasn't yet confirmed via the sheet.

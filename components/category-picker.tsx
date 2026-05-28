@@ -51,7 +51,7 @@ export default function CategoryPicker({
   onSelect,
   onClose,
   onCategoryAdded,
-  iconStyle = "3d",
+  iconStyle = "2d",
   onCloseStart,
 }: Props) {
   const tr = useT();

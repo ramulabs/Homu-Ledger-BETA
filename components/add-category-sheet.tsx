@@ -59,7 +59,7 @@ type Props = {
 
 type IconMode = "emoji" | "symbol";
 
-export default function AddCategorySheet({ open, type = "expense", onClose, onAdded, iconStyle = "3d" }: Props) {
+export default function AddCategorySheet({ open, type = "expense", onClose, onAdded, iconStyle = "2d" }: Props) {
   const firstSymbol = iconStyle === "2d" ? makeLucideSymbol(LUCIDE_PICKER[0]?.id ?? "home") : SYMBOLS[0];
 
   const [name, setName] = useState("");

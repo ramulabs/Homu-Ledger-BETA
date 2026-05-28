@@ -238,16 +238,6 @@ export const DEFAULT_INCOME_CATEGORIES: CategoryPreset[] = [
   { id: "refund",  name: "Refund",  symbol: "💰", color: "#22c55e" },
 ];
 
-/** Default wallets every new ledger gets. */
-export type WalletPreset = {
-  id: string;
-  name: string;
-  symbol: string;
-  color: string;
-  is_default?: boolean;
-};
-export const DEFAULT_WALLETS: WalletPreset[] = [
-  { id: "cash",        name: "Cash",        symbol: "💵", color: "#22c55e", is_default: true },
-  { id: "bank",        name: "Bank Card",   symbol: "💳", color: "#3b82f6" },
-  { id: "credit_card", name: "Credit Card", symbol: "🏦", color: "#8b5cf6" },
-];
+// Default wallets are seeded by the `seed_default_wallet` trigger
+// (migration 0008) — Cash / Savings / Credit, with Cash as the default.
+// No JS-side WalletPreset / DEFAULT_WALLETS export is needed.

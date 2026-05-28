@@ -18,7 +18,7 @@ type Props = {
 
 const FALLBACK_CAT = { name: "Uncategorized", symbol: "📋", color: "#6b7280" };
 
-export default function TransactionList({ transactions, members, currency = "IDR", iconStyle = "3d", onTap }: Props) {
+export default function TransactionList({ transactions, members, currency = "IDR", iconStyle = "2d", onTap }: Props) {
   const tr = useT();
   // Avoid SSR hydration mismatch: only compute "Today" after mount on the client.
   const [todayKey, setTodayKey] = useState<string | null>(null);

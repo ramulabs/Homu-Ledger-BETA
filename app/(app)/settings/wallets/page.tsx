@@ -48,7 +48,7 @@ export default async function WalletsPage() {
   return (
     <WalletsShell
       wallets={walletsWithBalance}
-      iconStyle={profile.icon_style ?? "3d"}
+      iconStyle={profile.icon_style ?? "2d"}
       currency={household?.currency ?? "IDR"}
     />
   );

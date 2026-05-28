@@ -19,7 +19,7 @@ export default async function SettingsPage() {
   const language = profile?.language ?? "en";
   const languageLabel = language === "id" ? "Bahasa Indonesia" : "English";
 
-  const iconStyle = profile?.icon_style ?? "3d";
+  const iconStyle = profile?.icon_style ?? "2d";
   const iconStyleLabel = iconStyle === "2d" ? t("settings.iconStyle.2d") : t("settings.iconStyle.3d");
 
   // Subscription info — show a small badge on the profile card so the user

@@ -1,7 +1,9 @@
 // Shared post-create wiring for a new household: wipe the trigger-
 // seeded default categories, replace with the user's picked set
-// (filtered against EXPENSE_CATEGORY_MASTER), seed the income +
-// wallet defaults.
+// (filtered against EXPENSE_CATEGORY_MASTER), seed the income
+// defaults. Wallets are seeded entirely by the
+// `seed_default_wallet` trigger (Cash / Savings / Credit) — see
+// migration 0008.
 //
 // Lives here (not inside an "use server" file) so both
 // `createHousehold` (initial onboarding) and `createNewLedger`
@@ -13,13 +15,15 @@ import type { createClient } from "@/lib/supabase/server";
 import {
   EXPENSE_CATEGORY_MASTER,
   DEFAULT_INCOME_CATEGORIES,
-  DEFAULT_WALLETS,
 } from "@/lib/onboarding-presets";
 
 /**
  * Replace the trigger-seeded default categories with the user-picked
- * set, AND seed the 3 default income categories + 3 default wallets.
- * Called from both the onboarding flow and the new-ledger flow.
+ * set, AND seed the 3 default income categories. Wallets are
+ * NOT touched here — the `seed_default_wallet` trigger (migration
+ * 0008) already inserts Cash / Savings / Credit on household insert,
+ * and that's exactly the set we want. Called from both the
+ * onboarding flow and the new-ledger flow.
  *
  * The seed_default_categories trigger fires on household insert and
  * creates 11 expense + income categories with is_default=true. We
@@ -69,17 +73,10 @@ export async function applyHouseholdPresets(
     }))
   );
 
-  // 4. Insert the 3 default wallets. The trigger doesn't seed wallets
-  //    at all, so this is a fresh insert. One is_default=true so the
-  //    Add Transaction sheet preselects it.
-  await supabase.from("wallets").insert(
-    DEFAULT_WALLETS.map((w) => ({
-      household_id: householdId,
-      name: w.name,
-      symbol: w.symbol,
-      color: w.color,
-      initial_balance: 0,
-      is_default: w.is_default ?? false,
-    }))
-  );
+  // Wallets: nothing to do — the `seed_default_wallet` trigger
+  // already inserted Cash / Savings / Credit (with is_default=true on
+  // Cash) when the household row was created. Previously this
+  // function ALSO inserted Bank Card / Credit Card on top of the
+  // trigger's three, which doubled up to six wallets per fresh
+  // ledger. Removed in v1.46.14.
 }

@@ -20,7 +20,7 @@ type Props = {
   currency?: string;
 };
 
-export default function WalletsShell({ wallets: initial, iconStyle = "3d", currency = "IDR" }: Props) {
+export default function WalletsShell({ wallets: initial, iconStyle = "2d", currency = "IDR" }: Props) {
   const router = useRouter();
   const tr = useT();
   const [wallets, setWallets] = useState<WalletWithBalance[]>(initial);
@@ -134,7 +134,7 @@ export default function WalletsShell({ wallets: initial, iconStyle = "3d", curre
 
 function WalletRow({
   wallet,
-  iconStyle = "3d",
+  iconStyle = "2d",
   currency,
   onTap,
 }: {

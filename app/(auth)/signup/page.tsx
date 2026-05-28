@@ -175,8 +175,8 @@ function SignupForm({
       </p>
 
       <form onSubmit={onSubmit} className="space-y-3">
-        <Field label={t("auth.yourName")} name="name" type="text" placeholder="Marcel" autoComplete="name" />
-        <Field label={t("auth.username")} name="username" type="text" placeholder="marcel123" autoComplete="username" />
+        <Field label={t("auth.yourName")} name="name" type="text" placeholder="Dustin" autoComplete="name" />
+        <Field label={t("auth.username")} name="username" type="text" placeholder="dustin007" autoComplete="username" />
         <Field label={t("auth.email")} name="email" type="email" placeholder="you@example.com" autoComplete="email" />
 
         {/* Gender — radio pills. Stored as a controlled state in the

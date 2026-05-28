@@ -293,7 +293,7 @@ export default function AddTransactionSheet({
   currency = "IDR",
   memberships = [],
   currentHouseholdId,
-  iconStyle = "3d",
+  iconStyle = "2d",
   defaultRecurring = false,
   prefill = null,
   onSaved,
