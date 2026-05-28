@@ -15,7 +15,7 @@ type Props = {
   iconStyle?: IconStyle;
 };
 
-export default function CategoriesShell({ categories: initial, iconStyle = "3d" }: Props) {
+export default function CategoriesShell({ categories: initial, iconStyle = "2d" }: Props) {
   const router = useRouter();
   const [categories, setCategories] = useState(initial);
   const [editing, setEditing] = useState<DbCategory | null>(null);
@@ -142,7 +142,7 @@ function TabBtn({
 
 function CategoryRow({
   cat,
-  iconStyle = "3d",
+  iconStyle = "2d",
   onTap,
 }: {
   cat: DbCategory;

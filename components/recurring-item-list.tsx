@@ -27,7 +27,7 @@ type Props = {
   onAdd: () => void;
 };
 
-export default function RecurringItemList({ items, currency = "IDR", iconStyle = "3d", onTap, onAdd }: Props) {
+export default function RecurringItemList({ items, currency = "IDR", iconStyle = "2d", onTap, onAdd }: Props) {
   const t = useT();
   const lang = useLang();
 

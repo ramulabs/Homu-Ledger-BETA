@@ -73,7 +73,7 @@ export default function VoiceShell({
   wallets,
   currency,
   languageHint = "auto",
-  iconStyle = "3d",
+  iconStyle = "2d",
 }: Props) {
   // Fall back to the full list if the trimmed prop wasn't provided.
   const geminiCats = categoriesForGemini ?? categories;

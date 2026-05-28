@@ -98,7 +98,7 @@ export default async function ReportsPage() {
       wallets={(walletsRaw ?? []) as DbWallet[]}
       members={members}
       currency={household.currency ?? "IDR"}
-      iconStyle={(profile.icon_style as "2d" | "3d") ?? "3d"}
+      iconStyle={(profile.icon_style as "2d" | "3d") ?? "2d"}
       nowISO={nowISO}
     />
   );

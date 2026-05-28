@@ -23,7 +23,7 @@ type Props = {
   currency?: string;
 };
 
-export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "3d", currency = "IDR" }: Props) {
+export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d", currency = "IDR" }: Props) {
   const tr = useT();
   const [name, setName] = useState("");
   // Default to the first wallet icon (Banknote / 💵), matching what the

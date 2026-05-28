@@ -48,7 +48,7 @@ export default function SetupForm({ initialName, email }: Props) {
             name="name"
             type="text"
             defaultValue={initialName}
-            placeholder="Marcel"
+            placeholder="Dustin"
             autoComplete="name"
             className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
           />
@@ -61,7 +61,7 @@ export default function SetupForm({ initialName, email }: Props) {
           <input
             name="username"
             type="text"
-            placeholder="marcel123"
+            placeholder="dustin007"
             required
             autoComplete="username"
             inputMode="text"

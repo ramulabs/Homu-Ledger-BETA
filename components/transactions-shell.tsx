@@ -95,7 +95,7 @@ export default function TransactionsShell({
   memberships,
   pendingInvitations = [],
   recurringItems,
-  iconStyle = "3d",
+  iconStyle = "2d",
   voiceEnabled = false,
 }: Props) {
   const t = useT();

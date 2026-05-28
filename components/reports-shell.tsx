@@ -78,7 +78,7 @@ type Props = {
   nowISO: string;
 };
 
-export default function ReportsShell({ transactions, categories, wallets, members, currency, iconStyle = "3d", nowISO }: Props) {
+export default function ReportsShell({ transactions, categories, wallets, members, currency, iconStyle = "2d", nowISO }: Props) {
   // Parse the server-provided ISO string ONCE per mount so this is a
   // stable reference for the lifetime of the component. We deliberately
   // don't update it later — for a Reports view the user's "now" is close

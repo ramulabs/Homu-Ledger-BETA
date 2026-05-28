@@ -28,7 +28,7 @@ type Props = {
 
 export default function EditWalletSheet({
   open, wallet, onClose, onUpdated, onDeleted, onDefaultChanged,
-  iconStyle = "3d", currency = "IDR",
+  iconStyle = "2d", currency = "IDR",
 }: Props) {
   const tr = useT();
   const [name, setName] = useState("");

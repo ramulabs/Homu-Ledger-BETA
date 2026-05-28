@@ -38,7 +38,7 @@ export default function WalletPickerSheet({
   onSelect,
   onClose,
   onWalletAdded,
-  iconStyle = "3d",
+  iconStyle = "2d",
   currency = "IDR",
   title,
   onCloseStart,

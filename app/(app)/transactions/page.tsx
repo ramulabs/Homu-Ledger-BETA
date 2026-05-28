@@ -228,7 +228,7 @@ export default async function TransactionsPage() {
       memberships={memberships}
       pendingInvitations={pendingInvitations}
       recurringItems={recurringItems}
-      iconStyle={profile.icon_style ?? "3d"}
+      iconStyle={profile.icon_style ?? "2d"}
       voiceEnabled={voiceEnabled}
     />
   );
