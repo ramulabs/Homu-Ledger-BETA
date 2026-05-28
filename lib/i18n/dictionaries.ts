@@ -118,6 +118,8 @@ export const en = {
   "wallet.deleteWallet": "Delete Wallet",
   "wallet.deleteDefaultBlocked": "Set another wallet as default before deleting this one.",
   "wallet.empty": "No wallets yet. Add one below.",
+  "wallet.currency": "Currency",
+  "wallet.currency.hint": "Transactions in this wallet will use this currency",
 
   // Categories
   "category.title": "Category",
@@ -604,6 +606,8 @@ export const id: Record<TKey, string> = {
   "wallet.deleteWallet": "Hapus Dompet",
   "wallet.deleteDefaultBlocked": "Atur dompet utama lain sebelum menghapus dompet ini.",
   "wallet.empty": "Belum ada dompet. Tambah di bawah.",
+  "wallet.currency": "Mata Uang",
+  "wallet.currency.hint": "Transaksi di dompet ini akan menggunakan mata uang ini",
 
   // Categories
   "category.title": "Kategori",

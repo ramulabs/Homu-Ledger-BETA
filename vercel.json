@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/notify-daily-nudge",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/update-fx-rates",
+      "schedule": "0 1 * * *"
     }
   ]
 }
