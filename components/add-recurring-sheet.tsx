@@ -10,6 +10,7 @@ import { formatShortDate } from "@/lib/format";
 import { useT, useLang } from "@/lib/i18n/provider";
 import type { DbRecurringItem, DbCategory, RecurringFrequency } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
+import { readViewportHeight } from "@/lib/viewport";
 
 type RepeatUntilMode = "forever" | "date";
 
@@ -58,6 +59,30 @@ export default function AddRecurringSheet({
   const selectedCategory = categories.find((c) => c.id === categoryId) ?? null;
   const sheetRef = useRef<HTMLDivElement>(null);
   const amountRef = useRef<HTMLInputElement>(null);
+
+  // v1.46.13 — JS-driven height with a px fallback. The sheet is
+  // `fixed top: 0` with `height: 100dvh` originally, but on older Android
+  // Chrome / WebView builds without `dvh` support the height collapses to
+  // 0 and the sheet appears as a sliver. Seeding from
+  // visualViewport → innerHeight → documentElement.clientHeight keeps it
+  // working everywhere. See add-transaction-sheet.tsx for the long note.
+  const [sheetHeight, setSheetHeight] = useState<number | null>(() => readViewportHeight());
+  useEffect(() => {
+    if (!open) return;
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    function update() {
+      const h = readViewportHeight();
+      if (h && h > 0) setSheetHeight(h);
+    }
+    update();
+    if (!vv) return;
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, [open]);
 
   // Auto-focus Amount on open (new entries only — editing pre-fills the form
   // and the user usually just wants to tweak one field). See AddTransactionSheet
@@ -234,9 +259,13 @@ export default function AddRecurringSheet({
         style={{
           // v1.28.0 — see add-transaction-sheet.tsx for the long note;
           // 100lvh extended below visible chrome on some devices and
-          // cut off the footer button. 100dvh tracks the live visible
-          // height instead.
-          height: "100dvh",
+          // cut off the footer button. 100dvh tracked the live visible
+          // height — but `dvh` shipped in Chrome 108 and is silently
+          // dropped on older Android Chrome / WebView, collapsing the
+          // sheet to 0. v1.46.13 — drive height from JS via
+          // `sheetHeight` (visualViewport → innerHeight → clientHeight),
+          // with `100vh` as a universally-supported CSS backstop.
+          height: sheetHeight != null ? `${sheetHeight}px` : "100vh",
           paddingTop: "env(safe-area-inset-top)",
         }}
       >
