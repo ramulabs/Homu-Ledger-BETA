@@ -24,6 +24,7 @@ import InboxChip from "@/components/inbox-chip";
 import BudgetWatchCard from "@/components/budget-watch-card";
 import { type InboxRow } from "@/components/inbox-bento";
 import { markInboxAcceptedAction } from "@/app/actions/inbox";
+import ImportWizard from "@/components/import-wizard";
 
 type SubTab = "history" | "recurring";
 type DateFilter = "all" | "30d" | "this_month" | "custom";
@@ -170,6 +171,9 @@ export default function TransactionsShell({
 
   // Ledger switcher
   const [showLedgerSwitcher, setShowLedgerSwitcher] = useState(false);
+
+  // RAM-26 — CSV import wizard
+  const [showImportWizard, setShowImportWizard] = useState(false);
 
   // Extra categories / wallets added inline (optimistic). Both arrays are
   // memoized — passing fresh array references to AddTransactionSheet on
@@ -606,6 +610,7 @@ export default function TransactionsShell({
                   currency={currency}
                   iconStyle={iconStyle}
                   onTap={openEdit}
+                  onImportClick={() => setShowImportWizard(true)}
                 />
                 {/* Infinite scroll sentinel */}
                 <div ref={sentinelRef} className="h-1" />
@@ -662,6 +667,16 @@ export default function TransactionsShell({
           onClose={() => setShowLedgerSwitcher(false)}
         />
       )}
+
+      {/* RAM-26 — CSV import wizard. Opened from the empty state or
+          future entry-points. wallets + categories are already in scope
+          as TransactionsShell props. */}
+      <ImportWizard
+        open={showImportWizard}
+        onClose={() => setShowImportWizard(false)}
+        wallets={allWallets}
+        categories={allCategories}
+      />
 
       <Suspense>
         <SheetOpener onOpen={() => tab === "recurring" ? openAddRecurring() : openAdd()} />
