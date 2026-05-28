@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Target, Download } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Target, Download, Database } from "lucide-react";
 import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
@@ -264,6 +264,7 @@ export default async function SettingsPage() {
           <RowLink href="/settings/ai-admin" icon={<Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("ai.admin.title")} />
           <RowLink href="/settings/dev-analytics" icon={<Activity className="h-[18px] w-[18px]" strokeWidth={2} />} label="Analytics" />
           <RowLink href="/settings/dev-changelog" icon={<RefreshCw className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.devChangelog")} />
+          <RowLink href="/settings/seed-demo" icon={<Database className="h-[18px] w-[18px]" strokeWidth={2} />} label="Seed Demo Data" />
           <RowLink href="/design-system" icon={<Palette className="h-[18px] w-[18px]" strokeWidth={2} />} label="DesignSystem" />
         </Group>
       )}
