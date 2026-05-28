@@ -29,7 +29,7 @@
 // changed; only the presentation did.
 
 import { useState, useEffect, useRef } from "react";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, ScanLine } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, ScanLine, Split } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
@@ -40,6 +40,7 @@ import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
 import { parseReceiptPhoto } from "@/app/actions/receipt-ocr";
 import { captureReceiptPhoto } from "@/lib/capture";
 import CategoryPicker from "@/components/category-picker";
+import SplitEditor from "@/components/split-editor";
 import NumericKeypad from "@/components/numeric-keypad";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
 import { CategoryIcon } from "@/components/category-icon";
@@ -49,7 +50,7 @@ import { formatShortDate } from "@/lib/format";
 import { uploadTransactionPhoto } from "@/lib/upload-photo";
 import { compressPhoto } from "@/lib/compress-photo";
 import PhotoViewer from "@/components/photo-viewer";
-import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership, RecurringFrequency } from "@/lib/types";
+import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership, RecurringFrequency, SplitLineItem } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
 type Props = {
@@ -343,6 +344,15 @@ export default function AddTransactionSheet({
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const previewObjectUrlRef = useRef<string | null>(null);
 
+  // RAM-27 — Split transactions state.
+  //   • `isSplitMode` drives the toggle and whether SplitEditor renders.
+  //   • `splits` is the ordered list of line items; parent controls this
+  //     state and passes it down to SplitEditor via onChange.
+  //   • The Save button is disabled if split mode is on AND splits don't
+  //     sum to amount (remaining !== 0).
+  const [isSplitMode, setIsSplitMode] = useState(false);
+  const [splits, setSplits] = useState<SplitLineItem[]>([]);
+
   // RAM-6 — Receipt OCR state.
   //   • `ocrScanning` drives the loading state on the Scan chip + a
   //     non-blocking overlay; the form remains interactive while the
@@ -620,6 +630,15 @@ export default function AddTransactionSheet({
     setAiSource(null);
     setUserTouchedCategory(!!editing);
     aiSuggestedRef.current = null;
+    // RAM-27 — restore split state from the editing row if it has splits,
+    // otherwise start fresh.
+    if (editing?.splits && editing.splits.length > 0) {
+      setIsSplitMode(true);
+      setSplits(editing.splits);
+    } else {
+      setIsSplitMode(false);
+      setSplits([]);
+    }
     // RAM-6 — clear last-scan flags so a fresh sheet doesn't carry
     // stale sparkles. Reset before any scan can fire.
     setOcrScanning(false);
@@ -951,6 +970,10 @@ export default function AddTransactionSheet({
     fd.set("wallet_id", walletId ?? "");
     fd.set("date", date);
     if (photoPath) fd.set("photo_url", photoPath);
+    // RAM-27 — include splits when split mode is on and there are rows.
+    if (isSplitMode && splits.length > 0) {
+      fd.set("splits", JSON.stringify(splits));
+    }
 
     const result = editing
       ? editing._pending
@@ -1037,7 +1060,14 @@ export default function AddTransactionSheet({
   }
 
   const otherLedgers = memberships.filter((m) => m.household_id !== currentHouseholdId);
-  const canSave = !!amount && (!isTransfer ? true : !!toWalletId && toWalletId !== walletId);
+  // RAM-27 — when split mode is on, splits must sum exactly to the total.
+  const amountNum = parseFloat(amount) || 0;
+  const splitsSum = splits.reduce((acc, s) => acc + (s.amount ?? 0), 0);
+  const splitValid = !isSplitMode || splits.length === 0 || Math.round(splitsSum) === Math.round(amountNum);
+  const canSave =
+    !!amount &&
+    splitValid &&
+    (!isTransfer ? true : !!toWalletId && toWalletId !== walletId);
   const editSubPanelOpen = confirmDelete || showMovePicker || showRecurringPicker || recurringSuccess;
 
   // Per-type accent for the segmented tabs.
@@ -1256,6 +1286,57 @@ export default function AddTransactionSheet({
                     />
                   </div>
                 </div>
+              )}
+
+              {/* RAM-27 — Split toggle (expense / income only, not transfer) */}
+              {!isTransfer && (
+                <>
+                  {/* Split toggle button */}
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setIsSplitMode((v) => {
+                        const next = !v;
+                        if (next && splits.length === 0) {
+                          // Initialise with one row: the current amount + current category.
+                          const initAmount = parseFloat(amount) || 0;
+                          setSplits([
+                            {
+                              amount: initAmount,
+                              category_id: categoryId ?? (categories[0]?.id ?? ""),
+                            },
+                          ]);
+                        }
+                        return next;
+                      });
+                    }}
+                    aria-pressed={isSplitMode}
+                    aria-label={tr("transaction.split")}
+                    className={cn(
+                      "inline-flex h-9 items-center gap-1.5 self-start rounded-full border px-3 text-[13px] font-semibold transition-all",
+                      isSplitMode
+                        ? "border-[var(--foreground)]/30 bg-[var(--foreground)]/08 text-[var(--foreground)]"
+                        : "border-[var(--separator)] bg-transparent text-[var(--label-secondary)]"
+                    )}
+                  >
+                    <Split className="h-[14px] w-[14px]" strokeWidth={2.25} />
+                    {tr("transaction.split")}
+                  </button>
+
+                  {/* SplitEditor — shown when split mode is active */}
+                  {isSplitMode && (
+                    <SplitEditor
+                      total={parseFloat(amount) || 0}
+                      splits={splits}
+                      onChange={setSplits}
+                      categories={allCategories.filter(
+                        (c) => c.type === (type === "income" ? "income" : "expense")
+                      )}
+                      iconStyle={iconStyle}
+                    />
+                  )}
+                </>
               )}
 
               {/* Date + Recurring toggle */}
