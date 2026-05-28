@@ -14,11 +14,13 @@ type Props = {
   currency?: string;
   iconStyle?: IconStyle;
   onTap?: (tx: DbTransaction) => void;
+  /** RAM-26 — callback to open the CSV import wizard from the empty state. */
+  onImportClick?: () => void;
 };
 
 const FALLBACK_CAT = { name: "Uncategorized", symbol: "📋", color: "#6b7280" };
 
-export default function TransactionList({ transactions, members, currency = "IDR", iconStyle = "3d", onTap }: Props) {
+export default function TransactionList({ transactions, members, currency = "IDR", iconStyle = "3d", onTap, onImportClick }: Props) {
   const tr = useT();
   // Avoid SSR hydration mismatch: only compute "Today" after mount on the client.
   const [todayKey, setTodayKey] = useState<string | null>(null);
@@ -58,6 +60,14 @@ export default function TransactionList({ transactions, members, currency = "IDR
         <p className="mt-1.5 text-[13px] text-[var(--label-secondary)] leading-relaxed">
           Tap the <span className="font-semibold text-[var(--foreground)]">+</span> button to record your first income or expense.
         </p>
+        {onImportClick && (
+          <button
+            onClick={onImportClick}
+            className="mt-4 rounded-full bg-black/[0.05] px-4 py-2 text-[13px] font-medium text-[var(--foreground)] active:scale-95 transition-transform"
+          >
+            Import from bank CSV
+          </button>
+        )}
       </div>
     );
   }

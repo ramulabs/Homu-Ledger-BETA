@@ -8,6 +8,7 @@ import { getServerT } from "@/lib/i18n/server";
 import DevFeedbackBadge from "@/components/dev-feedback-badge";
 import { APP_VERSION } from "@/lib/version";
 import TrackView from "@/components/track-view";
+import ImportSettingsRow from "@/components/import-settings-row";
 
 export default async function SettingsPage() {
   // requireSession + getServerT share the SAME getSession() call via
@@ -73,6 +74,17 @@ export default async function SettingsPage() {
       .eq("status", "open");
     openTicketCount = count ?? 0;
   }
+
+  // RAM-26 — Wallets and categories for the import wizard.
+  // Only fetch when the user has a household (same guard used above).
+  const [{ data: importWallets }, { data: importCategories }] = await Promise.all([
+    household
+      ? supabase.from("wallets").select("id, name, symbol, color, initial_balance, is_default").eq("household_id", household.id).order("is_default", { ascending: false })
+      : Promise.resolve({ data: [] }),
+    household
+      ? supabase.from("categories").select("id, name, symbol, color, type").eq("household_id", household.id).order("name")
+      : Promise.resolve({ data: [] }),
+  ]);
 
 
   return (
@@ -238,11 +250,15 @@ export default async function SettingsPage() {
         />
       </Group>
 
-      {/* Data — export, future backup/restore. Lives between Account and
-          Support because it's the user's data and is a power-user / "I
-          own this" affordance, not a support escalation. */}
+      {/* Data — export + import. Lives between Account and Support because
+          it's the user's data and is a power-user / "I own this" affordance,
+          not a support escalation. */}
       <Group title={t("settings.data")}>
         <RowLink href="/settings/export" icon={<Download className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.export")} />
+        <ImportSettingsRow
+          wallets={(importWallets ?? []).map((w) => ({ ...w, initial_balance: Number(w.initial_balance) }))}
+          categories={importCategories ?? []}
+        />
       </Group>
 
       <Group title={t("settings.support")}>
