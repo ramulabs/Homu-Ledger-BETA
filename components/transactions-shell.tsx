@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Search, SlidersHorizontal, X, Check } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 import Link from "next/link";
@@ -110,6 +110,7 @@ export default function TransactionsShell({
   ocrLanguageHint = "auto",
 }: Props) {
   const t = useT();
+  const router = useRouter();
   const [tab, setTab] = useState<SubTab>("history");
 
   // Search
@@ -396,6 +397,15 @@ export default function TransactionsShell({
 
   function openAdd() { setEditingTx(null); setSheetRecurring(false); setShowSheet(true); }
   function openEdit(tx: DbTransaction) { setEditingTx(tx); setSheetRecurring(false); setShowSheet(true); }
+
+  // RAM-28 — deep-link to the rules page with the transaction's name and
+  // category pre-filled so the user can one-tap create a matching rule.
+  function handleCreateRule(tx: DbTransaction) {
+    const params = new URLSearchParams();
+    if (tx.name) params.set("prefill", tx.name);
+    if (tx.category_id) params.set("category_id", tx.category_id);
+    router.push(`/settings/rules?${params.toString()}`);
+  }
   function closeSheet() {
     setShowSheet(false);
     setEditingTx(null);
@@ -606,6 +616,7 @@ export default function TransactionsShell({
                   currency={currency}
                   iconStyle={iconStyle}
                   onTap={openEdit}
+                  onCreateRule={handleCreateRule}
                 />
                 {/* Infinite scroll sentinel */}
                 <div ref={sentinelRef} className="h-1" />
