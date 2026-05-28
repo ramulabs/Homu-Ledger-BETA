@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Target, Download, Database } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Target, Download, Database, Zap } from "lucide-react";
 import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
@@ -224,6 +224,7 @@ export default async function SettingsPage() {
         <RowLink href="/settings/wallets" icon={<Wallet className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.wallets")} />
         <RowLink href="/settings/categories" icon={<Tag className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.categories")} />
         <RowLink href="/settings/budgets" icon={<Target className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("budgets.settingsLabel")} />
+        <RowLink href="/settings/rules" icon={<Zap className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("rules.settingsLabel")} />
         <RowLink href="/settings/integrations" icon={<Mailbox className="h-[18px] w-[18px]" strokeWidth={2} />} label="Integrations" />
         <RowLink
           href={`/settings/style?current=${iconStyle}`}

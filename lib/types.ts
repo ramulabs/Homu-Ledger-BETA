@@ -168,6 +168,31 @@ export type SplitLineItem = {
   notes?: string;
 };
 
+// RAM-28 — Categorization rules engine
+
+export type RuleTrigger = {
+  field: 'name' | 'amount';
+  op: 'contains' | 'starts_with' | 'equals' | 'gt' | 'lt';
+  value: string;
+};
+
+export type RuleAction = {
+  field: 'category_id' | 'notes';
+  value: string;
+};
+
+export type DbTransactionRule = {
+  id: string;
+  household_id: string;
+  name: string;
+  triggers: RuleTrigger[];
+  actions: RuleAction[];
+  order_idx: number;
+  enabled: boolean;
+  stop_processing: boolean;
+  created_at: string;
+};
+
 export type DbTransaction = {
   id: string;
   type: TransactionType;

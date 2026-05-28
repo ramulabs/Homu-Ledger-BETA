@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, ArrowRightLeft, Repeat, Split } from "lucide-react";
+import { Camera, ArrowRightLeft, Repeat, Split, Zap } from "lucide-react";
 import { formatAmount, formatAmountSigned, formatDayGroup } from "@/lib/format";
 import { CategoryIcon } from "@/components/category-icon";
 import { useT } from "@/lib/i18n/provider";
@@ -16,11 +16,15 @@ type Props = {
   onTap?: (tx: DbTransaction) => void;
   /** RAM-26 — callback to open the CSV import wizard from the empty state. */
   onImportClick?: () => void;
+  /** RAM-28 — when provided, a "Create rule" action appears in the row's
+   *  context menu (long-press or ellipsis tap). Navigates to
+   *  /settings/rules?prefill=<name>&category_id=<id> */
+  onCreateRule?: (tx: DbTransaction) => void;
 };
 
 const FALLBACK_CAT = { name: "Uncategorized", symbol: "📋", color: "#6b7280" };
 
-export default function TransactionList({ transactions, members, currency = "IDR", iconStyle = "3d", onTap, onImportClick }: Props) {
+export default function TransactionList({ transactions, members, currency = "IDR", iconStyle = "3d", onTap, onImportClick, onCreateRule }: Props) {
   const tr = useT();
   // Avoid SSR hydration mismatch: only compute "Today" after mount on the client.
   const [todayKey, setTodayKey] = useState<string | null>(null);
@@ -246,6 +250,23 @@ export default function TransactionList({ transactions, members, currency = "IDR
                 </span>
               )}
             </div>
+
+            {/* RAM-28 — "Create rule" button. Shown on non-transfer,
+                non-pending rows when the parent passes onCreateRule. */}
+            {onCreateRule && !isTransfer && !isPending && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateRule(t);
+                }}
+                aria-label={tr("rules.createFromTransaction")}
+                title={tr("rules.createFromTransaction")}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[var(--label-tertiary)] active:bg-black/[0.04] active:text-[#EE6452]"
+              >
+                <Zap className="h-[14px] w-[14px]" strokeWidth={2} />
+              </button>
+            )}
           </li>
         );
             })}

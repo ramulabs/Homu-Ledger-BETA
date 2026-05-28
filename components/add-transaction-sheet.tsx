@@ -29,7 +29,7 @@
 // changed; only the presentation did.
 
 import { useState, useEffect, useRef } from "react";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, ScanLine, Split } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, ScanLine, Split, Zap } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
@@ -38,6 +38,8 @@ import { signTransactionPhoto } from "@/app/actions/photos";
 import { addRecurringItem } from "@/app/actions/recurring";
 import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
 import { parseReceiptPhoto } from "@/app/actions/receipt-ocr";
+import { getRules } from "@/app/actions/rules";
+import { evaluateRules } from "@/lib/rules-engine";
 import { captureReceiptPhoto } from "@/lib/capture";
 import CategoryPicker from "@/components/category-picker";
 import SplitEditor from "@/components/split-editor";
@@ -50,7 +52,7 @@ import { formatShortDate } from "@/lib/format";
 import { uploadTransactionPhoto } from "@/lib/upload-photo";
 import { compressPhoto } from "@/lib/compress-photo";
 import PhotoViewer from "@/components/photo-viewer";
-import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership, RecurringFrequency, SplitLineItem } from "@/lib/types";
+import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership, DbTransactionRule, RecurringFrequency, SplitLineItem } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
 type Props = {
@@ -341,6 +343,11 @@ export default function AddTransactionSheet({
   const [aiSource, setAiSource] = useState<"rule" | "cache" | "seed" | "ai" | null>(null);
   const [userTouchedCategory, setUserTouchedCategory] = useState(false);
   const aiSuggestedRef = useRef<string | null>(null);
+
+  // RAM-28 — rules engine
+  const [txRules, setTxRules] = useState<DbTransactionRule[]>([]);
+  const [ruleMatchName, setRuleMatchName] = useState<string | null>(null);
+  const rulesLoadedRef = useRef(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const previewObjectUrlRef = useRef<string | null>(null);
 
@@ -466,6 +473,13 @@ export default function AddTransactionSheet({
   // Hidden end-date input for the recurring "On date" dropdown — we
   // call showPicker() on it the moment the user flips to "On date".
   const endDateRef = useRef<HTMLInputElement>(null);
+
+  // ── RAM-28 — load rules once on mount ──────────────────────────────
+  useEffect(() => {
+    if (rulesLoadedRef.current) return;
+    rulesLoadedRef.current = true;
+    getRules().then((r) => setTxRules(r)).catch(() => { /* non-critical */ });
+  }, []);
 
   // ── Body-scroll lock ────────────────────────────────────────────────
   // v1.46.5 — this NO LONGER sets `position: fixed` on <body>.
@@ -644,6 +658,8 @@ export default function AddTransactionSheet({
     setOcrScanning(false);
     setOcrFilled({ amount: false, name: false, date: false });
     setOcrHintLow(false);
+    // RAM-28 — clear rule match badge on each open.
+    setRuleMatchName(null);
   }, [open, editing, wallets, defaultRecurring, prefill]);
 
   // Desktop: focus the amount field on open so the user can type with
@@ -676,10 +692,39 @@ export default function AddTransactionSheet({
     if (open && !editing) logEvent("transaction_started");
   }, [open, editing]);
 
+  // ── RAM-28 — rules-engine auto-categorisation ────────────────────────
+  // Runs on each name/amount change. Priority: rules fire first. If a
+  // rule matches and the user hasn't touched the category, we apply it
+  // and skip AI. queueMicrotask defers setState to avoid purity warnings.
+  useEffect(() => {
+    if (!open || editing || isTransfer) return;
+    if (userTouchedCategoryRef.current) return;
+    if (!txRules.length) return;
+
+    const trimmed = name.trim();
+    const amountNum = parseFloat(amount) || 0;
+    if (trimmed.length < 2) return;
+
+    const match = evaluateRules(trimmed, amountNum, txRules);
+    queueMicrotask(() => {
+      if (match.category_id) {
+        setCategoryId(match.category_id);
+        setAiSource(null); // rules aren't AI
+        setRuleMatchName(match.ruleName ?? null);
+        aiSuggestedRef.current = match.category_id;
+      } else {
+        // No rule match — clear any previous rule badge (AI may still fill)
+        setRuleMatchName(null);
+      }
+    });
+  }, [open, editing, isTransfer, txRules, name, amount]);
+
   // ── AI auto-categorisation (unchanged) ──────────────────────────────
   useEffect(() => {
     if (!open || editing || isTransfer) return;
     if (userTouchedCategory) return;
+    // RAM-28 — if a rule already matched, skip AI (rule has priority)
+    if (ruleMatchName !== null) return;
     const trimmed = name.trim();
     if (trimmed.length < 2) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
@@ -710,7 +755,7 @@ export default function AddTransactionSheet({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [open, editing, isTransfer, userTouchedCategory, name, type]);
+  }, [open, editing, isTransfer, userTouchedCategory, ruleMatchName, name, type]);
 
   const userTouchedCategoryRef = useRef(userTouchedCategory);
   useEffect(() => {
@@ -1258,6 +1303,14 @@ export default function AddTransactionSheet({
                   </span>
                 )}
               </div>
+
+              {/* RAM-28 — rule match badge */}
+              {ruleMatchName && !userTouchedCategory && (
+                <p className="flex items-center gap-1.5 rounded-xl bg-[#EE6452]/08 px-3 py-1.5 text-[12px] font-medium text-[#EE6452] ring-1 ring-[#EE6452]/15">
+                  <Zap className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />
+                  {tr("rules.matched")}: {ruleMatchName}
+                </p>
+              )}
 
               {/* Account row */}
               {isTransfer ? (
