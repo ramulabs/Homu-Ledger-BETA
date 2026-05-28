@@ -144,6 +144,21 @@ export type DbRecurringItem = {
   wallets: DbWallet | null;
 };
 
+/**
+ * RAM-27 — one line item inside a split transaction.
+ * `amount` is in the same natural units as `transactions.amount`.
+ * `category_id` is a hard reference to a category in the same household.
+ * `notes` is an optional free-text annotation for that line.
+ *
+ * The split amounts must sum to the parent transaction's `amount` —
+ * this invariant is enforced by the SplitEditor component on save.
+ */
+export type SplitLineItem = {
+  amount: number;
+  category_id: string;
+  notes?: string;
+};
+
 export type DbTransaction = {
   id: string;
   type: TransactionType;
@@ -161,6 +176,13 @@ export type DbTransaction = {
   /** Set on transfer rows after deduplication: the OTHER wallet in the pair. */
   peer_wallet?: DbWallet | null;
   photo_url: string | null;
+  /**
+   * RAM-27 — optional split breakdown. Null / undefined = unsplit (the
+   * transaction is attributed to a single `category_id` as before).
+   * When present: an array of SplitLineItem whose amounts sum to
+   * `transactions.amount`. Stored as JSONB in the DB.
+   */
+  splits?: SplitLineItem[] | null;
   /** Synthesised client-side from a queued offline op (v1.36.0). When
    *  true, the row was added optimistically and is still waiting for
    *  replay. `transaction-list.tsx` styles it at 60% opacity + adds a
