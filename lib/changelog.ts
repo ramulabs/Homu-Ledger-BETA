@@ -58,6 +58,21 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.13",
+    date: "May 26, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Fixed Add Transaction not opening on older Android Chrome / WebView — the sheet was getting stuck as a thin sliver at the bottom of the screen with nothing visible. Applies in the browser tab and in the installed home-screen app. The Add Category, Edit Category and Add Recurring sheets shared the same issue and are fixed in the same release.",
+        id: "Memperbaiki Tambah Transaksi yang tidak terbuka di Chrome / WebView Android lama — lembar tersangkut sebagai garis tipis di bagian bawah layar tanpa terlihat sama sekali. Berlaku di tab browser dan di aplikasi home-screen yang terpasang. Lembar Tambah Kategori, Edit Kategori, dan Tambah Berulang punya masalah yang sama dan ikut diperbaiki di rilis ini." },
+      { type: "fix", audience: "dev",
+        en: "Root cause: the four bottom-anchored sheets sized their wrapper from `window.visualViewport.height` inside a `useEffect`, with a CSS `100dvh` fallback for the first paint. `dvh` units shipped in Chrome 108 (Nov 2022); on older Android Chrome / WebView builds (common on 4–5 year old Xiaomi-class hardware) the rule is silently dropped, the wrapper resolves to `height: auto = 0`, and the inner sheet (`max-height: 92%` or `absolute bottom: 0`) collapses to 0 px. Some old-Chrome / WebView combos also return 0 from `visualViewport.height` on the first read, with the same outcome.",
+        id: "Akar masalah: empat lembar yang berlabuh di bawah mengukur pembungkusnya dari `window.visualViewport.height` di dalam `useEffect`, dengan fallback CSS `100dvh` untuk paint pertama. Unit `dvh` baru dikirim di Chrome 108 (Nov 2022); di build Chrome / WebView Android lama (umum di perangkat kelas Xiaomi 4–5 tahun lalu) aturan itu diam-diam diabaikan, pembungkus jadi `height: auto = 0`, dan lembar di dalamnya (`max-height: 92%` atau `absolute bottom: 0`) menciut ke 0 px. Beberapa kombinasi Chrome / WebView lama juga mengembalikan 0 dari `visualViewport.height` pada pembacaan pertama, dengan hasil yang sama." },
+      { type: "fix", audience: "dev",
+        en: "Fix: new `lib/viewport.ts` helper (`readViewportHeight` / `readViewportOffsetTop`) with a three-step fallback chain — `visualViewport.height` → `window.innerHeight` → `document.documentElement.clientHeight`. The four sheets now seed their height state SYNCHRONOUSLY via `useState(() => readViewportHeight())`, so the wrapper has a real px height on the very first paint (no waiting for `useEffect`). The `update()` callback inside the resize / scroll subscription also guards against bogus 0 reads (`if (h && h > 0) setVvHeight(h)`). CSS fallback in the JSX flipped from `100dvh` to `100vh` so even the pre-hydration moment is safer on old browsers. Animations, body-scroll lock, the iOS-PWA fixes from v1.46.5, and the keyboard-tracking from v1.46.6/v1.46.7 are all untouched.",
+        id: "Perbaikan: helper baru `lib/viewport.ts` (`readViewportHeight` / `readViewportOffsetTop`) dengan rantai fallback tiga langkah — `visualViewport.height` → `window.innerHeight` → `document.documentElement.clientHeight`. Empat lembar tersebut kini menyemai state tinggi SECARA SINKRON via `useState(() => readViewportHeight())`, jadi pembungkus punya tinggi px nyata di paint pertama (tanpa menunggu `useEffect`). Callback `update()` di dalam langganan resize / scroll juga menjaga terhadap pembacaan 0 yang keliru (`if (h && h > 0) setVvHeight(h)`). Fallback CSS di JSX diubah dari `100dvh` ke `100vh` supaya momen pra-hidrasi pun lebih aman di browser lama. Animasi, body-scroll lock, perbaikan iOS-PWA v1.46.5, dan pelacakan keyboard v1.46.6/v1.46.7 tidak disentuh." },
+    ],
+  },
+  {
     version: "1.46.12",
     date: "May 24, 2026",
     changes: [

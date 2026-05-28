@@ -23,6 +23,7 @@ import { CATEGORY_LUCIDE_ICONS, makeLucideSymbol, isLucideSymbol } from "@/lib/c
 import { CategoryIcon } from "@/components/category-icon";
 import type { DbCategory } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
+import { readViewportHeight, readViewportOffsetTop } from "@/lib/viewport";
 
 const SOFT_PALETTE = [
   "#f97316", "#3b82f6", "#8b5cf6", "#ef4444",
@@ -129,18 +130,22 @@ export default function EditCategorySheet({
   // ── Keep the bento flush above the on-screen keyboard. The wrapper is
   //    sized + offset to overlay window.visualViewport (the visible area
   //    minus the keyboard); the bento is bottom-anchored inside it.
-  const [vvHeight, setVvHeight] = useState<number | null>(null);
-  const [vvOffsetTop, setVvOffsetTop] = useState(0);
+  //    v1.46.13 — see add-transaction-sheet.tsx for the long note: seeded
+  //    synchronously + guarded against bogus 0 reads so older Android
+  //    Chrome / WebView builds without `dvh` support don't collapse the
+  //    wrapper to 0 height.
+  const [vvHeight, setVvHeight] = useState<number | null>(() => readViewportHeight());
+  const [vvOffsetTop, setVvOffsetTop] = useState<number>(() => readViewportOffsetTop());
   useEffect(() => {
     if (!open) return;
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    if (!vv) return;
     function update() {
-      if (!vv) return;
-      setVvHeight(vv.height);
-      setVvOffsetTop(vv.offsetTop);
+      const h = readViewportHeight();
+      if (h && h > 0) setVvHeight(h);
+      setVvOffsetTop(readViewportOffsetTop());
     }
     update();
+    if (!vv) return;
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     return () => {
@@ -196,7 +201,7 @@ export default function EditCategorySheet({
     <div
       className="fixed left-0 top-0 z-[100] w-full"
       style={{
-        height: vvHeight != null ? `${vvHeight}px` : "100dvh",
+        height: vvHeight != null ? `${vvHeight}px` : "100vh",
         transform: `translateY(${vvOffsetTop}px)`,
         pointerEvents: open ? "auto" : "none",
       }}

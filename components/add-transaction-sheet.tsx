@@ -34,6 +34,7 @@ import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } fr
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
 import { withTimeout } from "@/lib/with-timeout";
+import { readViewportHeight, readViewportOffsetTop } from "@/lib/viewport";
 import { signTransactionPhoto } from "@/app/actions/photos";
 import { addRecurringItem } from "@/app/actions/recurring";
 import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
@@ -392,18 +393,29 @@ export default function AddTransactionSheet({
   // slid the sheet off-screen) and as a gap that widened on every
   // re-focus. Reading visualViewport directly on every event — no
   // baseline, no accumulation — removes the drift entirely.
-  const [vvHeight, setVvHeight] = useState<number | null>(null);
-  const [vvOffsetTop, setVvOffsetTop] = useState(0);
+  //
+  // v1.46.13 — `vvHeight` is now seeded SYNCHRONOUSLY from a fallback
+  // chain (visualViewport → innerHeight → documentElement.clientHeight)
+  // so the wrapper has a real px height on first paint, not after the
+  // effect runs. Without this seed the wrapper rendered `height: 100dvh`
+  // on the first frame; on older Android Chrome / WebView builds where
+  // `dvh` units aren't supported (Chrome < 108), the wrapper resolved to
+  // height:auto = 0, the inner sheet (max-height: 92%) collapsed to 0,
+  // and the entire sheet appeared as a sliver "stuck at the bottom" with
+  // nothing visible. Same fallback in `update()` guards against a bogus
+  // 0 / NaN visualViewport.height read on those devices.
+  const [vvHeight, setVvHeight] = useState<number | null>(() => readViewportHeight());
+  const [vvOffsetTop, setVvOffsetTop] = useState<number>(() => readViewportOffsetTop());
   useEffect(() => {
     if (!open) return;
     const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    if (!vv) return;
     function update() {
-      if (!vv) return;
-      setVvHeight(vv.height);
-      setVvOffsetTop(vv.offsetTop);
+      const h = readViewportHeight();
+      if (h && h > 0) setVvHeight(h);
+      setVvOffsetTop(readViewportOffsetTop());
     }
     update();
+    if (!vv) return;
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);
     return () => {
@@ -904,7 +916,12 @@ export default function AddTransactionSheet({
         <div
           className="fixed left-0 top-0 z-[70] w-full"
           style={{
-            height: vvHeight != null ? `${vvHeight}px` : "100dvh",
+            // v1.46.13 — `100vh` (not `100dvh`) as the CSS fallback. The
+            // useState init above seeds vvHeight from a JS chain so this
+            // fallback is almost never actually used at runtime, but on
+            // SSR / pre-hydration `100vh` is universally supported back
+            // to IE9, whereas `100dvh` silently drops on Chrome < 108.
+            height: vvHeight != null ? `${vvHeight}px` : "100vh",
             transform: `translateY(${vvOffsetTop}px)`,
             // v1.46.7 — ease the height/offset changes. When the
             // Description keyboard opens, visualViewport.height drops in

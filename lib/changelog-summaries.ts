@@ -7,6 +7,10 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.46.13": {
+    en: "Fixed Add Transaction (and the other bottom sheets) not opening on older Android Chrome — the sheet was stuck as a sliver at the bottom of the screen.",
+    id: "Memperbaiki Tambah Transaksi (dan lembar-lembar bawah lainnya) yang tidak terbuka di Chrome Android lama — lembar tersangkut sebagai garis tipis di bagian bawah layar.",
+  },
   "1.46.12": {
     en: "On the desktop / web app, opening Add Transaction now focuses the amount field for instant typing, and the sheet stays put when you move to the Description field.",
     id: "Di aplikasi desktop / web, membuka Tambah Transaksi kini memfokuskan kolom jumlah agar bisa langsung diketik, dan lembar tetap di tempat saat kamu berpindah ke kolom Deskripsi.",
