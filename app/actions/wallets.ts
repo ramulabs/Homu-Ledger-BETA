@@ -10,6 +10,16 @@ const COLOR_PALETTE = [
   "#ef4444", "#ec4899", "#eab308", "#14b8a6", "#6b7280",
 ];
 
+const ALLOWED_CURRENCIES = ["IDR", "USD", "SGD", "EUR", "MYR", "AUD", "JPY", "GBP"] as const;
+type AllowedCurrency = typeof ALLOWED_CURRENCIES[number];
+
+function parseCurrency(raw: FormDataEntryValue | null): AllowedCurrency {
+  const value = (raw as string | null)?.trim()?.toUpperCase();
+  return (ALLOWED_CURRENCIES as readonly string[]).includes(value ?? "")
+    ? (value as AllowedCurrency)
+    : "IDR";
+}
+
 function parseAmount(raw: string): number {
   return parseFloat(raw.replace(/\./g, "").replace(",", ".")) || 0;
 }
@@ -38,6 +48,7 @@ export async function addWallet(
   const colorIndex = parseInt(formData.get("color_index") as string) || 0;
   const color = colorDirect || COLOR_PALETTE[colorIndex % COLOR_PALETTE.length];
   const initialBalance = parseAmount(formData.get("initial_balance") as string);
+  const currency = parseCurrency(formData.get("currency"));
 
   if (!name) return { error: "Name required" };
   if (!symbol) return { error: "Icon required" };
@@ -53,9 +64,10 @@ export async function addWallet(
       color,
       initial_balance: initialBalance,
       is_default: false,
+      currency,
       ...(client_op_id ? { client_op_id } : {}),
     })
-    .select("id, name, symbol, color, initial_balance, is_default")
+    .select("id, name, symbol, color, initial_balance, is_default, currency")
     .single();
 
   if (error || !data) {
@@ -65,7 +77,7 @@ export async function addWallet(
     if (error && isClientOpDuplicate(error) && client_op_id) {
       const { data: existing } = await supabase
         .from("wallets")
-        .select("id, name, symbol, color, initial_balance, is_default")
+        .select("id, name, symbol, color, initial_balance, is_default, currency")
         .eq("household_id", householdId)
         .eq("client_op_id", client_op_id)
         .single();
@@ -96,6 +108,7 @@ export async function updateWallet(
   const symbol = (formData.get("symbol") as string).trim();
   const color = (formData.get("color") as string).trim();
   const initialBalanceRaw = formData.get("initial_balance") as string | null;
+  const currency = parseCurrency(formData.get("currency"));
 
   if (!name) return { error: "Name required" };
   if (!symbol) return { error: "Icon required" };
@@ -106,8 +119,9 @@ export async function updateWallet(
     name: string;
     symbol: string;
     color: string;
+    currency: string;
     initial_balance?: number;
-  } = { name, symbol, color };
+  } = { name, symbol, color, currency };
   // initial_balance is optional on update — only override when explicitly provided
   if (initialBalanceRaw != null && initialBalanceRaw !== "") {
     update.initial_balance = parseAmount(initialBalanceRaw);

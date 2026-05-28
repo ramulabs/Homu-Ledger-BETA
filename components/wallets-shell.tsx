@@ -168,12 +168,17 @@ function WalletRow({
             {wallet.is_default && (
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" strokeWidth={2} />
             )}
+            {wallet.currency && wallet.currency !== "IDR" && (
+              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600 ring-1 ring-blue-100">
+                {wallet.currency}
+              </span>
+            )}
           </p>
           <p className={cn(
             "text-[12px]",
             wallet.balance < 0 ? "text-rose-600" : "text-[var(--label-secondary)]"
           )}>
-            {tr("wallet.balance")}: {formatAmountWithSign(wallet.balance, currency)}
+            {tr("wallet.balance")}: {formatAmountWithSign(wallet.balance, wallet.currency ?? currency)}
           </p>
         </div>
         <ChevronRight className="h-[18px] w-[18px] text-[var(--label-tertiary)]" strokeWidth={2} />

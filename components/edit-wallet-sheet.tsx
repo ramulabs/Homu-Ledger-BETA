@@ -15,6 +15,17 @@ const COLOR_PALETTE = [
   "#ef4444", "#ec4899", "#eab308", "#14b8a6", "#6b7280",
 ];
 
+const CURRENCY_OPTIONS = [
+  { code: "IDR", flag: "🇮🇩", name: "Indonesian Rupiah" },
+  { code: "USD", flag: "🇺🇸", name: "US Dollar" },
+  { code: "SGD", flag: "🇸🇬", name: "Singapore Dollar" },
+  { code: "EUR", flag: "🇪🇺", name: "Euro" },
+  { code: "MYR", flag: "🇲🇾", name: "Malaysian Ringgit" },
+  { code: "AUD", flag: "🇦🇺", name: "Australian Dollar" },
+  { code: "JPY", flag: "🇯🇵", name: "Japanese Yen" },
+  { code: "GBP", flag: "🇬🇧", name: "British Pound" },
+] as const;
+
 type Props = {
   open: boolean;
   wallet: DbWallet | null;
@@ -35,6 +46,7 @@ export default function EditWalletSheet({
   const [selectedSymbol, setSelectedSymbol] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
   const [initialBalance, setInitialBalance] = useState("");
+  const [selectedCurrency, setSelectedCurrency] = useState("IDR");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -45,6 +57,7 @@ export default function EditWalletSheet({
       setSelectedSymbol(wallet.symbol);
       setSelectedColor(wallet.color);
       setInitialBalance(String(Math.round(Number(wallet.initial_balance ?? 0))));
+      setSelectedCurrency(wallet.currency ?? "IDR");
       setError(null);
       setConfirmDelete(false);
       setLoading(false);
@@ -66,6 +79,7 @@ export default function EditWalletSheet({
     fd.set("symbol", selectedSymbol);
     fd.set("color", selectedColor);
     fd.set("initial_balance", initialBalance || "0");
+    fd.set("currency", selectedCurrency);
     const result = await updateWallet(wallet.id, fd);
     if (result.error) {
       setError(result.error);
@@ -77,6 +91,7 @@ export default function EditWalletSheet({
         symbol: selectedSymbol,
         color: selectedColor,
         initial_balance: Number(initialBalance || 0),
+        currency: selectedCurrency,
       });
       onClose();
     }
@@ -177,10 +192,39 @@ export default function EditWalletSheet({
               />
             </div>
 
+            {/* Currency picker */}
+            <div>
+              <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
+                {tr("wallet.currency")}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CURRENCY_OPTIONS.map(({ code, flag, name: currencyName }) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setSelectedCurrency(code)}
+                    title={currencyName}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all",
+                      selectedCurrency === code
+                        ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-2 ring-[var(--foreground)]/20"
+                        : "bg-[var(--background)] text-[var(--foreground)] ring-1 ring-black/[0.08]"
+                    )}
+                  >
+                    <span>{flag}</span>
+                    <span>{code}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[12px] text-[var(--label-tertiary)] leading-snug">
+                {tr("wallet.currency.hint")}
+              </p>
+            </div>
+
             {/* Initial balance */}
             <div>
               <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
-                {tr("wallet.initialBalance")} ({currency})
+                {tr("wallet.initialBalance")} ({selectedCurrency})
               </label>
               <input
                 type="text"
