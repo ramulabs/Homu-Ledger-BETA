@@ -479,3 +479,21 @@ html[data-hide-amounts="1"]:not([data-privacy-revealed]) [data-privacy-mono-icon
   background-color: rgba(0, 0, 0, 0.06) !important;
   color: var(--foreground) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   RESPONSIVE LAYOUT — desktop / iPad (md+)
+   ─────────────────────────────────────────────────────────────────────────
+   --app-bottom-pad controls the bottom padding of the <main> element in
+   app/(app)/layout.tsx. On mobile it must be large enough to clear the
+   floating BottomNav (7rem + safe-area). On md+ the BottomNav is hidden
+   so we reduce it to a comfortable 2rem.
+   ────────────────────────────────────────────────────────────────────── */
+:root {
+  --app-bottom-pad: calc(7rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --app-bottom-pad: 2rem;
+  }
+}

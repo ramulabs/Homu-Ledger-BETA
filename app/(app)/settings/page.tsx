@@ -77,9 +77,10 @@ export default async function SettingsPage() {
 
   return (
     // Bottom-nav is hidden on Settings (see bottom-nav.tsx), so the layout's
-    // 7rem bottom padding leaves a big empty gap below the version label.
-    // Cancel ~6rem of it via negative margin; keep ~1rem + safe-area for breathing room.
-    <div className="pb-4" style={{ marginBottom: "calc(-7rem + 1rem)" }}>
+    // 7rem mobile bottom padding leaves a big empty gap below the version label.
+    // Cancel ~6rem of it via negative margin on mobile (keep ~1rem + safe-area).
+    // On md+, --app-bottom-pad is already 2rem so no negative margin needed.
+    <div className="pb-4 mb-[-6rem] md:mb-0">
       <TrackView event="settings_opened" />
       <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-2 backdrop-blur">
         <TapLink

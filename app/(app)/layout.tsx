@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import BottomNav from "@/components/bottom-nav";
+import SideNav from "@/components/side-nav";
 import { LanguageProvider } from "@/lib/i18n/provider";
 import { getServerT } from "@/lib/i18n/server";
 import { requireSession } from "@/lib/auth/session";
@@ -27,31 +28,54 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <LanguageProvider lang={lang}>
-      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[var(--background)]">
-        {/* Status-bar shield: a fixed, opaque strip covering the iOS safe-area
-            inset at the top. Sticky page headers below (top: env(safe-area-
-            inset-top)) sit flush underneath it, so scrolled content never
-            shows through the dynamic-island / status-bar zone. */}
-        <div
-          aria-hidden
-          className="fixed left-0 right-0 top-0 z-30 bg-[var(--background)]/95 backdrop-blur"
-          style={{ height: "env(safe-area-inset-top)" }}
-        />
-        <main
-          className="flex-1"
-          style={{
-            paddingTop: "env(safe-area-inset-top)",
-            paddingBottom: "calc(7rem + env(safe-area-inset-bottom))",
-          }}
-        >
-          {children}
-        </main>
-        <BottomNav />
-        <SyncStatusPill />
-        <SyncReplay />
-        <VersionGate />
-        {isDeveloper && <DevFeedbackNotifier />}
+      {/*
+       * Two-column layout on md+ (iPad / desktop):
+       *   ┌──────────┬──────────────────────────────┐
+       *   │ SideNav  │  main content (max-w-[720px]) │
+       *   │  w-60    │                               │
+       *   └──────────┴──────────────────────────────┘
+       *
+       * On mobile (< md): unchanged narrow column + BottomNav.
+       * SideNav is hidden on mobile via hidden md:flex.
+       * BottomNav is hidden on md+ via md:hidden.
+       */}
+      <div className="bg-[var(--background)] md:flex md:min-h-dvh">
+        <SideNav />
+
+        {/* Mobile: narrow centred column. Desktop: flex-1 with centred content. */}
+        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col md:mx-0 md:max-w-none md:flex-1">
+          {/*
+           * Status-bar shield — only relevant on iOS native (safe-area-inset-top
+           * is 0 on desktop/browser) so it's harmless to leave it unconditional.
+           * On md+ it's hidden so the fixed strip doesn't overlap the SideNav.
+           */}
+          <div
+            aria-hidden
+            className="fixed left-0 right-0 top-0 z-30 bg-[var(--background)]/95 backdrop-blur md:hidden"
+            style={{ height: "env(safe-area-inset-top)" }}
+          />
+          {/*
+           * paddingTop: safe-area-inset-top handles iOS notch/Dynamic Island.
+           * paddingBottom: uses --app-bottom-pad CSS variable (defined in
+           *   globals.css). Mobile: 7rem + safe-area (clears floating BottomNav).
+           *   md+: 2rem (BottomNav is hidden, normal breathing room only).
+           */}
+          <main
+            className="flex-1 md:mx-auto md:w-full md:max-w-[720px]"
+            style={{
+              paddingTop: "env(safe-area-inset-top)",
+              paddingBottom: "var(--app-bottom-pad)",
+            }}
+          >
+            {children}
+          </main>
+          <BottomNav />
+        </div>
       </div>
+      <SyncStatusPill />
+      <SyncReplay />
+      <VersionGate />
+      {isDeveloper && <DevFeedbackNotifier />}
     </LanguageProvider>
   );
 }

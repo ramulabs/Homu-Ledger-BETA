@@ -45,7 +45,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed left-1/2 z-50 -translate-x-1/2"
+      className="fixed left-1/2 z-50 -translate-x-1/2 md:hidden"
       style={{ bottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {/* Tighter shadow — close to the bar (small y-offset, moderate blur)
