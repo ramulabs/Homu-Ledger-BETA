@@ -449,6 +449,15 @@ export const en = {
   "budgets.amountRequired": "Enter a positive amount",
   "budgets.expensesOnly": "Budgets are for expense categories only.",
 
+  // Split transactions (RAM-27)
+  "transaction.split": "Split",
+  "transaction.split.add": "Add split",
+  "transaction.split.equally": "Split equally",
+  "transaction.split.remaining": "remaining",
+  "transaction.split.must.sum": "Split amounts must equal the total",
+  "transaction.split.empty": "Tap 'Add split' to divide this transaction",
+  "transaction.category.multiple": "Multiple",
+
   // Export transactions (RAM-10)
   "export.title": "Export transactions",
   "export.intro": "Download your transactions as a spreadsheet or printable statement. Useful for tax records, sharing with an accountant, or just keeping a copy.",
@@ -936,6 +945,15 @@ export const id: Record<TKey, string> = {
   "budgets.home.viewAll": "Lihat semua",
   "budgets.amountRequired": "Masukkan jumlah lebih dari nol",
   "budgets.expensesOnly": "Anggaran hanya untuk kategori pengeluaran.",
+
+  // Split transactions (RAM-27)
+  "transaction.split": "Bagi",
+  "transaction.split.add": "Tambah bagi",
+  "transaction.split.equally": "Bagi rata",
+  "transaction.split.remaining": "sisa",
+  "transaction.split.must.sum": "Jumlah bagi harus sama dengan total",
+  "transaction.split.empty": "Ketuk 'Tambah bagi' untuk membagi transaksi ini",
+  "transaction.category.multiple": "Banyak",
 
   // Export transactions (RAM-10)
   "export.title": "Ekspor transaksi",

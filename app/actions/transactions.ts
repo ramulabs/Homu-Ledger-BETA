@@ -71,6 +71,11 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
   const wallet_id = (formData.get("wallet_id") as string) || null;
   const date = formData.get("date") as string;
   const photo_url = (formData.get("photo_url") as string) || null;
+  // RAM-27 — parse the optional splits JSONB payload.
+  const splitsRaw = formData.get("splits") as string | null;
+  const splits = splitsRaw ? (() => {
+    try { return JSON.parse(splitsRaw); } catch { return null; }
+  })() : null;
 
   if (!validateType(typeRaw)) return { error: "Type must be income or expense" };
   const type = typeRaw;
@@ -96,6 +101,7 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
     wallet_id,
     date,
     photo_url,
+    ...(splits ? { splits } : {}),
     ...(client_op_id ? { client_op_id } : {}),
   });
 
@@ -138,6 +144,14 @@ export async function updateTransaction(id: string, formData: FormData): Promise
   const wallet_id = (formData.get("wallet_id") as string) || null;
   const date = formData.get("date") as string;
   const photo_url = (formData.get("photo_url") as string) || null;
+  // RAM-27 — parse the optional splits JSONB payload. Explicit "null"
+  // string clears an existing split; absent key = no change.
+  const splitsRaw = formData.get("splits") as string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let splits: any[] | null = null;
+  if (splitsRaw) {
+    try { splits = JSON.parse(splitsRaw); } catch { /* malformed — treat as null */ }
+  }
 
   if (!validateType(typeRaw)) return { error: "Type must be income or expense" };
   const type = typeRaw;
@@ -153,7 +167,17 @@ export async function updateTransaction(id: string, formData: FormData): Promise
 
   const { error } = await supabase
     .from("transactions")
-    .update({ type, amount, name, category_id, wallet_id, date, photo_url })
+    .update({
+      type,
+      amount,
+      name,
+      category_id,
+      wallet_id,
+      date,
+      photo_url,
+      // RAM-27 — always write splits (null clears an existing split).
+      splits: splits && splits.length > 0 ? splits : null,
+    })
     .eq("id", id)
     .eq("household_id", householdId);
 

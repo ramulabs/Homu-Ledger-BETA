@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, ArrowRightLeft, Repeat } from "lucide-react";
+import { Camera, ArrowRightLeft, Repeat, Split } from "lucide-react";
 import { formatAmount, formatAmountSigned, formatDayGroup } from "@/lib/format";
 import { CategoryIcon } from "@/components/category-icon";
 import { useT } from "@/lib/i18n/provider";
@@ -72,6 +72,8 @@ export default function TransactionList({ transactions, members, currency = "IDR
           <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
             {group.rows.map(({ tx: t, globalIndex: index }) => {
         const isTransfer = !!t.transfer_pair_id;
+        // RAM-27 — detect split transactions.
+        const isSplit = !isTransfer && !!t.splits && t.splits.length > 0;
         const cat = t.categories ?? FALLBACK_CAT;
         const creator = t.created_by ? (members[t.created_by] ?? null) : null;
         // If created_by is set but the member isn't loaded, show a neutral fallback
@@ -136,15 +138,20 @@ export default function TransactionList({ transactions, members, currency = "IDR
               // ── REGULAR ROW (expense / income) ────────────────────────────
               <div
                 className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[18px]"
-                style={{ backgroundColor: `${cat.color}1A` }}
+                style={{ backgroundColor: isSplit ? "#6b728020" : `${cat.color}1A` }}
               >
-                <CategoryIcon
-                  symbol={cat.symbol}
-                  iconStyle={iconStyle}
-                  size={20}
-                  emojiSize="18px"
-                  color={iconStyle === "2d" ? cat.color : undefined}
-                />
+                {isSplit ? (
+                  // RAM-27 — split transactions show a grid/split icon.
+                  <Split className="h-[18px] w-[18px] text-[#6b7280]" strokeWidth={2} />
+                ) : (
+                  <CategoryIcon
+                    symbol={cat.symbol}
+                    iconStyle={iconStyle}
+                    size={20}
+                    emojiSize="18px"
+                    color={iconStyle === "2d" ? cat.color : undefined}
+                  />
+                )}
                 {creator ? (
                   <span
                     className="absolute -bottom-0.5 -right-0.5 block h-4 w-4 overflow-hidden rounded-full ring-2 ring-[var(--surface)]"
@@ -176,7 +183,17 @@ export default function TransactionList({ transactions, members, currency = "IDR
                   </span>
                 ) : (
                   <>
-                    {cat.name}
+                    {/* RAM-27 — split transactions show "Multiple" label
+                        and a small Split icon; unsplit rows show the
+                        category name as before. */}
+                    {isSplit ? (
+                      <>
+                        <Split className="h-3 w-3 shrink-0" strokeWidth={2} />
+                        {tr("transaction.category.multiple")}
+                      </>
+                    ) : (
+                      cat.name
+                    )}
                     {t.wallets && <> · {t.wallets.name}</>}
                     {/* v1.43.1 — recurring + photo markers rendered as
                         small icons inline at the end of the sub-line.
