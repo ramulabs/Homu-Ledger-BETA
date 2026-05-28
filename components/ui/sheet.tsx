@@ -42,9 +42,20 @@ export default function Sheet({ open, onClose, title, children, maxHeight = "80v
         className="fixed inset-0 z-[var(--z-sheet-overlay)] bg-black/30 backdrop-blur-[2px] animate-overlay-fade-in"
         onClick={onClose}
       />
+      {/*
+       * Mobile (< md): classic bottom sheet — slides up from the bottom.
+       * Desktop/iPad (md+): centered modal — rounded on all sides, vertically
+       *   centered via top-1/2/-translate-y-1/2, max 480 px wide.
+       * The mobile classes (bottom-0, rounded-t-*, animate-sheet-slide-up)
+       * are overridden on md+ without removing them from the DOM so the
+       * slide-up animation still applies cleanly on mobile.
+       */}
       <div
         className={cn(
+          // Mobile: bottom sheet
           "fixed bottom-0 left-1/2 z-[var(--z-sheet-content)] w-full max-w-md -translate-x-1/2 rounded-t-[var(--radius-2xl)] bg-[var(--background)] shadow-[var(--shadow-sheet)] flex flex-col animate-sheet-slide-up",
+          // Desktop/iPad overrides
+          "md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:max-w-[480px] md:rounded-[var(--radius-2xl)]",
           className
         )}
         style={{ maxHeight }}

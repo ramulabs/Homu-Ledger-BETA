@@ -58,6 +58,27 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.47.0",
+    date: "May 27, 2026",
+    changes: [
+      { type: "new", audience: "user",
+        en: "Settings → Export transactions lets you download your transactions as a CSV spreadsheet or a printable PDF statement for any date range — handy for tax records, sharing with an accountant, or just keeping a copy.",
+        id: "Pengaturan → Ekspor transaksi memungkinkanmu mengunduh transaksi sebagai spreadsheet CSV atau pernyataan PDF cetak untuk rentang tanggal apa pun — berguna untuk catatan pajak, dibagikan ke akuntan, atau sekadar arsip pribadi." },
+      { type: "new", audience: "user",
+        en: "On phones that support it (iOS Safari 16.4+, Android Chrome), tapping the button opens the system Share sheet instead of a download — so you can hand the file straight to Files, Mail, WhatsApp, or wherever it needs to go.",
+        id: "Di ponsel yang mendukung (iOS Safari 16.4+, Android Chrome), menekan tombolnya membuka lembar Bagikan sistem alih-alih unduhan — sehingga kamu bisa mengirim file langsung ke Files, Mail, WhatsApp, atau mana saja." },
+      { type: "new", audience: "dev",
+        en: "RAM-10. New route handler at `app/api/export/transactions/route.ts` builds either a UTF-8-BOM CSV (RFC 4180, CRLF, fixed-point amounts + Currency column so spreadsheets can SUM) or a single-pass A4 portrait PDF via `pdf-lib`. Query scopes by `household_id` from the caller's profile and skips transfer rows (`transfer_pair_id IS NULL`) so net activity isn't double-counted. Paginates Supabase select() in 1000-row batches to handle full-year exports for active ledgers.",
+        id: "RAM-10. Route handler baru di `app/api/export/transactions/route.ts` membangun CSV UTF-8-BOM (RFC 4180, CRLF, jumlah fixed-point + kolom Currency agar spreadsheet bisa SUM) atau PDF A4 potret satu lintasan via `pdf-lib`. Kueri dibatasi `household_id` dari profil pemanggil dan melewati baris transfer (`transfer_pair_id IS NULL`) supaya aktivitas net tidak dihitung ganda. Memaginasi Supabase select() dalam batch 1000 baris untuk menangani ekspor satu tahun penuh di ledger aktif." },
+      { type: "new", audience: "dev",
+        en: "Two new helpers in `lib/export/`: `transactions.ts` (pure CSV/PDF builders + filename helper, no Supabase coupling — Capacitor can call them directly later) and `deliver.ts` (client-side abstraction over `navigator.share` ⇄ `<a download>` so the export shell never branches on runtime). `deliverFile()` prefers Web Share Level 2 when `canShare({ files })` returns true, otherwise falls back to a blob-URL anchor click matching `components/photo-viewer.tsx`. User-aborted share returns `{ method: 'cancelled' }` and intentionally does NOT fall back to a download.",
+        id: "Dua helper baru di `lib/export/`: `transactions.ts` (builder CSV/PDF murni + helper nama file, tanpa kopling Supabase — Capacitor bisa memanggilnya langsung nanti) dan `deliver.ts` (abstraksi sisi klien atas `navigator.share` ⇄ `<a download>` sehingga shell ekspor tidak pernah bercabang berdasarkan runtime). `deliverFile()` lebih memilih Web Share Level 2 saat `canShare({ files })` true, jika tidak fallback ke klik anchor blob-URL yang mengikuti `components/photo-viewer.tsx`. Share yang dibatalkan pengguna mengembalikan `{ method: 'cancelled' }` dan sengaja TIDAK fallback ke unduhan." },
+      { type: "new", audience: "dev",
+        en: "PDF layout: A4 portrait, Helvetica + HelveticaBold from pdf-lib's StandardFonts (no font shipping), 6-column table (Date / Description / Category / Wallet / Member / Amount) with totals block at the end and page numbers as a post-pass. Strings are passed through a small `toWinAnsiSafe()` filter that maps the ellipsis, smart quotes, and en/em dashes to ASCII equivalents — WinAnsi can't encode them and pdf-lib throws otherwise.",
+        id: "Tata letak PDF: A4 potret, Helvetica + HelveticaBold dari StandardFonts pdf-lib (tanpa pengiriman font), tabel 6 kolom (Tanggal / Deskripsi / Kategori / Dompet / Anggota / Jumlah) dengan blok total di akhir dan nomor halaman sebagai post-pass. String dilewatkan melalui filter kecil `toWinAnsiSafe()` yang memetakan elipsis, smart quote, dan en/em dash ke padanan ASCII — WinAnsi tidak bisa meng-encode-nya dan pdf-lib akan throw." },
+    ],
+  },
+  {
     version: "1.46.12",
     date: "May 24, 2026",
     changes: [

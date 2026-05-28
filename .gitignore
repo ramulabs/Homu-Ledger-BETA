@@ -48,3 +48,26 @@ supabase/.temp
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# native iOS (Capacitor) — see ios/.gitignore for the local one, this is
+# an extra safety net at the repo root.
+/ios/App/Pods/
+/ios/App/build/
+/ios/DerivedData/
+/ios/App/App/public/
+/ios/App/App/capacitor.config.json
+/ios/App/App/config.xml
+/ios/capacitor-cordova-ios-plugins/
+
+# native Android (Bubblewrap-generated artefacts)
+/android/app/build/
+/android/build/
+/android/.gradle/
+/android/local.properties
+/android/app/release/
+/android/app/debug/
+*.apk
+*.aab
+*.keystore
+*.jks
+

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox, Target, Download } from "lucide-react";
 import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
@@ -77,9 +77,10 @@ export default async function SettingsPage() {
 
   return (
     // Bottom-nav is hidden on Settings (see bottom-nav.tsx), so the layout's
-    // 7rem bottom padding leaves a big empty gap below the version label.
-    // Cancel ~6rem of it via negative margin; keep ~1rem + safe-area for breathing room.
-    <div className="pb-4" style={{ marginBottom: "calc(-7rem + 1rem)" }}>
+    // 7rem mobile bottom padding leaves a big empty gap below the version label.
+    // Cancel ~6rem of it via negative margin on mobile (keep ~1rem + safe-area).
+    // On md+, --app-bottom-pad is already 2rem so no negative margin needed.
+    <div className="pb-4 mb-[-6rem] md:mb-0">
       <TrackView event="settings_opened" />
       <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-2 backdrop-blur">
         <TapLink
@@ -210,6 +211,7 @@ export default async function SettingsPage() {
       <Group title={t("settings.account")}>
         <RowLink href="/settings/wallets" icon={<Wallet className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.wallets")} />
         <RowLink href="/settings/categories" icon={<Tag className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.categories")} />
+        <RowLink href="/settings/budgets" icon={<Target className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("budgets.settingsLabel")} />
         <RowLink href="/settings/integrations" icon={<Mailbox className="h-[18px] w-[18px]" strokeWidth={2} />} label="Integrations" />
         <RowLink
           href={`/settings/style?current=${iconStyle}`}
@@ -229,7 +231,18 @@ export default async function SettingsPage() {
           value={languageLabel}
         />
         <PrivacyToggleRow />
-        <Row icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.notifications")} />
+        <RowLink
+          href="/settings/notifications"
+          icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />}
+          label={t("settings.notifications")}
+        />
+      </Group>
+
+      {/* Data — export, future backup/restore. Lives between Account and
+          Support because it's the user's data and is a power-user / "I
+          own this" affordance, not a support escalation. */}
+      <Group title={t("settings.data")}>
+        <RowLink href="/settings/export" icon={<Download className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.export")} />
       </Group>
 
       <Group title={t("settings.support")}>
@@ -285,20 +298,6 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
         {children}
       </ul>
     </section>
-  );
-}
-
-function Row({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <li>
-      <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left min-h-[52px] active:bg-black/[0.02] transition-colors">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
-          {icon}
-        </span>
-        <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{label}</p>
-        <ChevronRight className="h-[18px] w-[18px] text-[var(--label-tertiary)]" strokeWidth={2} />
-      </button>
-    </li>
   );
 }
 

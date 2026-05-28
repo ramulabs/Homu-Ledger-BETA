@@ -1,0 +1,26 @@
+[
+  {
+    "//": "Digital Asset Links file for the HOMU Ledger Android TWA.",
+    "//purpose": "Tells Chrome on Android that app.ramu.homu.twa is owned by the same party that owns homu.ramu.app, so the TWA can launch URL bar-less.",
+    "//how-to-fill": [
+      "1. Build the Android TWA at least once (see scripts/native-android-bootstrap.md) so a release keystore exists.",
+      "2. From the bubblewrap project directory, run:",
+      "     keytool -list -v -keystore android.keystore -alias android | grep SHA256",
+      "3. Copy the hex fingerprint (colon-separated, uppercase) into the `sha256_cert_fingerprints` array below — REPLACE every XX:XX:... line.",
+      "4. Redeploy (the file MUST be served from https://homu.ramu.app/.well-known/assetlinks.json with Content-Type: application/json).",
+      "5. Verify with: curl -s https://homu.ramu.app/.well-known/assetlinks.json | jq",
+      "6. Sanity-check with Google's tester: https://developers.google.com/digital-asset-links/tools/generator"
+    ],
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.use_as_origin"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.ramu.homu.twa",
+      "sha256_cert_fingerprints": [
+        "XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX:XX"
+      ]
+    }
+  }
+]

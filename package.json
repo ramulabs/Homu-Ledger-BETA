@@ -1,6 +1,6 @@
 {
   "name": "homu",
-  "version": "1.46.12",
+  "version": "1.47.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,18 +18,24 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^1.8.0",
     "next": "16.2.4",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.73.1",
     "recharts": "^3.8.1",
     "tailwind-merge": "^3.5.0",
+    "web-push": "^3.6.7",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/ios": "^8.3.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",

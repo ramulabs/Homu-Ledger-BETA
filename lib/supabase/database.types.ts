@@ -1,5 +1,5 @@
 // AUTO-GENERATED — do not edit by hand.
-// Regenerated via Supabase MCP after migration 0033_email_inbox.
+// Regenerated via Supabase MCP after migration 0034_push_subscriptions.
 export type Json =
   | string
   | number
@@ -104,6 +104,61 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          household_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          household_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          household_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
             referencedColumns: ["id"]
           },
         ]
@@ -604,6 +659,27 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_dedup: {
+        Row: {
+          fired_at: string
+          id: string
+          key: string
+          user_id: string
+        }
+        Insert: {
+          fired_at?: string
+          id?: string
+          key: string
+          user_id: string
+        }
+        Update: {
+          fired_at?: string
+          id?: string
+          key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_color: string
@@ -665,6 +741,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string | null
+          created_at: string
+          device_token: string | null
+          enabled: boolean
+          endpoint: string | null
+          id: string
+          last_used_at: string | null
+          p256dh: string | null
+          prefs: Json
+          provider: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth?: string | null
+          created_at?: string
+          device_token?: string | null
+          enabled?: boolean
+          endpoint?: string | null
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string | null
+          prefs?: Json
+          provider?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string | null
+          created_at?: string
+          device_token?: string | null
+          enabled?: boolean
+          endpoint?: string | null
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string | null
+          prefs?: Json
+          provider?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       promo_codes: {
         Row: {
@@ -1042,6 +1163,13 @@ export type Database = {
         }[]
       }
       generate_promo_code_string: { Args: never; Returns: string }
+      get_budget_spent_this_month: {
+        Args: never
+        Returns: {
+          category_id: string
+          spent: number
+        }[]
+      }
       get_email_by_username: { Args: { p_username: string }; Returns: string }
       get_ledger_totals: {
         Args: never

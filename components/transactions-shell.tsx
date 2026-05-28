@@ -21,6 +21,7 @@ import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
 import SpeakToAddFab from "@/components/speak-to-add-fab";
 import InboxChip from "@/components/inbox-chip";
+import BudgetWatchCard from "@/components/budget-watch-card";
 import { type InboxRow } from "@/components/inbox-bento";
 import { markInboxAcceptedAction } from "@/app/actions/inbox";
 
@@ -77,6 +78,14 @@ type Props = {
    *  app_settings.voice_input_enabled; the FAB component itself also
    *  greys out when navigator.onLine is false. */
   voiceEnabled?: boolean;
+  /** RAM-6 — render the "Scan Receipt" chip in the Add Transaction
+   *  sheet? Server-rendered gate; for now the same dev-only blast
+   *  radius as voice (both share the Gemini key). */
+  ocrEnabled?: boolean;
+  /** RAM-6 — household ai_language passed straight through to the OCR
+   *  prompt. 'auto' lets Gemini guess; 'en' / 'id' biases the prompt
+   *  toward the right number format (Rp45.000 vs $45.00). */
+  ocrLanguageHint?: "auto" | "en" | "id";
 };
 
 export default function TransactionsShell({
@@ -97,6 +106,8 @@ export default function TransactionsShell({
   recurringItems,
   iconStyle = "3d",
   voiceEnabled = false,
+  ocrEnabled = false,
+  ocrLanguageHint = "auto",
 }: Props) {
   const t = useT();
   const [tab, setTab] = useState<SubTab>("history");
@@ -543,6 +554,16 @@ export default function TransactionsShell({
               the chip re-fetch after that save completes. */}
           <InboxChip onEdit={handleInboxEdit} refreshSignal={inboxRefresh} />
 
+          {/* RAM-5 — Budget watch card. Self-fetches + hides when no
+              budgets are set. transactionsRefreshKey bumps on every add /
+              edit / delete so the card sees fresh totals without a
+              full-page revalidate. */}
+          <BudgetWatchCard
+            currency={currency}
+            iconStyle={iconStyle}
+            refreshSignal={transactions.length}
+          />
+
           {/* Filter active banner */}
           {isFiltering && (
             <div className="mx-5 mb-1 flex items-center justify-between rounded-xl bg-[var(--foreground)]/[0.05] px-3.5 py-2">
@@ -619,6 +640,8 @@ export default function TransactionsShell({
         defaultRecurring={sheetRecurring}
         prefill={inboxPrefill}
         onSaved={inboxEdit ? handleInboxSaved : undefined}
+        ocrEnabled={ocrEnabled}
+        ocrLanguageHint={ocrLanguageHint}
       />
 
       <AddRecurringSheet
