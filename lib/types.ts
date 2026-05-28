@@ -92,6 +92,15 @@ export type DbWallet = {
   color: string;
   initial_balance: number;
   is_default: boolean;
+  /** ISO 4217 currency code, e.g. "IDR", "USD". Defaults to "IDR". */
+  currency?: string;
+};
+
+export type DbFxRate = {
+  base: string;
+  target: string;
+  rate: number;
+  date: string;
 };
 
 export type SubscriptionTier = "3_months" | "6_months" | "1_year" | "lifetime" | "developer";
