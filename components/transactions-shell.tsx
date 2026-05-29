@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, X, Check } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 import Link from "next/link";
@@ -111,11 +111,13 @@ export default function TransactionsShell({
   ocrLanguageHint = "auto",
 }: Props) {
   const t = useT();
-  const router = useRouter();
+  // v1.47.0 — `router` was only used by the removed handleCreateRule.
+  // Re-add `const router = useRouter();` if you bring it back.
   const [tab, setTab] = useState<SubTab>("history");
 
-  // Search
-  const [searchOpen, setSearchOpen] = useState(false);
+  // Search — v1.47.0 (UI/UX audit) search bar is always visible, so
+  // the previous `searchOpen` toggle state is gone. The ref is kept so
+  // future flows (e.g. Cmd-K hotkey) can focus the input programmatically.
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -394,22 +396,20 @@ export default function TransactionsShell({
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadOlderFromServer]);
 
-  // Focus search input when opened
-  useEffect(() => {
-    if (searchOpen) setTimeout(() => searchInputRef.current?.focus(), 50);
-  }, [searchOpen]);
+  // v1.47.0 — focus-on-open effect removed; the search input is now
+  // always rendered, so there's nothing to open.
 
   function openAdd() { setEditingTx(null); setSheetRecurring(false); setShowSheet(true); }
   function openEdit(tx: DbTransaction) { setEditingTx(tx); setSheetRecurring(false); setShowSheet(true); }
 
-  // RAM-28 — deep-link to the rules page with the transaction's name and
-  // category pre-filled so the user can one-tap create a matching rule.
-  function handleCreateRule(tx: DbTransaction) {
-    const params = new URLSearchParams();
-    if (tx.name) params.set("prefill", tx.name);
-    if (tx.category_id) params.set("category_id", tx.category_id);
-    router.push(`/settings/rules?${params.toString()}`);
-  }
+  // RAM-28 deep-link to rules page (was: handleCreateRule). Removed in
+  // v1.47.0 along with the per-row Zap button — re-add when the swipe
+  // / long-press action surface lands. Pattern:
+  //   const params = new URLSearchParams();
+  //   if (tx.name) params.set("prefill", tx.name);
+  //   if (tx.category_id) params.set("category_id", tx.category_id);
+  //   router.push(`/settings/rules?${params.toString()}`);
+
   function closeSheet() {
     setShowSheet(false);
     setEditingTx(null);
@@ -481,14 +481,9 @@ export default function TransactionsShell({
     setFilterOpen(false);
   }
 
-  function toggleSearchOpen() {
-    if (searchOpen) {
-      setSearchQuery("");
-      setSearchOpen(false);
-    } else {
-      setSearchOpen(true);
-    }
-  }
+  // v1.47.0 — toggleSearchOpen removed; search is always visible.
+  // The "Clear all" filter banner button now just clears the query
+  // text in place rather than collapsing the bar.
 
   const displayedTransactions = filteredTransactions.slice(0, displayCount);
   const hasMore = displayCount < filteredTransactions.length;
@@ -518,9 +513,10 @@ export default function TransactionsShell({
             </button>
 
             <div className="flex items-center gap-2">
-              <IconButton ariaLabel="Search" active={searchOpen} onClick={toggleSearchOpen}>
-                <Search className="h-[18px] w-[18px]" strokeWidth={2} />
-              </IconButton>
+              {/* v1.47.0 (UI/UX audit) — Search icon removed from header.
+                  The search bar below is now always visible (was
+                  collapsed-by-default behind this icon, hurting
+                  discoverability per the audit). Filter stays as icon. */}
               <IconButton ariaLabel="Filter" active={hasActiveFilter} onClick={openFilter}>
                 <SlidersHorizontal className="h-[18px] w-[18px]" strokeWidth={2} />
                 {hasActiveFilter && (
@@ -530,30 +526,33 @@ export default function TransactionsShell({
             </div>
           </header>
 
-          {/* Search bar */}
-          {searchOpen && (
-            <div className="px-5 pt-3 animate-search-reveal">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t("filter.searchPlaceholder")}
-                  className="h-10 w-full rounded-2xl bg-[var(--surface)] pl-9 pr-9 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"
-                />
-                {searchQuery.length > 0 && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--label-tertiary)]"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+          {/* v1.47.0 (UI/UX audit) — Persistent search bar. Always rendered
+              below the header so users can find a merchant without
+              hunting for an icon. Height reduced from h-10 → h-9 to
+              minimise the extra vertical space cost vs the old toggle. */}
+          <div className="px-5 pt-2">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t("filter.searchPlaceholder")}
+                aria-label={t("common.search")}
+                className="h-9 w-full rounded-2xl bg-[var(--surface)] pl-9 pr-9 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"
+              />
+              {searchQuery.length > 0 && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  aria-label={t("common.clearAll")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--label-tertiary)]"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-          )}
+          </div>
 
           <BalanceCard
             balance={filteredBalance}
@@ -585,7 +584,7 @@ export default function TransactionsShell({
                 {filteredTransactions.length} result{filteredTransactions.length !== 1 ? "s" : ""} filtered
               </p>
               <button
-                onClick={() => { setActiveCategories([]); setActiveWallets([]); setActiveDateFilter("all"); setSearchQuery(""); setSearchOpen(false); }}
+                onClick={() => { setActiveCategories([]); setActiveWallets([]); setActiveDateFilter("all"); setSearchQuery(""); }}
                 className="text-[12px] font-semibold text-[var(--foreground)]"
               >
                 {t("common.clearAll")}
@@ -614,6 +613,11 @@ export default function TransactionsShell({
           <div className="pt-3 pb-24">
             {tab === "history" ? (
               <>
+                {/* v1.47.0 (UI/UX audit) — onCreateRule prop dropped here;
+                    transaction-list.tsx no longer renders the always-visible
+                    Zap button (it cluttered every row + missed 44pt touch
+                    minimum). handleCreateRule below is kept for the
+                    future swipe-action / long-press menu implementation. */}
                 <TransactionList
                   transactions={displayedTransactions}
                   members={members}
@@ -621,7 +625,6 @@ export default function TransactionsShell({
                   iconStyle={iconStyle}
                   onTap={openEdit}
                   onImportClick={() => setShowImportWizard(true)}
-                  onCreateRule={handleCreateRule}
                 />
                 {/* Infinite scroll sentinel */}
                 <div ref={sentinelRef} className="h-1" />

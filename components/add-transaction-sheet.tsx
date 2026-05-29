@@ -47,8 +47,8 @@ import NumericKeypad from "@/components/numeric-keypad";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
-import { useT } from "@/lib/i18n/provider";
-import { formatShortDate } from "@/lib/format";
+import { useT, useLang } from "@/lib/i18n/provider";
+import { formatShortDate, formatWeekdayDate as formatWeekdayDateI18n } from "@/lib/format";
 import { uploadTransactionPhoto } from "@/lib/upload-photo";
 import { compressPhoto } from "@/lib/compress-photo";
 import PhotoViewer from "@/components/photo-viewer";
@@ -104,19 +104,14 @@ function todayString() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// "Today" if the YYYY-MM-DD is today's local date, else short date.
-function formatTodayOrShort(value: string) {
-  return value === todayString() ? "Today" : formatShortDate(value);
-}
-
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-function formatWeekdayDate(value: string) {
-  if (!value) return "";
-  const [y, m, d] = value.split("-").map(Number);
-  if (!y || !m || !d) return value;
-  const dt = new Date(y, m - 1, d);
-  return `${DAY_NAMES[dt.getDay()]} ${d} ${MONTH_NAMES[m - 1]}`;
+// "Today"/"Hari ini" if YYYY-MM-DD is today's local date, else short
+// localized date. Uses the user's app language so the date pill
+// matches the rest of the UI in both EN and ID.
+function formatTodayOrShort(value: string, lang: "en" | "id" = "en") {
+  const today = todayString();
+  // formatShortDate's third param `lang` returns "Today"/"Hari ini"
+  // for us when value === todayKey.
+  return formatShortDate(value, today, lang);
 }
 // Compact chip date — "Sat 30 Aug".
 function formatChipDate(value: string) {
@@ -313,6 +308,7 @@ export default function AddTransactionSheet({
   ocrLanguageHint = "auto",
 }: Props) {
   const tr = useT();
+  const lang = useLang();
   const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
   const [amount, setAmount] = useState("");
   const [name, setName] = useState("");
@@ -410,7 +406,10 @@ export default function AddTransactionSheet({
   // `open` is the parent's intent; `mounted` keeps the sheet in the DOM
   // for the 560ms its slide-down (translateY 100%) takes — so closing
   // the sheet animates out instead of vanishing instantly. The backdrop
-  // already fades over 600ms; this syncs the sheet's exit to it.
+  // already fades; this syncs the sheet's exit to it.
+  // v1.47.0 (UI/UX audit): durations halved back to 350ms (was 560).
+  // Apple HIG and Material both recommend ≤400ms for modal entrance;
+  // 560ms made the sheet feel sluggish on iOS banking-app comparisons.
   const [mounted, setMounted] = useState(open);
   useEffect(() => {
     if (open) {
@@ -418,7 +417,7 @@ export default function AddTransactionSheet({
       return;
     }
     if (!mounted) return;
-    const t = setTimeout(() => setMounted(false), 560);
+    const t = setTimeout(() => setMounted(false), 350);
     return () => clearTimeout(t);
   }, [open, mounted]);
 
@@ -1127,15 +1126,20 @@ export default function AddTransactionSheet({
   }
 
   // Date input is an invisible overlay; the visible pill is read-only.
-  const dateLabel = recurringMode ? formatWeekdayDate(date) : formatTodayOrShort(date);
+  // Both formatters are locale-aware via `lang` so the date matches the
+  // app's current language (EN: "Friday 29 May" / "Today"; ID: "Jumat 29 Mei" / "Hari ini").
+  const dateLabel = recurringMode
+    ? formatWeekdayDateI18n(date, lang)
+    : formatTodayOrShort(date, lang);
 
   return (
     <>
-      {/* Backdrop. v1.45.3 — fade duration 300→600ms (animations
-          globally slowed to half speed at the user's request). */}
+      {/* Backdrop. v1.47.0 — fade duration tuned to 350ms to match the
+          sheet slide (was 600ms; UI/UX audit flagged it as too slow vs
+          Apple HIG / Material 300–400ms recommendation). */}
       <div
         className={cn(
-          "fixed inset-0 z-[60] bg-black/40 transition-opacity duration-[600ms]",
+          "fixed inset-0 z-[60] bg-black/40 transition-opacity duration-[350ms]",
           open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -1179,14 +1183,14 @@ export default function AddTransactionSheet({
             // off-screen (translateY 100%). Because the sheet genuinely
             // sits at the wrapper's bottom edge, translateY(100%) moves
             // it FULLY off-screen. On close (`mounted && !open`) this is
-            // the exit animation; `mounted` then unmounts it after 560ms.
-            // v1.45.3 — durations doubled (280→560ms): animations slowed
-            // to half speed at the user's request.
+            // the exit animation; `mounted` then unmounts it after 350ms.
+            // v1.47.0 (UI/UX audit): durations restored to 350ms (was
+            // 560ms which felt sluggish; matches Apple HIG sheet timing).
             transform: pickerVisible || !open ? "translateY(100%)" : "translateY(0)",
-            transition: "transform 560ms cubic-bezier(0.32,0.72,0,1)",
+            transition: "transform 350ms cubic-bezier(0.32,0.72,0,1)",
             animation: pickerVisible || !open
               ? "none"
-              : "sheet-slide-up 560ms cubic-bezier(0.32,0.72,0,1) both",
+              : "sheet-slide-up 350ms cubic-bezier(0.32,0.72,0,1) both",
           }}
         >
           {/* Drag handle — tap backdrop to dismiss; no header chrome. */}
@@ -1278,16 +1282,26 @@ export default function AddTransactionSheet({
                   keyboard can take over for text entry.
                   RAM-6 — wrapper renders an OCR sparkle outside the
                   pill when the merchant was AI-filled. Editing the
-                  text clears the sparkle (clearOcrFlag). */}
+                  text clears the sparkle (clearOcrFlag).
+                  v1.47.0 (UI/UX audit) — added a visible label above
+                  the pill so it's clear what the field is even after
+                  the user starts typing (placeholder-only labels fail
+                  WCAG and usability heuristics). */}
               <div className="relative">
+                <label
+                  htmlFor="atx-description"
+                  className="mb-1 ml-3 block text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]"
+                >
+                  {isTransfer ? tr("tx.note") : tr("tx.description")}
+                </label>
                 <input
+                  id="atx-description"
                   type="text"
                   value={name}
                   onChange={(e) => { setName(e.target.value); clearOcrFlag("name"); }}
                   onFocus={() => { setAmountActive(false); setDescFocused(true); }}
                   onBlur={() => setDescFocused(false)}
                   placeholder={isTransfer ? tr("tx.note") : tr("tx.descriptionPlaceholder")}
-                  aria-label={tr("tx.description")}
                   className={cn(
                     "h-12 w-full rounded-full border bg-[var(--background)] px-[18px] text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30",
                     ocrFilled.name ? "border-[#EE6452]/40 pr-10" : "border-[var(--separator)]"

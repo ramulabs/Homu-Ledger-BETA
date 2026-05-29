@@ -220,22 +220,34 @@ export default async function SettingsPage() {
         </section>
       )}
 
+      {/* Ledger — the things you manage inside your household ledger.
+          Members lives in the Household section above, so it's not
+          duplicated here. */}
       <Group title={t("settings.account")}>
         <RowLink href="/settings/wallets" icon={<Wallet className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.wallets")} />
         <RowLink href="/settings/categories" icon={<Tag className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("settings.categories")} />
         <RowLink href="/settings/budgets" icon={<Target className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("budgets.settingsLabel")} />
-        <RowLink href="/settings/rules" icon={<Zap className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("rules.settingsLabel")} />
         <RowLink href="/settings/integrations" icon={<Mailbox className="h-[18px] w-[18px]" strokeWidth={2} />} label="Integrations" />
+      </Group>
+
+      {/* TODO i18n: needs settings.aiAutomation key in both EN+ID dicts.
+          AI Language lives in the Household section above (per-household
+          preference), so it's intentionally not duplicated here. */}
+      <Group title="AI & Automation">
+        <RowLink href="/settings/rules" icon={<Zap className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("rules.settingsLabel")} />
+      </Group>
+
+      <Group title={t("settings.preferences")}>
+        <RowLink
+          href="/settings/theme"
+          icon={<SunMoon className="h-[18px] w-[18px]" strokeWidth={2} />}
+          label="Theme"
+        />
         <RowLink
           href={`/settings/style?current=${iconStyle}`}
           icon={<Layers className="h-[18px] w-[18px]" strokeWidth={2} />}
           label={t("settings.iconStyle")}
           value={iconStyleLabel}
-        />
-        <RowLink
-          href="/settings/theme"
-          icon={<SunMoon className="h-[18px] w-[18px]" strokeWidth={2} />}
-          label="Theme"
         />
         <RowLink
           href={`/settings/language?current=${language}`}
@@ -244,6 +256,9 @@ export default async function SettingsPage() {
           value={languageLabel}
         />
         <PrivacyToggleRow />
+      </Group>
+
+      <Group title={t("settings.notifications")}>
         <RowLink
           href="/settings/notifications"
           icon={<Bell className="h-[18px] w-[18px]" strokeWidth={2} />}
