@@ -10,6 +10,7 @@ import { cn } from "@/lib/cn";
 import { TapButton } from "@/components/tap";
 import { formatAmount, formatDayWithWeekday } from "@/lib/format";
 import { CategoryIcon } from "@/components/category-icon";
+import { useT } from "@/lib/i18n/provider";
 import type { DbTransaction, DbCategory, DbMember, DbWallet } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 
@@ -79,6 +80,7 @@ type Props = {
 };
 
 export default function ReportsShell({ transactions, categories, wallets, members, currency, iconStyle = "3d", nowISO }: Props) {
+  const tr = useT();
   // Parse the server-provided ISO string ONCE per mount so this is a
   // stable reference for the lifetime of the component. We deliberately
   // don't update it later — for a Reports view the user's "now" is close
@@ -105,6 +107,35 @@ export default function ReportsShell({ transactions, categories, wallets, member
   const dropdownRef = useRef<HTMLDivElement>(null);
   const walletDropdownRef = useRef<HTMLDivElement>(null);
   const stackedBarRef = useRef<HTMLDivElement>(null);
+
+  // Theme-aware chart colors — Recharts can't read CSS vars directly, so we
+  // read them at mount + on the prefers-color-scheme media query change.
+  const [chartColors, setChartColors] = useState({
+    income: "#10b981",
+    expense: "#f43f5e",
+    grid: "rgba(66,52,40,0.08)",
+    axis: "rgba(66,52,40,0.38)",
+    other: "#d1d5db",
+  });
+  useEffect(() => {
+    function read() {
+      const cs = getComputedStyle(document.documentElement);
+      setChartColors({
+        income: cs.getPropertyValue("--color-chart-income").trim() || "#10b981",
+        expense: cs.getPropertyValue("--color-chart-expense").trim() || "#f43f5e",
+        grid: cs.getPropertyValue("--color-chart-grid").trim() || "rgba(66,52,40,0.08)",
+        axis: cs.getPropertyValue("--color-chart-axis").trim() || "rgba(66,52,40,0.38)",
+        other: cs.getPropertyValue("--color-chart-other").trim() || "#d1d5db",
+      });
+    }
+    read();
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", read);
+    // Also listen for explicit data-theme attribute changes (manual theme toggle)
+    const obs = new MutationObserver(read);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => { mq.removeEventListener("change", read); obs.disconnect(); };
+  }, []);
 
   function toggleWallet(id: string) {
     setWalletIds((prev) => {
@@ -195,7 +226,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
     return days;
   }, [activeTx, start, end]);
 
-  const barColor = txType === "expenses" ? "#f43f5e" : "#10b981";
+  const barColor = txType === "expenses" ? chartColors.expense : chartColors.income;
 
   // --- By category ---
   const byCategory = useMemo(() => (
@@ -224,17 +255,30 @@ export default function ReportsShell({ transactions, categories, wallets, member
   ), [activeTx, members]);
 
   // --- Donut data ---
+  // Cap visible slices at top 5 + an "Other (N)" bucket so the breakdown bar
+  // and any direct labels don't get visually crowded when the user has many
+  // small categories. "Uncategorized" / "Unassigned" stays as its own slice
+  // (not folded into "Other") because users expect to see that bucket
+  // explicitly.
   const donutData = useMemo(() => {
+    let slices: { name: string; value: number; color: string }[];
     if (breakdown === "category") {
-      const slices = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));
-      if (uncategorizedTotal > 0) slices.push({ name: "Uncategorized", value: uncategorizedTotal, color: "#d1d5db" });
-      return slices;
+      slices = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));
+      if (uncategorizedTotal > 0) slices.push({ name: "Uncategorized", value: uncategorizedTotal, color: chartColors.other });
     } else {
-      const slices = byMember.map((m) => ({ name: m.name, value: m.total, color: m.avatar_color }));
-      if (unassignedTotal > 0) slices.push({ name: "Unassigned", value: unassignedTotal, color: "#d1d5db" });
-      return slices;
+      slices = byMember.map((m) => ({ name: m.name, value: m.total, color: m.avatar_color }));
+      if (unassignedTotal > 0) slices.push({ name: "Unassigned", value: unassignedTotal, color: chartColors.other });
     }
-  }, [breakdown, byCategory, byMember, uncategorizedTotal, unassignedTotal]);
+    slices.sort((a, b) => b.value - a.value);
+    if (slices.length > 5) {
+      const top = slices.slice(0, 4);
+      const rest = slices.slice(4);
+      const restSum = rest.reduce((s, r) => s + r.value, 0);
+      top.push({ name: `${tr("common.more")} (${rest.length})`, value: restSum, color: chartColors.other });
+      slices = top;
+    }
+    return slices;
+  }, [breakdown, byCategory, byMember, uncategorizedTotal, unassignedTotal, chartColors.other, tr]);
 
   const hasData = grandTotal > 0;
 
@@ -445,13 +489,14 @@ export default function ReportsShell({ transactions, categories, wallets, member
           <BarChart data={trendData} barSize={trendData.length > 20 ? 6 : 10} margin={{ top: 0, right: 4, left: 4, bottom: 0 }}>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: "var(--label-tertiary)" }}
+              tick={{ fontSize: 10, fill: chartColors.axis }}
               axisLine={false}
               tickLine={false}
               interval={trendData.length > 20 ? 4 : trendData.length > 10 ? 2 : 0}
             />
             <Tooltip
-              cursor={{ fill: "rgba(0,0,0,0.04)", radius: 4 }}
+              trigger="click"
+              cursor={{ fill: chartColors.grid, radius: 4 }}
               contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.12)", fontSize: 13 }}
               labelFormatter={(_label, payload) => {
                 const p = Array.isArray(payload) ? payload[0]?.payload : null;
@@ -503,13 +548,18 @@ export default function ReportsShell({ transactions, categories, wallets, member
                 {donutData.map((entry, i) => {
                   const pct = grandTotal > 0 ? (entry.value / grandTotal) * 100 : 0;
                   const isSel = selectedSegmentIndex === i;
+                  // Color-blind safety: print the percentage directly on
+                  // segments that take up ≥ 8% of the bar. Below that the
+                  // text doesn't fit cleanly, so we omit it rather than
+                  // clipping. Tooltip popup still works for tiny slices.
+                  const showLabel = pct >= 8;
                   return (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setSelectedSegment(isSel ? null : { index: i, key: segmentKey })}
                       className={cn(
-                        "h-full transition-opacity [touch-action:manipulation]",
+                        "h-full transition-opacity [touch-action:manipulation] flex items-center justify-center",
                         // Hairline white separator between adjacent segments
                         // so they stay legible even when two same-tone
                         // colours sit next to each other.
@@ -519,7 +569,13 @@ export default function ReportsShell({ transactions, categories, wallets, member
                       )}
                       style={{ width: `${pct}%`, backgroundColor: entry.color }}
                       aria-label={`${entry.name}: ${formatAmount(entry.value, currency)}`}
-                    />
+                    >
+                      {showLabel && (
+                        <span className="text-[10px] font-semibold text-white tabular-nums leading-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]">
+                          {Math.round(pct)}%
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
