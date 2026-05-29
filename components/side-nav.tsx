@@ -43,10 +43,10 @@ export default function SideNav() {
     >
       {/* App brand / logo at top */}
       <div className="flex items-center gap-2.5 px-5 pt-6 pb-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--foreground)] text-[var(--on-foreground)] text-[16px] font-bold select-none">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--foreground)] text-[var(--on-foreground)] text-[18px] font-black tracking-tighter select-none ring-1 ring-[var(--foreground)]/5 shadow-[var(--shadow-card)]">
           H
         </div>
-        <span className="text-[17px] font-bold tracking-tight text-[var(--foreground)]">Homu</span>
+        <span className="text-[18px] font-black tracking-tight text-[var(--foreground)]">Homu</span>
       </div>
 
       {/* Nav items */}
@@ -76,7 +76,7 @@ export default function SideNav() {
         <TapButton
           onTap={openAddTransaction}
           aria-label={t("tx.add")}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--foreground)] px-4 py-3 text-[14px] font-semibold text-[var(--on-foreground)] shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-[transform,box-shadow] duration-150 ease-out active:scale-[0.98] active:shadow-[0_2px_6px_rgba(0,0,0,0.14)] [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--foreground)] px-4 py-3 text-[14px] font-semibold text-[var(--on-foreground)] shadow-[0_4px_12px_rgba(0,0,0,0.18)] transition-[transform,box-shadow] duration-150 ease-out active:scale-[0.98] active:shadow-[0_2px_6px_rgba(0,0,0,0.14)] [touch-action:manipulation] [-webkit-tap-highlight-color:transparent] focus-visible:outline-none"
         >
           <Plus className="h-[18px] w-[18px]" strokeWidth={2.5} />
           {t("tx.add")}
@@ -102,7 +102,7 @@ function SideNavItem({
       href={href}
       aria-label={label}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors duration-150 ease-out [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]",
+        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] font-medium transition-colors duration-150 ease-out [touch-action:manipulation] [-webkit-tap-highlight-color:transparent] focus-visible:outline-none",
         active
           ? "bg-[var(--foreground)]/[0.07] text-[var(--foreground)] font-semibold"
           : "text-[var(--label-tertiary)] hover:bg-[var(--foreground)]/[0.04] hover:text-[var(--foreground)]"

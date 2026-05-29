@@ -57,7 +57,7 @@ export default function BottomNav() {
           light mode this resolves to near-black at 15% alpha — a touch more
           contrast than before, which is fine since the floating bar was
           blending a little too much with the page background anyway. */}
-      <div className="flex items-center gap-4 rounded-full bg-[var(--surface)] p-2 shadow-[0_6px_18px_rgba(42,37,32,0.12),0_1px_4px_rgba(42,37,32,0.08)] ring-1 ring-[var(--foreground)]/15">
+      <div className="flex items-center gap-4 rounded-full bg-[var(--surface)] p-2 shadow-[var(--shadow-float)] ring-1 ring-[var(--foreground)]/15">
         <NavTab
           href="/transactions"
           label={t("nav.transactions")}
@@ -110,7 +110,7 @@ function NavTab({
       )}
     >
       {icon}
-      <span className="text-[10px] font-semibold tracking-tight">{label}</span>
+      <span className="text-[11px] font-semibold tracking-tight">{label}</span>
     </TapLink>
   );
 }
