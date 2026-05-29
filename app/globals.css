@@ -53,6 +53,16 @@
   --color-income:      #059669;
   --color-expense:     #dc2626;
 
+  /* ── Chart colors · light ─────────────────────────────────────────── */
+  /* Slightly desaturated from semantic finance colors so bars/lines
+     don't compete with the more saturated category icons. */
+  --color-chart-income:  #10b981;
+  --color-chart-expense: #f43f5e;
+  --color-chart-grid:    rgba(66, 52, 40, 0.08);
+  --color-chart-axis:    rgba(66, 52, 40, 0.38);
+  /* Used for the "Other" category bucket when capping donut slices. */
+  --color-chart-other:   #d1d5db;
+
   /* ── Shadows / elevation · light ──────────────────────────────────── */
   --shadow-card:       0 1px 2px rgba(0, 0, 0, 0.03);
   --shadow-float:      0 6px 18px rgba(42, 37, 32, 0.12),
@@ -130,6 +140,14 @@
   --color-income:      #34d399;
   --color-expense:     #f87171;
 
+  /* Chart · dark — softer than light mode so they don't burn against
+     the dark surface; same family as semantic finance colors. */
+  --color-chart-income:  #34d399;
+  --color-chart-expense: #f87171;
+  --color-chart-grid:    rgba(245, 240, 232, 0.08);
+  --color-chart-axis:    rgba(245, 240, 232, 0.40);
+  --color-chart-other:   rgba(245, 240, 232, 0.20);
+
   /* Shadows · dark — slightly stronger blur to read against dark surface */
   --shadow-card:       0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-float:      0 6px 24px rgba(0, 0, 0, 0.55),
@@ -165,6 +183,12 @@
     --color-income:      #34d399;
     --color-expense:     #f87171;
 
+    --color-chart-income:  #34d399;
+    --color-chart-expense: #f87171;
+    --color-chart-grid:    rgba(245, 240, 232, 0.08);
+    --color-chart-axis:    rgba(245, 240, 232, 0.40);
+    --color-chart-other:   rgba(245, 240, 232, 0.20);
+
     --shadow-card:       0 1px 2px rgba(0, 0, 0, 0.40);
     --shadow-float:      0 6px 24px rgba(0, 0, 0, 0.55),
                          0 1px 4px rgba(0, 0, 0, 0.40);
@@ -187,6 +211,24 @@ html, body {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 .tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* ─── A11y · keyboard focus ──────────────────────────────────────────────
+   Global focus-visible ring for ALL interactive elements (links, buttons,
+   inputs, selects). Uses :focus-visible so the ring ONLY appears for
+   keyboard users — mouse/touch users don't see an outline.
+   The app sets -webkit-tap-highlight-color: transparent everywhere via
+   TapLink / TapButton; without this rule, keyboard navigation on desktop
+   (which has a SideNav now) was completely invisible. */
+:where(a, button, input, select, textarea, [role="button"], [role="link"], [role="menuitem"], [tabindex]):focus {
+  outline: none;
+}
+:where(a, button, input, select, textarea, [role="button"], [role="link"], [role="menuitem"], [tabindex]):focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Pill/circular controls (TapLink/TapButton) inherit their own border-radius
+   via CSS; the outline picks it up automatically. */
 
 /* iOS Safari's native date input has an intrinsic min-width that overflows
    its container. Force it to respect the parent's width. */
@@ -307,6 +349,44 @@ input[type="date"]::-webkit-clear-button {
 }
 .animate-chip-pop {
   animation: chip-pop 0.22s ease both;
+}
+
+/* ─── Skeleton loading shimmer ──────────────────────────────────────────
+   Used by components/loading-skeleton.tsx to show animated placeholder
+   rows while server-side data is loading. Pure transform — GPU-composited. */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--separator) 0%,
+    color-mix(in oklab, var(--separator) 60%, var(--surface)) 50%,
+    var(--separator) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+/* ─── A11y · reduced motion (global) ────────────────────────────────────
+   This is the GLOBAL reduced-motion rule — disables every main-UI
+   animation when the user has set prefers-reduced-motion. Voice-specific
+   rules below extend this with their own selectors. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-row-in,
+  .animate-tx-flash,
+  .animate-chip-pop,
+  .animate-overlay-fade-in,
+  .animate-sheet-slide-up,
+  .animate-search-reveal,
+  .animate-toast-slide-down,
+  .animate-splash-breathe,
+  .animate-skeleton,
+  .animate-pulse { animation: none !important; }
+  /* Number count-up uses requestAnimationFrame in components/balance-card.tsx;
+     that hook checks matchMedia('(prefers-reduced-motion: reduce)') and skips
+     the RAF loop when true. */
 }
 
 /* ─── AI Voice Transactions (v1.41.0) ──────────────────────────────────────

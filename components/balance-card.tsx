@@ -28,6 +28,19 @@ function useCountUp(target: number, duration = 600) {
     // Skip animation for identical values or very small deltas
     if (from === to) return;
 
+    // A11y — respect the user's reduced-motion preference. When set,
+    // snap to the target value instead of running the RAF easing loop.
+    // matchMedia is safe to call client-side; this hook only runs in
+    // useEffect so SSR never sees it. queueMicrotask defers the setState
+    // out of the effect body to satisfy react-hooks/set-state-in-effect.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      queueMicrotask(() => setDisplay(to));
+      return;
+    }
+
     const start = performance.now();
     function tick(now: number) {
       const progress = Math.min((now - start) / duration, 1);
