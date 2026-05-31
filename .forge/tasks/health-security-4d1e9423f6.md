@@ -1,14 +1,14 @@
 ---
-id: "health-security-4d1e9423f6"
-title: "auth-log API route accepts unauthenticated POST requests"
-status: "backlog"
-priority: "P2"
+id: health-security-4d1e9423f6
+title: auth-log API route accepts unauthenticated POST requests
+status: completed
+priority: P2
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - security
+  - warning
+  - health-check
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-05-31T19:12:11.745Z
 ---
 
 ## Finding
@@ -51,3 +51,4 @@ export async function POST(request: NextRequest) {
 ```
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
+
