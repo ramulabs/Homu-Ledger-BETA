@@ -243,7 +243,7 @@ export default function TransactionList({ transactions, members, currency = "IDR
                     <Repeat
                       className="h-2.5 w-2.5 text-[var(--label-tertiary)]"
                       strokeWidth={2}
-                      aria-label={tr("recurring.label") || "Recurring"}
+                      aria-label={tr("recurring.title")}
                     />
                   )}
                   {t.photo_url && (

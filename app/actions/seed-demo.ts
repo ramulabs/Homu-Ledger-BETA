@@ -45,7 +45,10 @@ const SEED_WALLETS = [
   { name: "BCA Kartu Kredit",   symbol: "💎", color: "#b91c1c", initial_balance: 0,         is_default: false },
 ];
 
-const SEED_CATEGORIES = [
+// Explicit literal-union type on `type` so Supabase's typed insert
+// (which requires "income" | "expense", not plain string) accepts the
+// payload without an `as` cast at every call site.
+const SEED_CATEGORIES: { name: string; symbol: string; color: string; type: "income" | "expense" }[] = [
   { name: "Gaji",           symbol: "💰", color: "#16a34a", type: "income"  },
   { name: "Freelance",      symbol: "💻", color: "#2563eb", type: "income"  },
   { name: "Belanja Harian", symbol: "🛒", color: "#f97316", type: "expense" },
@@ -165,7 +168,7 @@ export async function seedDemoData(): Promise<SeedResult> {
 
   // ── 3. Transactions ──────────────────────────────────────────────────
   const transactions: {
-    household_id: string; created_by: string; type: string;
+    household_id: string; created_by: string; type: "income" | "expense";
     amount: number; name: string; category_id: string | null;
     wallet_id: string | null; date: string;
   }[] = [];
@@ -227,14 +230,25 @@ export async function seedDemoData(): Promise<SeedResult> {
   const now = new Date();
   const nextMonth25 = new Date(now.getFullYear(), now.getMonth() + (now.getDate() > 25 ? 1 : 0), 25).toISOString().slice(0, 10);
 
-  const recurringRows = [
+  // Explicit literal-union types on `type` and `frequency` so Supabase's
+  // typed insert accepts the payload without per-row `as` casts.
+  type RecurringRow = {
+    type: "income" | "expense";
+    amount: number;
+    name: string;
+    category_id: string | null;
+    wallet_id: string | null;
+    frequency: "weekly" | "monthly" | "yearly";
+    next_due_date: string;
+  };
+  const recurringRows: (RecurringRow & { household_id: string; created_by: string })[] = ([
     { type: "income",  amount: 10000000, name: "Gaji Bulanan",      category_id: catIdMap["Gaji"]        ?? null, wallet_id: resolveWallet("BCA Tab"),  frequency: "monthly", next_due_date: nextMonth25 },
     { type: "expense", amount: 400000,   name: "IndiHome Internet",  category_id: catIdMap["Tagihan"]     ?? null, wallet_id: resolveWallet("BCA Tab"),  frequency: "monthly", next_due_date: daysOffset(-7)  },
     { type: "expense", amount: 385000,   name: "PLN Listrik",        category_id: catIdMap["Tagihan"]     ?? null, wallet_id: resolveWallet("BCA Tab"),  frequency: "monthly", next_due_date: daysOffset(-5)  },
     { type: "expense", amount: 95000,    name: "PDAM Air",           category_id: catIdMap["Tagihan"]     ?? null, wallet_id: resolveWallet("BCA Tab"),  frequency: "monthly", next_due_date: daysOffset(-9)  },
     { type: "expense", amount: 54000,    name: "Netflix",            category_id: catIdMap["Hiburan"]     ?? null, wallet_id: resolveWallet("BCA Kredit"), frequency: "monthly", next_due_date: daysOffset(-12) },
     { type: "expense", amount: 500000,   name: "Les Bahasa Inggris", category_id: catIdMap["Pendidikan"]  ?? null, wallet_id: resolveWallet("BCA Tab"),  frequency: "monthly", next_due_date: daysOffset(-3)  },
-  ].map(r => ({ ...r, household_id: hhId, created_by: user.id }));
+  ] as RecurringRow[]).map(r => ({ ...r, household_id: hhId, created_by: user.id }));
 
   const { error: recErr } = await supabase.from("recurring_items").insert(recurringRows);
   const recurringCreated = recErr ? 0 : recurringRows.length;

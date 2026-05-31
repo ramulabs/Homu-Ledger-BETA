@@ -335,6 +335,33 @@ export type Database = {
           },
         ]
       }
+      fx_rates: {
+        Row: {
+          base: string
+          created_at: string
+          date: string
+          id: string
+          rate: number
+          target: string
+        }
+        Insert: {
+          base: string
+          created_at?: string
+          date: string
+          id?: string
+          rate: number
+          target: string
+        }
+        Update: {
+          base?: string
+          created_at?: string
+          date?: string
+          id?: string
+          rate?: number
+          target?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           attachments: string[]
@@ -492,6 +519,7 @@ export type Database = {
           ai_language: string
           created_at: string
           currency: string
+          home_currency: string
           id: string
           invite_code: string
           name: string
@@ -503,6 +531,7 @@ export type Database = {
           ai_language?: string
           created_at?: string
           currency?: string
+          home_currency?: string
           id?: string
           invite_code: string
           name: string
@@ -514,6 +543,7 @@ export type Database = {
           ai_language?: string
           created_at?: string
           currency?: string
+          home_currency?: string
           id?: string
           invite_code?: string
           name?: string
@@ -909,6 +939,50 @@ export type Database = {
           },
         ]
       }
+      transaction_rules: {
+        Row: {
+          actions: Json
+          created_at: string
+          enabled: boolean
+          household_id: string
+          id: string
+          name: string
+          order_idx: number
+          stop_processing: boolean
+          triggers: Json
+        }
+        Insert: {
+          actions?: Json
+          created_at?: string
+          enabled?: boolean
+          household_id: string
+          id?: string
+          name: string
+          order_idx?: number
+          stop_processing?: boolean
+          triggers?: Json
+        }
+        Update: {
+          actions?: Json
+          created_at?: string
+          enabled?: boolean
+          household_id?: string
+          id?: string
+          name?: string
+          order_idx?: number
+          stop_processing?: boolean
+          triggers?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_rules_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transactions: {
         Row: {
           amount: number
@@ -923,6 +997,7 @@ export type Database = {
           note: string | null
           photo_url: string | null
           recurring_item_id: string | null
+          splits: Json | null
           transfer_pair_id: string | null
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at: string
@@ -941,6 +1016,7 @@ export type Database = {
           note?: string | null
           photo_url?: string | null
           recurring_item_id?: string | null
+          splits?: Json | null
           transfer_pair_id?: string | null
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
@@ -959,6 +1035,7 @@ export type Database = {
           note?: string | null
           photo_url?: string | null
           recurring_item_id?: string | null
+          splits?: Json | null
           transfer_pair_id?: string | null
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
@@ -1061,6 +1138,7 @@ export type Database = {
           client_op_id: string | null
           color: string
           created_at: string
+          currency: string
           household_id: string
           id: string
           initial_balance: number
@@ -1073,6 +1151,7 @@ export type Database = {
           client_op_id?: string | null
           color: string
           created_at?: string
+          currency?: string
           household_id: string
           id?: string
           initial_balance?: number
@@ -1085,6 +1164,7 @@ export type Database = {
           client_op_id?: string | null
           color?: string
           created_at?: string
+          currency?: string
           household_id?: string
           id?: string
           initial_balance?: number

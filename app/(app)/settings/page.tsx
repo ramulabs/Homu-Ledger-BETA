@@ -230,10 +230,9 @@ export default async function SettingsPage() {
         <RowLink href="/settings/integrations" icon={<Mailbox className="h-[18px] w-[18px]" strokeWidth={2} />} label="Integrations" />
       </Group>
 
-      {/* TODO i18n: needs settings.aiAutomation key in both EN+ID dicts.
-          AI Language lives in the Household section above (per-household
+      {/* AI Language lives in the Household section above (per-household
           preference), so it's intentionally not duplicated here. */}
-      <Group title="AI & Automation">
+      <Group title={t("settings.aiAutomation")}>
         <RowLink href="/settings/rules" icon={<Zap className="h-[18px] w-[18px]" strokeWidth={2} />} label={t("rules.settingsLabel")} />
       </Group>
 
