@@ -1,20 +1,25 @@
 ---
-id: health-security-4d1e9423f6
+id: health-security-9a5c80c68a
 title: auth-log API route accepts unauthenticated POST requests
-status: completed
+status: backlog
 priority: P2
+assignee: unassigned
+project: homu-ledger-beta
 labels:
+  - Health check
+  - Warning
+  - Security
   - security
   - warning
   - health-check
-created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-06-02T19:11:28.266Z
+created_at: 2026-06-02T19:10:58.200Z
+updated_at: 2026-06-02T19:10:58.200Z
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
-**File:** `app/api/auth-log/route.ts:1`  
+**File:** `app/api/auth-log/route.ts:37`  
 **Severity:** warning
 
 ## Description
@@ -32,14 +37,14 @@ export async function POST(request: NextRequest) {
 ```
 
 Any unauthenticated client can:
-- Flood Vercel runtime logs with fake diagnostic entries, obscuring real logout events the endpoint was designed to capture
-- Probe which fields are logged to infer what diagnostic metadata the platform captures
+- Flood Vercel runtime logs with fake diagnostic entries, obscuring real logout events
+- Probe which fields are logged to infer internal observability infrastructure
 
-The intentional design (no DB write, log only) reduces severity, but the endpoint serves as a signal about internal observability infrastructure.
+The intentional design (no DB write, log only) reduces severity, but the endpoint serves as a signal about internal observability.
 
 ## Recommended Fix
 
-Add a lightweight session check using the Supabase server client. If no session, return 401 and skip logging. The client-side caller already has a Supabase session when it fires this endpoint (the bounce only happens from authenticated pages):
+Add a lightweight session check using the Supabase server client:
 
 ```typescript
 export async function POST(request: NextRequest) {
@@ -49,6 +54,3 @@ export async function POST(request: NextRequest) {
   // ... rest of logging logic
 }
 ```
-
-Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
-
