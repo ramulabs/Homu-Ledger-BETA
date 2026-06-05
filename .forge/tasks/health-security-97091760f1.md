@@ -2,20 +2,22 @@
 id: "health-security-97091760f1"
 title: "cancelInvitation deletes by ID with no caller ownership check"
 status: "backlog"
-priority: "P1"
+priority: "P0"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-05T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/actions/invitations.ts:77`  
-**Severity:** warning
+**Severity:** critical
+
+> **Escalation (2026-06-05):** Finding has been `backlog` for 16 days (threshold: 14 days). Severity bumped from `warning` → `critical`.
 
 ## Description
 
