@@ -2,20 +2,22 @@
 id: "health-security-97091760f1"
 title: "cancelInvitation deletes by ID with no caller ownership check"
 status: "backlog"
-priority: "P1"
+priority: "P0"
+assignee: "unassigned"
+project: "homu-ledger-beta"
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
+  - "Health check"
+  - "Critical"
+  - "Security"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-10T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/actions/invitations.ts:77`  
-**Severity:** warning
+**Severity:** critical *(escalated from warning — open in backlog >14 days)*
 
 ## Description
 
@@ -63,3 +65,5 @@ if (invite.invited_by !== user.id) {
 ```
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
+
+Last seen by health check: 2026-06-10T00:00:00Z
