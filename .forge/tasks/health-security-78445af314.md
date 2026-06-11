@@ -2,20 +2,20 @@
 id: "health-security-78445af314"
 title: "Cursor query params interpolated raw into PostgREST filter string"
 status: "backlog"
-priority: "P1"
+priority: "P0"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-11T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A03 (Injection)  
 **File:** `app/api/transactions/route.ts:38`  
-**Severity:** warning
+**Severity:** critical _(escalated from warning: open >14 days)_
 
 ## Description
 

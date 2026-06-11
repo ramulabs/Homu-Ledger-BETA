@@ -2,20 +2,20 @@
 id: "health-security-4d1e9423f6"
 title: "auth-log API route accepts unauthenticated POST requests"
 status: "backlog"
-priority: "P2"
+priority: "P0"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-11T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/api/auth-log/route.ts:1`  
-**Severity:** warning
+**Severity:** critical _(escalated from warning: open >14 days)_
 
 ## Description
 
@@ -35,7 +35,7 @@ Any unauthenticated client can:
 - Flood Vercel runtime logs with fake diagnostic entries, obscuring real logout events the endpoint was designed to capture
 - Probe which fields are logged to infer what diagnostic metadata the platform captures
 
-The intentional design (no DB write, log only) reduces severity, but the endpoint serves as a signal about internal observability infrastructure.
+The intentional design (no DB write, log only) reduces data-loss risk, but the endpoint serves as a signal about internal observability infrastructure and consumes paid Vercel log volume.
 
 ## Recommended Fix
 
