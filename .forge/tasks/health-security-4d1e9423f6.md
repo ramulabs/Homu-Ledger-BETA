@@ -5,17 +5,18 @@ status: "backlog"
 priority: "P2"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-14T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/api/auth-log/route.ts:1`  
-**Severity:** warning
+**Severity:** critical  
+**Escalated:** Yes — open in backlog for >14 days (first seen 2026-05-20, was warning)
 
 ## Description
 
