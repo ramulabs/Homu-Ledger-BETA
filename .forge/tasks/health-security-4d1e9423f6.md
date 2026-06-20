@@ -2,20 +2,20 @@
 id: "health-security-4d1e9423f6"
 title: "auth-log API route accepts unauthenticated POST requests"
 status: "backlog"
-priority: "P2"
+priority: "P0"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-20T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/api/auth-log/route.ts:1`  
-**Severity:** warning
+**Severity:** critical (escalated from warning — open >14 days, still backlog)
 
 ## Description
 
