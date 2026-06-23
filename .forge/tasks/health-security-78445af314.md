@@ -1,14 +1,17 @@
 ---
-id: "health-security-78445af314"
-title: "Cursor query params interpolated raw into PostgREST filter string"
-status: "backlog"
-priority: "P1"
+id: health-security-78445af314
+title: "Cursor query params interpolated raw into PostgREST filter string
+  [ESCALATED: >14 days in backlog]"
+status: backlog
+priority: P0
+assignee: unassigned
+project: homu-ledger-beta
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - Health check
+  - Critical
+  - Security
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-06-23T19:09:58.593Z
 ---
 
 ## Finding
@@ -53,3 +56,5 @@ if (date && createdAt && id &&
 ```
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
+
+Last seen by health check: 2026-06-23T19:09:58.593Z
