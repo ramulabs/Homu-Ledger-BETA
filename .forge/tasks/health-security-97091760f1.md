@@ -1,14 +1,14 @@
 ---
-id: "health-security-97091760f1"
-title: "cancelInvitation deletes by ID with no caller ownership check"
-status: "backlog"
-priority: "P1"
+id: health-security-97091760f1
+title: cancelInvitation deletes by ID with no caller ownership check
+status: completed
+priority: P1
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - security
+  - warning
+  - health-check
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-06-25T19:11:32.425Z
 ---
 
 ## Finding
@@ -63,3 +63,4 @@ if (invite.invited_by !== user.id) {
 ```
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
+
