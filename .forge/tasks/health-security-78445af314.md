@@ -5,17 +5,17 @@ status: "backlog"
 priority: "P1"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-27T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A03 (Injection)  
 **File:** `app/api/transactions/route.ts:38`  
-**Severity:** warning
+**Severity:** critical (escalated — open >14 days as backlog)
 
 ## Description
 
@@ -36,6 +36,8 @@ if (date && createdAt && id) {
 PostgREST parses the `.or()` string as a filter expression. If `date` contains a comma or closing parenthesis (e.g. `2026-01-01,amount.gt.0`), additional filter conditions can be injected. Because Supabase RLS is active, an attacker can only affect data within their own household scope — they cannot cross household boundaries. However, they can:
 - Bypass the cursor restriction and return rows outside the intended page window
 - Inject predicates that expose all of their transactions regardless of the cursor
+
+This finding has been open >14 days with no action; severity escalated to critical this run.
 
 ## Recommended Fix
 

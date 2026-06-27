@@ -5,17 +5,17 @@ status: "backlog"
 priority: "P1"
 labels:
   - "security"
-  - "warning"
+  - "critical"
   - "health-check"
 created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+updated_at: "2026-06-27T00:00:00Z"
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/actions/invitations.ts:77`  
-**Severity:** warning
+**Severity:** critical (escalated — open >14 days as backlog)
 
 ## Description
 
@@ -34,6 +34,8 @@ export async function cancelInvitation(invitationId: string): Promise<{ error?: 
 ```
 
 Contrast with `declineInvitation`, which correctly validates `invite.invited_user_id !== user.id`. Any authenticated user who learns or guesses a valid `invitationId` UUID can cancel any pending invitation in any household. Whether this is exploitable depends entirely on whether the Supabase RLS `DELETE` policy on `household_invitations` restricts deletions to the `invited_by` user or household owner. If it does not, the server action provides no additional check.
+
+This finding has been open >14 days with no action; severity escalated to critical this run.
 
 ## Recommended Fix
 
