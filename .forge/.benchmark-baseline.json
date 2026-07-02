@@ -1,5 +1,6 @@
 {
-  "_note": "Lighthouse baseline not yet populated — first run was in a headless-browser-free environment. Run again with Lighthouse available to establish scores.",
+  "_note": "Lighthouse baseline still not populated. Lighthouse itself is installed and Chromium is available in this run, but the sandbox's outbound network policy blocks the benchmark_urls hosts (homu.ramu.app) — Chrome returns a CHROME_INTERSTITIAL_ERROR before any page loads. Performance check skipped for 2026-07-02 run; retry from an environment with egress to homu.ramu.app.",
   "created_at": "2026-05-20T17:55:00Z",
+  "last_attempted_at": "2026-07-02T19:00:00Z",
   "scores": {}
 }
