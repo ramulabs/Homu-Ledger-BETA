@@ -1,15 +1,19 @@
 ---
-id: "health-security-4d1e9423f6"
-title: "auth-log API route accepts unauthenticated POST requests"
-status: "backlog"
-priority: "P2"
+id: health-security-4d1e9423f6
+title: auth-log API route accepts unauthenticated POST requests
+status: backlog
+priority: P0
+assignee: unassigned
+project: homu-ledger-beta
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - Health check
+  - Critical
+  - Security
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-07-05T19:15:03.014Z
 ---
+
+> **Escalated 2026-07-05:** unresolved for 46 days while still `backlog` (first seen 2026-05-20). Auto-escalated warning → critical per the health-check's 14-day backlog policy. Re-confirmed still present (POST handler now at `route.ts:34`); middleware blocks fully anonymous requests but any request with a session cookie still reaches the unauthenticated handler.
 
 ## Finding
 
@@ -51,3 +55,5 @@ export async function POST(request: NextRequest) {
 ```
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
+
+Last seen by health check: 2026-07-05T19:15:03.014Z

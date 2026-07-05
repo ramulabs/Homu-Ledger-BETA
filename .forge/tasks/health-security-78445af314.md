@@ -1,15 +1,19 @@
 ---
-id: "health-security-78445af314"
-title: "Cursor query params interpolated raw into PostgREST filter string"
-status: "backlog"
-priority: "P1"
+id: health-security-78445af314
+title: Cursor query params interpolated raw into PostgREST filter string
+status: backlog
+priority: P0
+assignee: unassigned
+project: homu-ledger-beta
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - Health check
+  - Critical
+  - Security
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-07-05T19:15:03.127Z
 ---
+
+> **Escalated 2026-07-05:** unresolved for 46 days while still `backlog` (first seen 2026-05-20). Auto-escalated warning → critical per the health-check's 14-day backlog policy. Re-confirmed still present (filter build now at `route.ts:44-47`); still no format validation on `date`/`createdAt`/`id` before interpolation.
 
 ## Finding
 
@@ -53,3 +57,5 @@ if (date && createdAt && id &&
 ```
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
+
+Last seen by health check: 2026-07-05T19:15:03.127Z
