@@ -1,15 +1,19 @@
 ---
-id: "health-security-97091760f1"
-title: "cancelInvitation deletes by ID with no caller ownership check"
-status: "backlog"
-priority: "P1"
+id: health-security-97091760f1
+title: cancelInvitation deletes by ID with no caller ownership check
+status: backlog
+priority: P0
+assignee: unassigned
+project: homu-ledger-beta
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - Health check
+  - Critical
+  - Security
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-07-05T19:15:03.308Z
 ---
+
+> **Escalated 2026-07-05:** unresolved for 46 days while still `backlog` (first seen 2026-05-20). Auto-escalated warning → critical per the health-check's 14-day backlog policy. Re-confirmed still present (`cancelInvitation` now at `invitations.ts:132-146`, delete at 139-140). RLS migration 0008 does restrict deletion to `invited_by = auth.uid() OR household_id = current_household_id()`, so cross-household deletion is blocked at the DB layer — but any member of the household (not just the inviter/owner, contrary to the code's implied intent) can still cancel any pending invite in it, since authorization lives entirely in RLS rather than in the action.
 
 ## Finding
 
@@ -63,3 +67,5 @@ if (invite.invited_by !== user.id) {
 ```
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
+
+Last seen by health check: 2026-07-05T19:15:03.308Z
