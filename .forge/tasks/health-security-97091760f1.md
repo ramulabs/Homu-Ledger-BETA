@@ -1,14 +1,14 @@
 ---
-id: "health-security-97091760f1"
-title: "cancelInvitation deletes by ID with no caller ownership check"
-status: "backlog"
-priority: "P1"
+id: health-security-97091760f1
+title: cancelInvitation deletes by ID with no caller ownership check
+status: completed
+priority: P1
 labels:
-  - "security"
-  - "warning"
-  - "health-check"
-created_at: "2026-05-20T17:55:00Z"
-updated_at: "2026-05-20T17:55:00Z"
+  - security
+  - warning
+  - health-check
+created_at: 2026-05-20T17:55:00Z
+updated_at: 2026-07-06T19:16:56.686Z
 ---
 
 ## Finding
@@ -63,3 +63,5 @@ if (invite.invited_by !== user.id) {
 ```
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
+
+**Closed by health check:** the RLS `DELETE` policy "household_invitations: inviter or members can delete" (migration `0008_update_seed_default_wallets_three.sql`) enforces caller ownership at the database layer, so cross-household deletion via `cancelInvitation` is blocked regardless of the app-level gap. No longer exploitable — verified 2026-07-06.
