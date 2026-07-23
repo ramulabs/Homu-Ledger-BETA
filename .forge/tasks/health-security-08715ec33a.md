@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.795Z
-updated_at: 2026-07-21T19:15:04.795Z
+updated_at: 2026-07-23T19:17:57.976Z
 ---
 
 ## Finding
@@ -48,3 +48,5 @@ export async function updateWallet(id: string, formData: FormData): Promise<{ er
 ```
 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
+
+Last seen by health check: 2026-07-23T19:17:57.976Z
