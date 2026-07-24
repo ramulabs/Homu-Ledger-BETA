@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.250Z
-updated_at: 2026-07-21T19:15:10.250Z
+updated_at: 2026-07-24T19:11:41.583Z
 ---
 
 ## Finding
@@ -52,3 +52,5 @@ export async function deleteWallet(id: string): Promise<{ error?: string }> {
 ```
 
 Also verify the RLS DELETE policy on `wallets` scopes by household membership.
+
+Last seen by health check: 2026-07-24T19:11:41.583Z

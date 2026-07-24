@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-07-21T19:15:04.532Z
+updated_at: 2026-07-24T19:11:41.906Z
 ---
 
 ## Finding
@@ -53,3 +53,5 @@ const { error } = await supabase
 ```
 
 Confirm the RLS UPDATE policy on `categories` also enforces household membership as a second line of defense.
+
+Last seen by health check: 2026-07-24T19:11:41.906Z
