@@ -1,6 +1,6 @@
 ---
 id: health-security-baf2a8c2a5
-title: deleteCategory deletes by ID with no household ownership check
+title: deleteCategory deletes by id with no household ownership check
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-07-21T19:15:04.664Z
+updated_at: 2026-07-27T19:16:02.279Z
 ---
 
 ## Finding
@@ -50,3 +50,5 @@ const { error } = await supabase
 ```
 
 Also verify the RLS DELETE policy on `categories` scopes by household membership.
+
+Last seen by health check: 2026-07-27T19:16:02.279Z
