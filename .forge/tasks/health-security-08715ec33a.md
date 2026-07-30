@@ -1,7 +1,7 @@
 ---
 id: health-security-08715ec33a
 title: updateWallet discards household scope, updates by ID alone
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.795Z
-updated_at: 2026-07-21T19:15:04.795Z
+updated_at: 2026-07-30T19:19:38.259Z
 ---
 
 ## Finding
@@ -48,3 +48,4 @@ export async function updateWallet(id: string, formData: FormData): Promise<{ er
 ```
 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
+

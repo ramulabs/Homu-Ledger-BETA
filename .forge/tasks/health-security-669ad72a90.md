@@ -1,7 +1,7 @@
 ---
 id: health-security-669ad72a90
 title: updateCategory updates by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-07-21T19:15:04.532Z
+updated_at: 2026-07-30T19:19:37.956Z
 ---
 
 ## Finding
@@ -53,3 +53,4 @@ const { error } = await supabase
 ```
 
 Confirm the RLS UPDATE policy on `categories` also enforces household membership as a second line of defense.
+

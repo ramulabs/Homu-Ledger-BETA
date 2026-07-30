@@ -1,5 +1,5 @@
 {
-  "_note": "Lighthouse baseline not yet populated — first run was in a headless-browser-free environment. Run again with Lighthouse available to establish scores.",
+  "_note": "Lighthouse baseline not yet populated — as of 2026-07-30, Lighthouse + a headless Chromium are both installed, but this environment's outbound network policy blocks HTTPS egress to homu.ramu.app (403 on CONNECT). Re-run in an environment with egress allowed to those hosts to establish scores.",
   "created_at": "2026-05-20T17:55:00Z",
   "scores": {}
 }

@@ -1,7 +1,7 @@
 ---
 id: health-security-bd9a093261
 title: updateRecurringItem updates by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.518Z
-updated_at: 2026-07-21T19:15:10.518Z
+updated_at: 2026-07-30T19:19:38.734Z
 ---
 
 ## Finding
@@ -51,3 +51,4 @@ const { error } = await supabase
 ```
 
 Also verify the RLS UPDATE policy on `recurring_items` scopes by household membership.
+
