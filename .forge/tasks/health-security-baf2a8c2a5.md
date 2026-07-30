@@ -1,7 +1,7 @@
 ---
 id: health-security-baf2a8c2a5
 title: deleteCategory deletes by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-07-21T19:15:04.664Z
+updated_at: 2026-07-30T19:19:38.111Z
 ---
 
 ## Finding
@@ -50,3 +50,4 @@ const { error } = await supabase
 ```
 
 Also verify the RLS DELETE policy on `categories` scopes by household membership.
+

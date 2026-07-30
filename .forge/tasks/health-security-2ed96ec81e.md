@@ -1,7 +1,7 @@
 ---
 id: health-security-2ed96ec81e
 title: setDefaultWallet discards household scope, updates by ID alone
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.377Z
-updated_at: 2026-07-21T19:15:10.377Z
+updated_at: 2026-07-30T19:19:38.561Z
 ---
 
 ## Finding
@@ -49,3 +49,4 @@ export async function setDefaultWallet(id: string): Promise<{ error?: string }> 
 ```
 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
+

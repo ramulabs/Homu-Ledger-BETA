@@ -1,7 +1,7 @@
 ---
 id: health-security-1e00f83d7f
 title: replyToFeedback lacks developer-role authorization check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.626Z
-updated_at: 2026-07-21T19:14:59.626Z
+updated_at: 2026-07-30T19:19:37.805Z
 ---
 
 ## Finding
@@ -50,3 +50,4 @@ if (!profile?.is_developer) return { error: "Developer access required." };
 ```
 
 Insert this immediately after the existing `if (!user)` check, before the update.
+
