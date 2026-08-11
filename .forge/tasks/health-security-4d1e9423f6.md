@@ -2,15 +2,15 @@
 id: health-security-4d1e9423f6
 title: auth-log API route accepts unauthenticated POST requests
 status: backlog
-priority: P0
+priority: P2
 assignee: unassigned
 project: homu-ledger-beta
 labels:
   - Health check
-  - Critical
+  - Warning
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-07-21T19:14:53.491Z
+updated_at: 2026-08-11T19:17:30.677Z
 ---
 
 ## Finding
@@ -54,4 +54,4 @@ export async function POST(request: NextRequest) {
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
 
-Last seen by health check: 2026-07-21T19:14:53.491Z
+Last seen by health check: 2026-08-11T19:17:30.677Z

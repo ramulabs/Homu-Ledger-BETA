@@ -2,15 +2,15 @@
 id: health-security-97091760f1
 title: cancelInvitation deletes by ID with no caller ownership check
 status: backlog
-priority: P0
+priority: P2
 assignee: unassigned
 project: homu-ledger-beta
 labels:
   - Health check
-  - Critical
+  - Warning
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-07-21T19:14:53.827Z
+updated_at: 2026-08-11T19:17:30.990Z
 ---
 
 ## Finding
@@ -66,4 +66,4 @@ if (invite.invited_by !== user.id) {
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
 
-Last seen by health check: 2026-07-21T19:14:53.827Z
+Last seen by health check: 2026-08-11T19:17:30.990Z
