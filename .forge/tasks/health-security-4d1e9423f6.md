@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.011Z
+updated_at: 2026-08-16T19:19:29.635Z
 ---
 
 ## Finding
@@ -54,4 +54,4 @@ export async function POST(request: NextRequest) {
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
 
-Last seen by health check: 2026-08-13T19:18:07.011Z
+Last seen by health check: 2026-08-16T19:19:29.635Z
