@@ -21,6 +21,7 @@ import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
 import SpeakToAddFab from "@/components/speak-to-add-fab";
 import InboxChip from "@/components/inbox-chip";
+import BudgetWatchCard from "@/components/budget-watch-card";
 import { type InboxRow } from "@/components/inbox-bento";
 import { markInboxAcceptedAction } from "@/app/actions/inbox";
 
@@ -542,6 +543,16 @@ export default function TransactionsShell({
               off to AddTransactionSheet pre-filled; refreshSignal makes
               the chip re-fetch after that save completes. */}
           <InboxChip onEdit={handleInboxEdit} refreshSignal={inboxRefresh} />
+
+          {/* RAM-5 — Budget watch card. Self-fetches + hides when no
+              budgets are set. transactionsRefreshKey bumps on every add /
+              edit / delete so the card sees fresh totals without a
+              full-page revalidate. */}
+          <BudgetWatchCard
+            currency={currency}
+            iconStyle={iconStyle}
+            refreshSignal={transactions.length}
+          />
 
           {/* Filter active banner */}
           {isFiltering && (
