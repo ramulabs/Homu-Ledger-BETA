@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.368Z
-updated_at: 2026-08-13T19:18:07.915Z
+updated_at: 2026-08-16T19:19:30.685Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ export async function deleteFeedback(id: string): Promise<Result> {
 
 Also add/verify an RLS DELETE policy on `feedback` restricted to developers, so the database enforces this even if a future code change drops the application-level check again.
 
-Last seen by health check: 2026-08-13T19:18:07.915Z
+Last seen by health check: 2026-08-16T19:19:30.685Z

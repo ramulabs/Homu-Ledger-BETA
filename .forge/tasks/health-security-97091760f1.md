@@ -1,6 +1,7 @@
 ---
 id: health-security-97091760f1
-title: cancelInvitation deletes by ID with no caller ownership check
+title: cancelInvitation lets any household member cancel invites they didn't
+  send, contradicting its own docstring
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +11,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.456Z
+updated_at: 2026-08-16T19:19:30.147Z
 ---
 
 ## Finding
@@ -66,4 +67,16 @@ if (invite.invited_by !== user.id) {
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
 
-Last seen by health check: 2026-08-13T19:18:07.456Z
+## Update — 2026-08-16
+
+Checked the RLS policy this run (`supabase/migrations/0008_update_seed_default_wallets_three.sql`):
+
+```sql
+CREATE POLICY "household_invitations: inviter or members can delete"
+  ON public.household_invitations FOR DELETE
+  USING (invited_by = auth.uid() OR household_id = public.current_household_id());
+```
+
+This *does* scope deletes to the caller's own household — an attacker guessing another household's `invitationId` cannot delete it, so the "any authenticated user in any household" framing above is not accurate. The remaining issue is narrower: the policy allows **any member of the household**, not just the inviter or an owner, so a regular member can cancel an invite someone else sent — looser than the function's own docstring ("Cancel a pending invitation (inviter or household owner)") describes. No cross-tenant exposure, no financial data involved. Downgraded from a cross-tenant IDOR to a same-household permission/consistency gap; fix either the docstring or the RLS policy to match the intended access model (see `cancelInvitation` in `app/actions/invitations.ts`).
+
+Last seen by health check: 2026-08-16T19:19:30.147Z
