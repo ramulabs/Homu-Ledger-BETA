@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.505Z
-updated_at: 2026-08-13T19:18:07.346Z
+updated_at: 2026-08-17T19:14:18.795Z
 ---
 
 ## Finding
@@ -59,4 +59,4 @@ export async function updateFeedbackStatus(id: string, status: FeedbackStatus): 
 
 Apply the same guard to `deleteFeedback` and `replyToFeedback` in the same file, and confirm the RLS policy on `feedback` also restricts UPDATE/DELETE to developers as a second line of defense.
 
-Last seen by health check: 2026-08-13T19:18:07.346Z
+Last seen by health check: 2026-08-17T19:14:18.795Z
