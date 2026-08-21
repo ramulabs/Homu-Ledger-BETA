@@ -1,7 +1,7 @@
 ---
 id: health-security-78445af314
 title: Cursor query params interpolated raw into PostgREST filter string
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.232Z
+updated_at: 2026-08-21T19:14:01.217Z
 ---
 
 ## Finding
@@ -57,3 +57,4 @@ if (date && createdAt && id &&
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
 
 Last seen by health check: 2026-08-13T19:18:07.232Z
+
