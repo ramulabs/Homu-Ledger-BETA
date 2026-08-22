@@ -1,7 +1,7 @@
 ---
 id: health-security-2c68445265
 title: deleteWallet deletes by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.250Z
-updated_at: 2026-08-13T19:18:06.725Z
+updated_at: 2026-08-22T19:14:35.589Z
 ---
 
 ## Finding
@@ -54,3 +54,4 @@ export async function deleteWallet(id: string): Promise<{ error?: string }> {
 Also verify the RLS DELETE policy on `wallets` scopes by household membership.
 
 Last seen by health check: 2026-08-13T19:18:06.725Z
+

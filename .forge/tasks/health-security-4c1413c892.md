@@ -1,7 +1,7 @@
 ---
-id: health-security-1e00f83d7f
+id: health-security-4c1413c892
 title: replyToFeedback lacks developer-role authorization check
-status: completed
+status: backlog
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -9,8 +9,8 @@ labels:
   - Health check
   - Critical
   - Security
-created_at: 2026-07-21T19:14:59.626Z
-updated_at: 2026-08-22T19:14:35.133Z
+created_at: 2026-08-22T19:14:33.978Z
+updated_at: 2026-08-22T19:14:33.978Z
 ---
 
 ## Finding
@@ -21,7 +21,7 @@ updated_at: 2026-08-22T19:14:35.133Z
 
 ## Description
 
-`replyToFeedback` checks that the caller is signed in, but never checks that they are a developer/admin:
+`replyToFeedback` verifies the caller is *authenticated* but never checks that they're a developer/support agent before writing a reply to an arbitrary feedback ticket:
 
 ```typescript
 export async function replyToFeedback(id: string, reply: string): Promise<Result> {
@@ -34,22 +34,15 @@ export async function replyToFeedback(id: string, reply: string): Promise<Result
     .from("feedback")
     .update({ reply: trimmed, replied_at: new Date().toISOString(), replied_by: user.id })
     .eq("id", id);
-  ...
-}
 ```
 
-This action is only meant to be used from the `/settings/feedback-admin` support panel (gated to `is_developer` at the page level), but the action itself has no equivalent role check. Any authenticated user who can reach the action id can post a reply — attributed to themselves via `replied_by`, but written into someone else's feedback ticket, including ones from other households — impersonating official support on tickets they don't own.
+The function is meant to back the developer-only feedback-admin panel (per the file's own comments and the `feedback: dev can update` RLS policy elsewhere in this file's schema), but the action performs no `is_developer` check and no `id` scoping — it relies entirely on RLS to reject non-developer callers. There is no application-level signal distinguishing an intended admin action from a regular user probing the endpoint.
 
 ## Recommended Fix
 
-Add the same developer-role check used in `testGeminiConnection` (`app/actions/ai.ts:375-391`):
+Add an explicit developer check, mirroring `testGeminiConnection` in `app/actions/ai.ts`:
 
 ```typescript
 const { data: profile } = await supabase.from("profiles").select("is_developer").eq("id", user.id).maybeSingle();
-if (!profile?.is_developer) return { error: "Developer access required." };
+if (!profile?.is_developer) return { error: "Developer access required" };
 ```
-
-Insert this immediately after the existing `if (!user)` check, before the update.
-
-Last seen by health check: 2026-08-13T19:18:06.615Z
-

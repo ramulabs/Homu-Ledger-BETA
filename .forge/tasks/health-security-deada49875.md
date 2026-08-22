@@ -1,7 +1,7 @@
 ---
-id: health-security-bd9a093261
+id: health-security-deada49875
 title: updateRecurringItem updates by ID with no household ownership check
-status: completed
+status: backlog
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -9,8 +9,8 @@ labels:
   - Health check
   - Critical
   - Security
-created_at: 2026-07-21T19:15:10.518Z
-updated_at: 2026-08-22T19:14:35.819Z
+created_at: 2026-08-22T19:14:33.642Z
+updated_at: 2026-08-22T19:14:33.642Z
 ---
 
 ## Finding
@@ -21,7 +21,7 @@ updated_at: 2026-08-22T19:14:35.819Z
 
 ## Description
 
-`updateRecurringItem` checks the caller is authenticated but never resolves or applies a `household_id` scope to the update:
+`updateRecurringItem` checks authentication but never resolves or checks `household_id` before the write:
 
 ```typescript
 export async function updateRecurringItem(id: string, formData: FormData): Promise<{ error?: string }> {
@@ -32,25 +32,22 @@ export async function updateRecurringItem(id: string, formData: FormData): Promi
   const { error } = await supabase
     .from("recurring_items")
     .update({ type, amount, name, category_id, frequency, next_due_date, repeat_until })
-    .eq("id", id); // ← no household_id check
+    .eq("id", id);
 ```
 
-`addRecurringItem` in the same file correctly scopes inserts to `profile.household_id`, but the update path drops that check entirely. Any authenticated user who supplies another household's `recurring_items` row id can modify it if RLS doesn't independently scope UPDATE by household membership.
+Unlike `addRecurringItem` in the same file (which resolves `profile.household_id` and inserts it), the update path drops household scoping entirely. Any authenticated user supplying another household's recurring-item id can modify its amount, name, category, or schedule; only RLS on `recurring_items` stands between this and the reference pattern in `transactions.ts`.
 
 ## Recommended Fix
+
+Resolve and scope by `household_id`, mirroring `addRecurringItem`:
 
 ```typescript
 const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
 if (!profile?.household_id) return { error: "No household" };
-...
+
 const { error } = await supabase
   .from("recurring_items")
   .update({ type, amount, name, category_id, frequency, next_due_date, repeat_until })
   .eq("id", id)
   .eq("household_id", profile.household_id);
 ```
-
-Also verify the RLS UPDATE policy on `recurring_items` scopes by household membership.
-
-Last seen by health check: 2026-08-13T19:18:07.678Z
-

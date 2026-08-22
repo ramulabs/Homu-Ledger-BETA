@@ -1,7 +1,7 @@
 ---
-id: health-security-bfbb9c92c1
+id: health-security-9243c3a4a5
 title: deleteRecurringItem deletes by ID with no household ownership check
-status: completed
+status: backlog
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -9,8 +9,8 @@ labels:
   - Health check
   - Critical
   - Security
-created_at: 2026-07-21T19:15:10.650Z
-updated_at: 2026-08-22T19:14:35.945Z
+created_at: 2026-08-22T19:14:33.751Z
+updated_at: 2026-08-22T19:14:33.751Z
 ---
 
 ## Finding
@@ -21,7 +21,7 @@ updated_at: 2026-08-22T19:14:35.945Z
 
 ## Description
 
-`deleteRecurringItem` checks the caller is authenticated but deletes filtered only by row `id`:
+`deleteRecurringItem` has the same gap as `updateRecurringItem` in this file:
 
 ```typescript
 export async function deleteRecurringItem(id: string): Promise<{ error?: string }> {
@@ -29,10 +29,10 @@ export async function deleteRecurringItem(id: string): Promise<{ error?: string 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { error } = await supabase.from("recurring_items").delete().eq("id", id); // ← no household_id check
+  const { error } = await supabase.from("recurring_items").delete().eq("id", id);
 ```
 
-Same class of issue as `updateRecurringItem` in this file. Any authenticated user who supplies another household's `recurring_items` row id can delete it if RLS doesn't independently scope DELETE by household membership.
+No `household_id` scoping is applied before the delete, so any authenticated user supplying a foreign recurring-item id can delete it, with only the RLS DELETE policy as a backstop.
 
 ## Recommended Fix
 
@@ -46,8 +46,3 @@ const { error } = await supabase
   .eq("id", id)
   .eq("household_id", profile.household_id);
 ```
-
-Also verify the RLS DELETE policy on `recurring_items` scopes by household membership.
-
-Last seen by health check: 2026-08-13T19:18:07.793Z
-

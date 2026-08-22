@@ -1,7 +1,7 @@
 ---
 id: health-security-7a25785cd9
 title: updateFeedbackStatus server action has no authentication check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.505Z
-updated_at: 2026-08-13T19:18:07.346Z
+updated_at: 2026-08-22T19:14:35.021Z
 ---
 
 ## Finding
@@ -60,3 +60,4 @@ export async function updateFeedbackStatus(id: string, status: FeedbackStatus): 
 Apply the same guard to `deleteFeedback` and `replyToFeedback` in the same file, and confirm the RLS policy on `feedback` also restricts UPDATE/DELETE to developers as a second line of defense.
 
 Last seen by health check: 2026-08-13T19:18:07.346Z
+
