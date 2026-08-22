@@ -1,7 +1,7 @@
 ---
-id: health-security-669ad72a90
+id: health-security-eadb44c430
 title: updateCategory updates by ID with no household ownership check
-status: completed
+status: backlog
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -9,8 +9,8 @@ labels:
   - Health check
   - Critical
   - Security
-created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-08-22T19:14:35.251Z
+created_at: 2026-08-22T19:14:33.041Z
+updated_at: 2026-08-22T19:14:33.041Z
 ---
 
 ## Finding
@@ -21,7 +21,7 @@ updated_at: 2026-08-22T19:14:35.251Z
 
 ## Description
 
-`updateCategory` checks the caller is authenticated, but performs the UPDATE filtered only by the row `id` — never by `household_id`:
+`updateCategory` checks that the caller is authenticated but performs the UPDATE filtered only by the row `id` — it never scopes to the caller's `household_id`:
 
 ```typescript
 export async function updateCategory(id: string, formData: FormData): Promise<{ error?: string }> {
@@ -32,14 +32,14 @@ export async function updateCategory(id: string, formData: FormData): Promise<{ 
   const { error } = await supabase
     .from("categories")
     .update({ name, symbol, color })
-    .eq("id", id); // ← no household_id check
+    .eq("id", id); // no household_id check
 ```
 
-Contrast with `app/actions/transactions.ts:updateTransaction`, which explicitly chains `.eq("household_id", householdId)` as defense in depth on top of RLS. Any authenticated user who supplies a category `id` belonging to a different household can rename/recolor it if the RLS UPDATE policy on `categories` doesn't independently scope by household membership — the server action provides no additional check either way.
+Contrast with `app/actions/transactions.ts:updateTransaction`, which resolves the caller's `householdId` and chains `.eq("household_id", householdId)` as defense-in-depth alongside RLS. Here, any authenticated user who supplies a category `id` belonging to a different household can rename/recolor it, relying entirely on the `categories: members can update` RLS policy as the only backstop.
 
 ## Recommended Fix
 
-Resolve the caller's `household_id` (as the file already does in `addCategory`) and scope the update to it:
+Resolve the caller's `household_id` (as `addCategory` already does in this same file) and scope the update to it:
 
 ```typescript
 const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
@@ -51,8 +51,3 @@ const { error } = await supabase
   .eq("id", id)
   .eq("household_id", profile.household_id);
 ```
-
-Confirm the RLS UPDATE policy on `categories` also enforces household membership as a second line of defense.
-
-Last seen by health check: 2026-08-13T19:18:07.121Z
-

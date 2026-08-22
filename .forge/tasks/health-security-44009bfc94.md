@@ -1,7 +1,7 @@
 ---
-id: health-security-baf2a8c2a5
+id: health-security-44009bfc94
 title: deleteCategory deletes by ID with no household ownership check
-status: completed
+status: backlog
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -9,8 +9,8 @@ labels:
   - Health check
   - Critical
   - Security
-created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-08-22T19:14:35.364Z
+created_at: 2026-08-22T19:14:33.161Z
+updated_at: 2026-08-22T19:14:33.161Z
 ---
 
 ## Finding
@@ -21,7 +21,7 @@ updated_at: 2026-08-22T19:14:35.364Z
 
 ## Description
 
-`deleteCategory` checks the caller is authenticated, but performs the DELETE filtered only by the row `id` — never by `household_id`:
+`deleteCategory` authenticates the caller but deletes solely by row `id`, with no `household_id` filter:
 
 ```typescript
 export async function deleteCategory(id: string): Promise<{ error?: string }> {
@@ -30,13 +30,13 @@ export async function deleteCategory(id: string): Promise<{ error?: string }> {
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("categories").delete().eq("id", id);
-  if (error) return { error: error.message };
-  ...
 ```
 
-Same class of issue as `updateCategory` in this file and the already-tracked `cancelInvitation` finding: any authenticated user who supplies a category `id` from another household can delete it if RLS doesn't independently enforce household scoping on DELETE. `app/actions/transactions.ts:deleteTransaction` shows the correct pattern (explicit `.eq("household_id", householdId)`).
+This mirrors the `updateCategory` gap in the same file and departs from the pattern in `app/actions/transactions.ts`. The only thing preventing cross-household deletion is the `categories: members can delete` RLS policy — the server action itself provides no application-level scoping.
 
 ## Recommended Fix
+
+Resolve `household_id` from the caller's profile and add it to the filter, matching `addCategory`'s pattern:
 
 ```typescript
 const { data: profile } = await supabase.from("profiles").select("household_id").eq("id", user.id).single();
@@ -48,8 +48,3 @@ const { error } = await supabase
   .eq("id", id)
   .eq("household_id", profile.household_id);
 ```
-
-Also verify the RLS DELETE policy on `categories` scopes by household membership.
-
-Last seen by health check: 2026-08-13T19:18:07.566Z
-
