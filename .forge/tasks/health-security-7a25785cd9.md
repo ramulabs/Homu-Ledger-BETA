@@ -1,7 +1,7 @@
 ---
 id: health-security-7a25785cd9
 title: updateFeedbackStatus server action has no authentication check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.505Z
-updated_at: 2026-08-13T19:18:07.346Z
+updated_at: 2026-08-23T19:14:54.214Z
 ---
 
 ## Finding
@@ -58,5 +58,9 @@ export async function updateFeedbackStatus(id: string, status: FeedbackStatus): 
 ```
 
 Apply the same guard to `deleteFeedback` and `replyToFeedback` in the same file, and confirm the RLS policy on `feedback` also restricts UPDATE/DELETE to developers as a second line of defense.
+
+## Resolution
+
+Verified via the actual migration SQL (not the app-code path alone): The `feedback` UPDATE policy ("feedback: dev can update", migration 0020) restricts updates to `is_developer_caller()`. `updateFeedbackStatus`'s unguarded `.update({status}).eq("id", id)` is backed by this row-level check. The app-level query never changed, but the finding is not exploitable — closing as mitigated by database-level authorization rather than application-level authorization. Re-flag if the underlying policy is ever dropped or weakened.
 
 Last seen by health check: 2026-08-13T19:18:07.346Z

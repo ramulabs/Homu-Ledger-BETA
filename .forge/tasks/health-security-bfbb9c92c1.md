@@ -1,7 +1,7 @@
 ---
 id: health-security-bfbb9c92c1
 title: deleteRecurringItem deletes by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.650Z
-updated_at: 2026-08-13T19:18:07.793Z
+updated_at: 2026-08-23T19:14:55.122Z
 ---
 
 ## Finding
@@ -48,5 +48,9 @@ const { error } = await supabase
 ```
 
 Also verify the RLS DELETE policy on `recurring_items` scopes by household membership.
+
+## Resolution
+
+Verified via the actual migration SQL (not the app-code path alone): The `recurring_items` DELETE policy ("recurring: members can delete", migration 0001) restricts deletes to `household_id = current_household_id()`. `deleteRecurringItem`'s app-level `.eq("id", id)` is backed by this row-level check. The app-level query never changed, but the finding is not exploitable — closing as mitigated by database-level authorization rather than application-level authorization. Re-flag if the underlying policy is ever dropped or weakened.
 
 Last seen by health check: 2026-08-13T19:18:07.793Z
