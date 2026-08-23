@@ -1,7 +1,7 @@
 ---
 id: health-security-669ad72a90
 title: updateCategory updates by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-08-13T19:18:07.121Z
+updated_at: 2026-08-23T19:14:54.442Z
 ---
 
 ## Finding
@@ -53,5 +53,9 @@ const { error } = await supabase
 ```
 
 Confirm the RLS UPDATE policy on `categories` also enforces household membership as a second line of defense.
+
+## Resolution
+
+Verified via the actual migration SQL (not the app-code path alone): The `categories` UPDATE policy ("categories: members can update", migration 0001) restricts updates to `household_id = current_household_id()`. `updateCategory`'s app-level `.eq("id", id)` is backed by this row-level check. The app-level query never changed, but the finding is not exploitable — closing as mitigated by database-level authorization rather than application-level authorization. Re-flag if the underlying policy is ever dropped or weakened.
 
 Last seen by health check: 2026-08-13T19:18:07.121Z

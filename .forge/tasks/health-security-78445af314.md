@@ -10,14 +10,14 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.232Z
+updated_at: 2026-08-23T19:14:53.742Z
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A03 (Injection)  
-**File:** `app/api/transactions/route.ts:38`  
-**Severity:** warning
+**File:** `app/api/transactions/route.ts:45` (line drifted from :38 as the file grew; same unfixed vulnerability)  
+**Severity:** critical (escalated — open >14 days, still in backlog)
 
 ## Description
 
@@ -56,4 +56,4 @@ if (date && createdAt && id &&
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
 
-Last seen by health check: 2026-08-13T19:18:07.232Z
+Last seen by health check: 2026-08-23T19:14:53.742Z

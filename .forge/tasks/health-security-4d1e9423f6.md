@@ -10,14 +10,14 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.011Z
+updated_at: 2026-08-23T19:16:07.638Z
 ---
 
 ## Finding
 
 **Source:** Security · OWASP A01 (Broken Access Control)  
 **File:** `app/api/auth-log/route.ts:1`  
-**Severity:** warning
+**Severity:** critical (escalated — open >14 days, still in backlog; not RLS-mitigated since this route performs no DB write)
 
 ## Description
 
@@ -54,4 +54,4 @@ export async function POST(request: NextRequest) {
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
 
-Last seen by health check: 2026-08-13T19:18:07.011Z
+Last seen by health check: 2026-08-23T19:16:07.638Z

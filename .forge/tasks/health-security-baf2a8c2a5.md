@@ -1,7 +1,7 @@
 ---
 id: health-security-baf2a8c2a5
 title: deleteCategory deletes by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-08-13T19:18:07.566Z
+updated_at: 2026-08-23T19:14:54.558Z
 ---
 
 ## Finding
@@ -50,5 +50,9 @@ const { error } = await supabase
 ```
 
 Also verify the RLS DELETE policy on `categories` scopes by household membership.
+
+## Resolution
+
+Verified via the actual migration SQL (not the app-code path alone): The `categories` DELETE policy ("categories: members can delete non-default", migration 0018) restricts deletes to `household_id = current_household_id() AND is_default = false`. `deleteCategory`'s app-level `.eq("id", id)` is backed by this row-level check. The app-level query never changed, but the finding is not exploitable — closing as mitigated by database-level authorization rather than application-level authorization. Re-flag if the underlying policy is ever dropped or weakened.
 
 Last seen by health check: 2026-08-13T19:18:07.566Z

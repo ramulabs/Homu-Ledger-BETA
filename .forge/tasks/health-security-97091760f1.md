@@ -1,7 +1,7 @@
 ---
 id: health-security-97091760f1
 title: cancelInvitation deletes by ID with no caller ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.456Z
+updated_at: 2026-08-23T19:14:53.990Z
 ---
 
 ## Finding
@@ -65,5 +65,9 @@ if (invite.invited_by !== user.id) {
 ```
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
+
+## Resolution
+
+Verified via the actual migration SQL (not the app-code path alone): The `household_invitations` DELETE policy ("household_invitations: inviter or members can delete", migration 0011) restricts deletes to `invited_by = auth.uid() OR household_id = current_household_id()`. `cancelInvitation`'s app-level `.eq("id", id)` call is backed by this row-level check, so a caller cannot cancel another household's invitation even without an app-level ownership check. The app-level query never changed, but the finding is not exploitable — closing as mitigated by database-level authorization rather than application-level authorization. Re-flag if the underlying policy is ever dropped or weakened.
 
 Last seen by health check: 2026-08-13T19:18:07.456Z
