@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.795Z
-updated_at: 2026-08-13T19:18:06.505Z
+updated_at: 2026-08-28T19:12:24.532Z
 ---
 
 ## Finding
@@ -49,4 +49,11 @@ export async function updateWallet(id: string, formData: FormData): Promise<{ er
 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
 
-Last seen by health check: 2026-08-13T19:18:06.505Z
+Last seen by health check: 2026-08-28T19:12:24.532Z
+
+
+## Deep health check follow-up (2026-08-28)
+
+Re-verified this run. The app-code gap described above is real, but Postgres RLS appears to fully cover it: `wallets: members can update` (migration 0008) — `USING (household_id = current_household_id()) WITH CHECK (household_id = current_household_id())`. A cross-household `.update().eq("id", id)` is rejected by Postgres before it reaches this row.
+
+This looks like it may have been flagged without checking RLS. Recommend a human confirms the policy is still in force (no later migration weakens it) and, if so, downgrades or closes this task — the automated check cannot itself verify RLS coverage, so it is left open pending that confirmation rather than auto-closed.

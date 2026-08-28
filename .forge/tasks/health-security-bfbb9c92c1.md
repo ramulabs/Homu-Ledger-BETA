@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.650Z
-updated_at: 2026-08-13T19:18:07.793Z
+updated_at: 2026-08-28T19:12:25.712Z
 ---
 
 ## Finding
@@ -49,4 +49,11 @@ const { error } = await supabase
 
 Also verify the RLS DELETE policy on `recurring_items` scopes by household membership.
 
-Last seen by health check: 2026-08-13T19:18:07.793Z
+Last seen by health check: 2026-08-28T19:12:25.712Z
+
+
+## Deep health check follow-up (2026-08-28)
+
+Re-verified this run. The app-code gap described above is real, but Postgres RLS appears to fully cover it: `recurring: members can delete` (migration 0001) — `USING (household_id = current_household_id())`.
+
+This looks like it may have been flagged without checking RLS. Recommend a human confirms the policy is still in force (no later migration weakens it) and, if so, downgrades or closes this task — the automated check cannot itself verify RLS coverage, so it is left open pending that confirmation rather than auto-closed.

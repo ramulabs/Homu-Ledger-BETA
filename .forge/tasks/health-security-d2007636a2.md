@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.368Z
-updated_at: 2026-08-13T19:18:07.915Z
+updated_at: 2026-08-28T19:12:25.807Z
 ---
 
 ## Finding
@@ -56,4 +56,11 @@ export async function deleteFeedback(id: string): Promise<Result> {
 
 Also add/verify an RLS DELETE policy on `feedback` restricted to developers, so the database enforces this even if a future code change drops the application-level check again.
 
-Last seen by health check: 2026-08-13T19:18:07.915Z
+Last seen by health check: 2026-08-28T19:12:25.807Z
+
+
+## Deep health check follow-up (2026-08-28)
+
+Re-verified this run. The app-code gap described above is real, but Postgres RLS appears to fully cover it: `feedback: dev can delete` (migration 0020) — `USING (is_developer_caller())`.
+
+This looks like it may have been flagged without checking RLS. Recommend a human confirms the policy is still in force (no later migration weakens it) and, if so, downgrades or closes this task — the automated check cannot itself verify RLS coverage, so it is left open pending that confirmation rather than auto-closed.
