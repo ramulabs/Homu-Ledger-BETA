@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-08-13T19:18:07.566Z
+updated_at: 2026-08-28T19:12:25.493Z
 ---
 
 ## Finding
@@ -51,4 +51,11 @@ const { error } = await supabase
 
 Also verify the RLS DELETE policy on `categories` scopes by household membership.
 
-Last seen by health check: 2026-08-13T19:18:07.566Z
+Last seen by health check: 2026-08-28T19:12:25.493Z
+
+
+## Deep health check follow-up (2026-08-28)
+
+Re-verified this run. The app-code gap described above is real, but Postgres RLS appears to fully cover it: `categories: members can delete` (migration 0018, superseding the 0001 non-default-only policy) — `USING (household_id = current_household_id())`.
+
+This looks like it may have been flagged without checking RLS. Recommend a human confirms the policy is still in force (no later migration weakens it) and, if so, downgrades or closes this task — the automated check cannot itself verify RLS coverage, so it is left open pending that confirmation rather than auto-closed.

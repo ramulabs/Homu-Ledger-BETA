@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.456Z
+updated_at: 2026-08-28T19:12:25.379Z
 ---
 
 ## Finding
@@ -66,4 +66,11 @@ if (invite.invited_by !== user.id) {
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
 
-Last seen by health check: 2026-08-13T19:18:07.456Z
+Last seen by health check: 2026-08-28T19:12:25.379Z
+
+
+## Deep health check follow-up (2026-08-28)
+
+Re-verified this run. The app-code gap described above is real, but Postgres RLS appears to fully cover it: `household_invitations: inviter or members can delete` (migration 0008) — `USING (invited_by = auth.uid() OR household_id = current_household_id())`. Any member cancelling any invite to their own household is the intended behavior, not cross-tenant access.
+
+This looks like it may have been flagged without checking RLS. Recommend a human confirms the policy is still in force (no later migration weakens it) and, if so, downgrades or closes this task — the automated check cannot itself verify RLS coverage, so it is left open pending that confirmation rather than auto-closed.
