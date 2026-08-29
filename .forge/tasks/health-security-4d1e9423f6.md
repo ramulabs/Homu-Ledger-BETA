@@ -1,7 +1,7 @@
 ---
 id: health-security-4d1e9423f6
 title: auth-log API route accepts unauthenticated POST requests
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.011Z
+updated_at: 2026-08-29T19:16:10.143Z
 ---
 
 ## Finding
@@ -55,3 +55,9 @@ export async function POST(request: NextRequest) {
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
 
 Last seen by health check: 2026-08-13T19:18:07.011Z
+
+
+
+---
+
+**Closed by 2026-08-29 health check:** re-verified against `middleware.ts` — `/api/auth-log` is not in `PUBLIC_ROUTES` or `AUTH_PASSTHROUGH`, and the middleware matcher covers all non-static paths including `/api/*`, so an unauthenticated POST is redirected to `/login` before it ever reaches this handler. Confirmed false positive, not a fix — no code changed. (Note: this does mean the endpoint can never log the exact "session just got revoked" event it was built to capture — a real functional bug, just not a security one; worth a separate non-health-check task if the logout investigation is still active.)

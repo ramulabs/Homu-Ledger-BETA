@@ -1,7 +1,7 @@
 ---
 id: health-security-baf2a8c2a5
 title: deleteCategory deletes by ID with no household ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-08-13T19:18:07.566Z
+updated_at: 2026-08-29T19:16:10.805Z
 ---
 
 ## Finding
@@ -52,3 +52,9 @@ const { error } = await supabase
 Also verify the RLS DELETE policy on `categories` scopes by household membership.
 
 Last seen by health check: 2026-08-13T19:18:07.566Z
+
+
+
+---
+
+**Closed by 2026-08-29 health check:** re-verified against this repo's RLS policies (`supabase/migrations/`) — the app-code layer always uses the anon-key + user-cookie client (RLS-enforced), and the relevant table/row policies (household scoping via `current_household_id()`, or `is_developer_caller()` for feedback) correctly block cross-household/unauthorized mutation at the DB layer even though the app code itself performs no redundant check. Confirmed false positive, not a fix — no code changed.

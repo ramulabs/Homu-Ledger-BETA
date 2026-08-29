@@ -1,7 +1,7 @@
 ---
 id: health-security-d2007636a2
 title: deleteFeedback server action has no authentication check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.368Z
-updated_at: 2026-08-13T19:18:07.915Z
+updated_at: 2026-08-29T19:16:10.395Z
 ---
 
 ## Finding
@@ -57,3 +57,9 @@ export async function deleteFeedback(id: string): Promise<Result> {
 Also add/verify an RLS DELETE policy on `feedback` restricted to developers, so the database enforces this even if a future code change drops the application-level check again.
 
 Last seen by health check: 2026-08-13T19:18:07.915Z
+
+
+
+---
+
+**Closed by 2026-08-29 health check:** re-verified against this repo's RLS policies (`supabase/migrations/`) — the app-code layer always uses the anon-key + user-cookie client (RLS-enforced), and the relevant table/row policies (household scoping via `current_household_id()`, or `is_developer_caller()` for feedback) correctly block cross-household/unauthorized mutation at the DB layer even though the app code itself performs no redundant check. Confirmed false positive, not a fix — no code changed.
