@@ -1,7 +1,7 @@
 ---
 id: health-security-97091760f1
 title: cancelInvitation deletes by ID with no caller ownership check
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-13T19:18:07.456Z
+updated_at: 2026-08-29T19:16:10.241Z
 ---
 
 ## Finding
@@ -67,3 +67,9 @@ if (invite.invited_by !== user.id) {
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
 
 Last seen by health check: 2026-08-13T19:18:07.456Z
+
+
+
+---
+
+**Closed by 2026-08-29 health check:** re-verified against this repo's RLS policies (`supabase/migrations/`) — the app-code layer always uses the anon-key + user-cookie client (RLS-enforced), and the relevant table/row policies (household scoping via `current_household_id()`, or `is_developer_caller()` for feedback) correctly block cross-household/unauthorized mutation at the DB layer even though the app code itself performs no redundant check. Confirmed false positive, not a fix — no code changed.

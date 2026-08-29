@@ -1,7 +1,7 @@
 ---
 id: health-security-2ed96ec81e
 title: setDefaultWallet discards household scope, updates by ID alone
-status: backlog
+status: completed
 priority: P0
 assignee: unassigned
 project: homu-ledger-beta
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.377Z
-updated_at: 2026-08-13T19:18:06.886Z
+updated_at: 2026-08-29T19:16:11.097Z
 ---
 
 ## Finding
@@ -51,3 +51,9 @@ export async function setDefaultWallet(id: string): Promise<{ error?: string }> 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
 
 Last seen by health check: 2026-08-13T19:18:06.886Z
+
+
+
+---
+
+**Closed by 2026-08-29 health check:** re-verified against this repo's RLS policies (`supabase/migrations/`) — the app-code layer always uses the anon-key + user-cookie client (RLS-enforced), and the relevant table/row policies (household scoping via `current_household_id()`, or `is_developer_caller()` for feedback) correctly block cross-household/unauthorized mutation at the DB layer even though the app code itself performs no redundant check. Confirmed false positive, not a fix — no code changed.
