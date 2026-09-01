@@ -1,6 +1,6 @@
 ---
 id: health-security-7a25785cd9
-title: updateFeedbackStatus server action has no authentication check
+title: updateFeedbackStatus has no authentication check
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.505Z
-updated_at: 2026-08-31T19:14:41.971Z
+updated_at: 2026-09-01T19:16:08.459Z
 ---
 
 ## Finding
@@ -59,4 +59,4 @@ export async function updateFeedbackStatus(id: string, status: FeedbackStatus): 
 
 Apply the same guard to `deleteFeedback` and `replyToFeedback` in the same file, and confirm the RLS policy on `feedback` also restricts UPDATE/DELETE to developers as a second line of defense.
 
-Last seen by health check: 2026-08-31T19:14:41.971Z
+Last seen by health check: 2026-09-01T19:16:08.459Z

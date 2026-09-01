@@ -1,6 +1,6 @@
 ---
 id: health-security-bd9a093261
-title: updateRecurringItem updates by ID with no household ownership check
+title: updateRecurringItem mutates by ID without household scope
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.518Z
-updated_at: 2026-08-31T19:14:42.368Z
+updated_at: 2026-09-01T19:16:08.466Z
 ---
 
 ## Finding
@@ -52,4 +52,4 @@ const { error } = await supabase
 
 Also verify the RLS UPDATE policy on `recurring_items` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:42.368Z
+Last seen by health check: 2026-09-01T19:16:08.466Z

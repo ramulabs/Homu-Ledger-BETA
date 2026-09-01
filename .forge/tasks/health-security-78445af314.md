@@ -1,6 +1,6 @@
 ---
 id: health-security-78445af314
-title: Cursor query params interpolated raw into PostgREST filter string
+title: Transactions cursor params interpolated raw into PostgREST filter
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:41.819Z
+updated_at: 2026-09-01T19:16:08.457Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ if (date && createdAt && id &&
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
 
-Last seen by health check: 2026-08-31T19:14:41.819Z
+Last seen by health check: 2026-09-01T19:16:08.457Z

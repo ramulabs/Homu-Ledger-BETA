@@ -1,6 +1,6 @@
 ---
 id: health-security-1e00f83d7f
-title: replyToFeedback lacks developer-role authorization check
+title: replyToFeedback lacks developer-role authorization
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.626Z
-updated_at: 2026-08-31T19:14:41.132Z
+updated_at: 2026-09-01T19:16:08.447Z
 ---
 
 ## Finding
@@ -51,4 +51,4 @@ if (!profile?.is_developer) return { error: "Developer access required." };
 
 Insert this immediately after the existing `if (!user)` check, before the update.
 
-Last seen by health check: 2026-08-31T19:14:41.132Z
+Last seen by health check: 2026-09-01T19:16:08.447Z

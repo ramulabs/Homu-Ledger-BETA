@@ -1,6 +1,6 @@
 ---
 id: health-security-2c68445265
-title: deleteWallet deletes by ID with no household ownership check
+title: deleteWallet deletes by ID without household scope
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.250Z
-updated_at: 2026-08-31T19:14:41.303Z
+updated_at: 2026-09-01T19:16:08.450Z
 ---
 
 ## Finding
@@ -53,4 +53,4 @@ export async function deleteWallet(id: string): Promise<{ error?: string }> {
 
 Also verify the RLS DELETE policy on `wallets` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:41.303Z
+Last seen by health check: 2026-09-01T19:16:08.450Z

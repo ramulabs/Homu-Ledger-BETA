@@ -1,6 +1,6 @@
 ---
 id: health-security-08715ec33a
-title: updateWallet discards household scope, updates by ID alone
+title: updateWallet mutates by ID without household scope
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.795Z
-updated_at: 2026-08-31T19:14:41.005Z
+updated_at: 2026-09-01T19:16:08.431Z
 ---
 
 ## Finding
@@ -49,4 +49,4 @@ export async function updateWallet(id: string, formData: FormData): Promise<{ er
 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:41.005Z
+Last seen by health check: 2026-09-01T19:16:08.431Z

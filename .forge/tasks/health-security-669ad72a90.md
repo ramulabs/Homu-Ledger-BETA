@@ -1,6 +1,6 @@
 ---
 id: health-security-669ad72a90
-title: updateCategory updates by ID with no household ownership check
+title: updateCategory mutates by ID without household scope
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-08-31T19:14:41.680Z
+updated_at: 2026-09-01T19:16:08.455Z
 ---
 
 ## Finding
@@ -54,4 +54,4 @@ const { error } = await supabase
 
 Confirm the RLS UPDATE policy on `categories` also enforces household membership as a second line of defense.
 
-Last seen by health check: 2026-08-31T19:14:41.680Z
+Last seen by health check: 2026-09-01T19:16:08.455Z

@@ -1,6 +1,6 @@
 ---
 id: health-security-d2007636a2
-title: deleteFeedback server action has no authentication check
+title: deleteFeedback has no authentication check
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.368Z
-updated_at: 2026-08-31T19:14:42.633Z
+updated_at: 2026-09-01T19:16:08.468Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ export async function deleteFeedback(id: string): Promise<Result> {
 
 Also add/verify an RLS DELETE policy on `feedback` restricted to developers, so the database enforces this even if a future code change drops the application-level check again.
 
-Last seen by health check: 2026-08-31T19:14:42.633Z
+Last seen by health check: 2026-09-01T19:16:08.468Z
