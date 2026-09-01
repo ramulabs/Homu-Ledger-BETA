@@ -1,6 +1,6 @@
 ---
 id: health-security-97091760f1
-title: cancelInvitation deletes by ID with no caller ownership check
+title: cancelInvitation deletes by ID without caller-ownership check
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:42.112Z
+updated_at: 2026-09-01T19:16:08.460Z
 ---
 
 ## Finding
@@ -66,4 +66,4 @@ if (invite.invited_by !== user.id) {
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
 
-Last seen by health check: 2026-08-31T19:14:42.112Z
+Last seen by health check: 2026-09-01T19:16:08.460Z

@@ -1,6 +1,6 @@
 ---
 id: health-security-4d1e9423f6
-title: auth-log API route accepts unauthenticated POST requests
+title: auth-log route accepts unauthenticated POST requests
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:41.552Z
+updated_at: 2026-09-01T19:16:08.453Z
 ---
 
 ## Finding
@@ -54,4 +54,4 @@ export async function POST(request: NextRequest) {
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
 
-Last seen by health check: 2026-08-31T19:14:41.552Z
+Last seen by health check: 2026-09-01T19:16:08.453Z

@@ -1,6 +1,6 @@
 ---
 id: health-security-bfbb9c92c1
-title: deleteRecurringItem deletes by ID with no household ownership check
+title: deleteRecurringItem deletes by ID without household scope
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.650Z
-updated_at: 2026-08-31T19:14:42.500Z
+updated_at: 2026-09-01T19:16:08.467Z
 ---
 
 ## Finding
@@ -49,4 +49,4 @@ const { error } = await supabase
 
 Also verify the RLS DELETE policy on `recurring_items` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:42.500Z
+Last seen by health check: 2026-09-01T19:16:08.467Z
