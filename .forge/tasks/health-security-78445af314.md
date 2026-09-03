@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:41.819Z
+updated_at: 2026-09-03T19:07:39.913Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ if (date && createdAt && id &&
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
 
-Last seen by health check: 2026-08-31T19:14:41.819Z
+Last seen by health check: 2026-09-03T19:07:39.913Z

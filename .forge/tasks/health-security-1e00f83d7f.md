@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.626Z
-updated_at: 2026-08-31T19:14:41.132Z
+updated_at: 2026-09-03T19:07:39.411Z
 ---
 
 ## Finding
@@ -51,4 +51,4 @@ if (!profile?.is_developer) return { error: "Developer access required." };
 
 Insert this immediately after the existing `if (!user)` check, before the update.
 
-Last seen by health check: 2026-08-31T19:14:41.132Z
+Last seen by health check: 2026-09-03T19:07:39.411Z
