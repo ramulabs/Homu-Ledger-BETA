@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:42.112Z
+updated_at: 2026-09-03T19:07:40.113Z
 ---
 
 ## Finding
@@ -66,4 +66,4 @@ if (invite.invited_by !== user.id) {
 
 Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enforces the same constraint at the database level.
 
-Last seen by health check: 2026-08-31T19:14:42.112Z
+Last seen by health check: 2026-09-03T19:07:40.113Z

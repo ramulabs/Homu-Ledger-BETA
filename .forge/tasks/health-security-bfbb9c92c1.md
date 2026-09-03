@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.650Z
-updated_at: 2026-08-31T19:14:42.500Z
+updated_at: 2026-09-03T19:07:40.410Z
 ---
 
 ## Finding
@@ -49,4 +49,4 @@ const { error } = await supabase
 
 Also verify the RLS DELETE policy on `recurring_items` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:42.500Z
+Last seen by health check: 2026-09-03T19:07:40.410Z
