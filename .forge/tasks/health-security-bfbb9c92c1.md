@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.650Z
-updated_at: 2026-08-31T19:14:42.500Z
+updated_at: 2026-09-04T19:16:13.359Z
 ---
 
 ## Finding
@@ -49,4 +49,6 @@ const { error } = await supabase
 
 Also verify the RLS DELETE policy on `recurring_items` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:42.500Z
+
+**RLS verified (2026-09-04 health check):** the `recurring_items` DELETE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
+Last seen by health check: 2026-09-04T19:16:13.359Z

@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:41.819Z
+updated_at: 2026-09-04T19:16:13.018Z
 ---
 
 ## Finding
@@ -56,4 +56,6 @@ if (date && createdAt && id &&
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
 
-Last seen by health check: 2026-08-31T19:14:41.819Z
+
+**RLS verified (2026-09-04 health check):** `transactions` SELECT is scoped to `current_household_id()`, so this filter injection cannot cross household boundaries — it can only be used to bypass the pagination cursor within the caller's own data.
+Last seen by health check: 2026-09-04T19:16:13.018Z

@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-08-31T19:14:41.552Z
+updated_at: 2026-09-04T19:16:13.904Z
 ---
 
 ## Finding
@@ -54,4 +54,6 @@ export async function POST(request: NextRequest) {
 
 Alternatively, a signed HMAC token generated client-side from the session JWT would work without a Supabase round-trip on the edge runtime.
 
-Last seen by health check: 2026-08-31T19:14:41.552Z
+
+**Note (2026-09-04 health check):** this is a log-flooding/diagnostic-probing vector, not a data-access issue — no RLS applies (the route only writes to the server console).
+Last seen by health check: 2026-09-04T19:16:13.904Z

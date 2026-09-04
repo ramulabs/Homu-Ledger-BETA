@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-08-31T19:14:42.243Z
+updated_at: 2026-09-04T19:16:13.579Z
 ---
 
 ## Finding
@@ -51,4 +51,6 @@ const { error } = await supabase
 
 Also verify the RLS DELETE policy on `categories` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:42.243Z
+
+**RLS verified (2026-09-04 health check):** the `categories` DELETE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
+Last seen by health check: 2026-09-04T19:16:13.579Z

@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.795Z
-updated_at: 2026-08-31T19:14:41.005Z
+updated_at: 2026-09-04T19:16:14.245Z
 ---
 
 ## Finding
@@ -49,4 +49,6 @@ export async function updateWallet(id: string, formData: FormData): Promise<{ er
 
 Also verify the RLS UPDATE policy on `wallets` scopes by household membership.
 
-Last seen by health check: 2026-08-31T19:14:41.005Z
+
+**RLS verified (2026-09-04 health check):** the `wallets` UPDATE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
+Last seen by health check: 2026-09-04T19:16:14.245Z
