@@ -1,6 +1,6 @@
 ---
 id: health-security-669ad72a90
-title: updateCategory updates by ID with no household ownership check
+title: updateCategory updates by id with no household check
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-09-04T19:16:13.471Z
+updated_at: 2026-09-05T19:13:59.160Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ Confirm the RLS UPDATE policy on `categories` also enforces household membership
 
 
 **RLS verified (2026-09-04 health check):** the `categories` UPDATE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
-Last seen by health check: 2026-09-04T19:16:13.471Z
+Last seen by health check: 2026-09-05T19:13:59.160Z
