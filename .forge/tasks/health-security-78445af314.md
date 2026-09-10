@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-09-04T19:16:13.018Z
+updated_at: 2026-09-10T19:10:49.715Z
 ---
 
 ## Finding
@@ -58,4 +58,4 @@ Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, w
 
 
 **RLS verified (2026-09-04 health check):** `transactions` SELECT is scoped to `current_household_id()`, so this filter injection cannot cross household boundaries — it can only be used to bypass the pagination cursor within the caller's own data.
-Last seen by health check: 2026-09-04T19:16:13.018Z
+Last seen by health check: 2026-09-10T19:10:49.715Z
