@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.505Z
-updated_at: 2026-09-04T19:16:14.399Z
+updated_at: 2026-09-17T19:12:28.311Z
 ---
 
 ## Finding
@@ -61,4 +61,4 @@ Apply the same guard to `deleteFeedback` and `replyToFeedback` in the same file,
 
 
 **RLS verified (2026-09-04 health check):** the `feedback` UPDATE policy restricts writes to developers, so this is not currently exploitable by a non-developer — but it means the friendly rejection message never fires; the DB just silently no-ops the write instead.
-Last seen by health check: 2026-09-04T19:16:14.399Z
+Last seen by health check: 2026-09-17T19:12:28.311Z
