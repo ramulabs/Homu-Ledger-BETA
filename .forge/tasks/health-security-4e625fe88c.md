@@ -1,22 +1,22 @@
 ---
-id: health-security-78445af314
+id: health-security-4e625fe88c
 title: Cursor query params interpolated raw into PostgREST filter string
-status: completed
-priority: P0
+status: backlog
+priority: P2
 assignee: unassigned
 project: homu-ledger-beta
 labels:
   - Health check
-  - Critical
+  - Warning
   - Security
-created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-09-20T19:17:51.201Z
+created_at: 2026-09-20T19:17:47.487Z
+updated_at: 2026-09-20T19:17:47.487Z
 ---
 
 ## Finding
 
-**Source:** Security · OWASP A03 (Injection)  
-**File:** `app/api/transactions/route.ts:38`  
+**Source:** Security · SQL Injection (OWASP A03)
+**File:** `app/api/transactions/route.ts:44`
 **Severity:** warning
 
 ## Description
@@ -35,13 +35,15 @@ if (date && createdAt && id) {
 }
 ```
 
-PostgREST parses the `.or()` string as a filter expression. If `date` contains a comma or closing parenthesis (e.g. `2026-01-01,amount.gt.0`), additional filter conditions can be injected. Because Supabase RLS is active, an attacker can only affect data within their own household scope — they cannot cross household boundaries. However, they can:
+PostgREST parses the `.or()` string as a filter expression. If `date` contains a comma or closing parenthesis (e.g. `2026-01-01,amount.gt.0`), additional filter conditions can be injected. `transactions` SELECT is RLS-scoped to `current_household_id()` (migration `0001_initial_schema.sql`), so an attacker can only affect data within their own household — they cannot cross household boundaries. However, they can:
 - Bypass the cursor restriction and return rows outside the intended page window
 - Inject predicates that expose all of their transactions regardless of the cursor
 
+Note: this is the same underlying issue as the previously-tracked injection finding on this route — added documentation comments shifted the vulnerable `if` block a few lines down, which changed this finding's stable id.
+
 ## Recommended Fix
 
-Validate and sanitize cursor parameters before interpolation. A lightweight approach:
+Validate and sanitize cursor parameters before interpolation:
 
 ```typescript
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,8 +57,3 @@ if (date && createdAt && id &&
 ```
 
 Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, which PostgREST parameterizes safely.
-
-
-**RLS verified (2026-09-04 health check):** `transactions` SELECT is scoped to `current_household_id()`, so this filter injection cannot cross household boundaries — it can only be used to bypass the pagination cursor within the caller's own data.
-Last seen by health check: 2026-09-04T19:16:13.018Z
-
