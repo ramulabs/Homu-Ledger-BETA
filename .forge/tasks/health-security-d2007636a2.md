@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.368Z
-updated_at: 2026-09-04T19:16:14.015Z
+updated_at: 2026-09-21T19:12:56.033Z
 ---
 
 ## Finding
@@ -58,4 +58,4 @@ Also add/verify an RLS DELETE policy on `feedback` restricted to developers, so 
 
 
 **RLS verified (2026-09-04 health check):** the `feedback` DELETE policy restricts deletes to developers, so this is not currently exploitable by a non-developer — but it means the friendly rejection message never fires and there is no audit trail of the attempt.
-Last seen by health check: 2026-09-04T19:16:14.015Z
+Last seen by health check: 2026-09-21T19:12:56.033Z
