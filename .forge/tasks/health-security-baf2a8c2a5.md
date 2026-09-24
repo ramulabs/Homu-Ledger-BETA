@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.664Z
-updated_at: 2026-09-04T19:16:13.579Z
+updated_at: 2026-09-24T19:15:15.285Z
 ---
 
 ## Finding
@@ -53,4 +53,4 @@ Also verify the RLS DELETE policy on `categories` scopes by household membership
 
 
 **RLS verified (2026-09-04 health check):** the `categories` DELETE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
-Last seen by health check: 2026-09-04T19:16:13.579Z
+Last seen by health check: 2026-09-24T19:15:15.285Z
