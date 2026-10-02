@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-09-04T19:16:14.133Z
+updated_at: 2026-10-02T19:06:47.716Z
 ---
 
 ## Finding
@@ -68,4 +68,4 @@ Also audit the RLS `DELETE` policy on `household_invitations` to ensure it enfor
 
 
 **RLS verified (2026-09-04 health check) — NOT fully mitigated:** the `household_invitations` DELETE policy is `invited_by = auth.uid() OR household_id = current_household_id()`. This blocks cross-household deletes, but it means ANY member of the household — not just the inviter or an owner — can cancel another member's pending invitation. That's a real, currently-exploitable within-household authorization gap, not just defense-in-depth. The RLS policy itself should be tightened (to inviter-or-owner), in addition to the app-level check.
-Last seen by health check: 2026-09-04T19:16:14.133Z
+Last seen by health check: 2026-10-02T19:06:47.716Z
