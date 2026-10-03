@@ -58,6 +58,21 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.47.0",
+    date: "October 4, 2026",
+    changes: [
+      { type: "new", audience: "user",
+        en: "Connect Homu to AI assistants like Gemini Spark. Once connected, you can ask things like \"How much did we spend on food in September?\" or say \"Log 25,000 for coffee\" and the assistant reads or updates your ledger. You approve the connection on a Homu screen first, and the assistant can only add transactions — it can't edit or delete anything.",
+        id: "Hubungkan Homu ke asisten AI seperti Gemini Spark. Setelah terhubung, kamu bisa bertanya \"Berapa pengeluaran makan kita bulan September?\" atau bilang \"Catat 25.000 untuk kopi\", dan asisten akan membaca atau memperbarui buku keuanganmu. Kamu menyetujui koneksinya dulu di layar Homu, dan asisten hanya bisa menambah transaksi — tidak bisa mengubah atau menghapus apa pun." },
+      { type: "new", audience: "dev",
+        en: "Remote MCP server at /api/mcp (mcp-handler 2.x: Streamable HTTP, 2026-07-28 spec + 2025-era fallback). OAuth 2.1 via Supabase Auth's OAuth server: withMcpAuth answers 401 with an RFC 9728 challenge; /.well-known/oauth-protected-resource names Supabase as the authorization server (plus an RFC 8414 shim at /.well-known/oauth-authorization-server for older clients). Bearer tokens are validated with getUser() and used to build a user-scoped client, so every tool runs through RLS. Tools: list_wallets, list_categories, list_transactions, spending_summary (read-only) and add_transaction (idempotency_key → client_op_id, same dedupe contract as the offline queue).",
+        id: "Server MCP remote di /api/mcp (mcp-handler 2.x: Streamable HTTP, spesifikasi 2026-07-28 + fallback era 2025). OAuth 2.1 lewat server OAuth Supabase Auth: withMcpAuth membalas 401 dengan challenge RFC 9728; /.well-known/oauth-protected-resource menyebut Supabase sebagai authorization server (plus shim RFC 8414 di /.well-known/oauth-authorization-server untuk klien lama). Bearer token divalidasi dengan getUser() dan dipakai membuat client ber-scope user, jadi semua tool lewat RLS. Tool: list_wallets, list_categories, list_transactions, spending_summary (read-only) dan add_transaction (idempotency_key → client_op_id, kontrak dedupe sama dengan antrean offline)." },
+      { type: "new", audience: "dev",
+        en: "Consent screen at /oauth/consent (Supabase OAuth Server → Authorization Path). Signed-out users are sent through /login and returned via a 10-minute httpOnly homu_after_login cookie honoured by the password sign-in action, the Google callback and middleware (only /oauth/consent paths are accepted, so it can't be an open redirect). Auto-categorisation layers 1–3 (rules → household cache → global seed) moved to lib/categorize-local.ts, shared by suggestCategory() and add_transaction; app behaviour unchanged.",
+        id: "Layar persetujuan di /oauth/consent (Supabase OAuth Server → Authorization Path). Pengguna yang belum masuk diarahkan lewat /login lalu dikembalikan via cookie httpOnly homu_after_login 10 menit, yang dihormati oleh aksi masuk password, callback Google, dan middleware (hanya path /oauth/consent yang diterima, jadi tidak bisa jadi open redirect). Lapisan auto-kategori 1–3 (aturan → cache rumah tangga → seed global) dipindah ke lib/categorize-local.ts, dipakai bersama suggestCategory() dan add_transaction; perilaku aplikasi tidak berubah." },
+    ],
+  },
+  {
     version: "1.46.15",
     date: "October 3, 2026",
     changes: [
