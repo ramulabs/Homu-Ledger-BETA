@@ -2,7 +2,27 @@
 
 This file is the GitHub-facing release log for Homu. Every production release must be documented here and in `lib/changelog.ts` before it is deployed.
 
-> **Note:** v1.37.0–v1.43.3 (the Voice release line) and v1.45.0–v1.46.1 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
+> **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
+
+## v1.46.15 - October 3, 2026
+
+**Fix: app stuck on the launch logo on phones.**
+
+Symptoms: on the installed phone app, slow launch, sometimes stuck on the Homu logo, sometimes blinking; only a force-close recovered it. Laptop unaffected.
+
+### Root cause
+
+`public/sw.js` handled navigations network-first with **no timeout**. iOS home-screen PWAs can *hang* a fetch (radio waking up, flaky network) instead of rejecting it, so the launch screen waited indefinitely. Force-closing killed the hung request, which is why relaunching worked. Desktop browsers reject failed fetches quickly, so laptops never hit it. Same iOS behaviour as the v1.35.1 "Saving…" hang.
+
+Secondary: the splash overlay was server-rendered opaque and only removed by JS after hydration — any slow or failed hydration left the logo up forever.
+
+### Fix
+
+- **sw.js (CACHE_VERSION v94)** — navigations race the network. With a cached copy: served after 3.5s, flagged `data-homu-stale="1"` on `<html>`. Without one: an inline "Can't reach Homu — Try again" page (503, `no-store`) after 12s, auto-reloading on `online`. The in-flight network response still refreshes the cache via `event.waitUntil`.
+- **ServiceWorkerRegistrar** — on a stale-flagged page, probes `/api/version`, then `router.refresh()`. Probe-first because a failed RSC refresh makes Next fall back to a full reload; a 60s `sessionStorage` guard prevents any refresh → reload → stale loop. Also sets `window.__homuHydrated`.
+- **Splash** — CSS failsafe (`.splash-failsafe`) hides it at ~2.1s even if JS never runs.
+- **Boot guard** (`app/layout.tsx`, `beforeInteractive`) — reloads once (max every 30s) on `ChunkLoadError` / failed dynamic import; shows a "Reload" pill if React hasn't hydrated after 8s.
+- **middleware.ts** — matcher skips `/api/version` and `/api/sw-kill-switch`: both run on every launch and need no session. Saves two Supabase `getUser()` round-trips per launch, and they no longer redirect to `/login` when signed out.
 
 ## v1.46.2 - May 17, 2026
 

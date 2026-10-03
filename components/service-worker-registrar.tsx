@@ -1,8 +1,64 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { withTimeout } from "@/lib/with-timeout";
+
+const STALE_REFRESH_KEY = "homu-stale-refresh";
+
+async function serverReachable(): Promise<boolean> {
+  try {
+    const res = await withTimeout(fetch("/api/version", { cache: "no-store" }), 8000);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 export default function ServiceWorkerRegistrar() {
+  const router = useRouter();
+
+  // React is up: tell the boot guard (app/layout.tsx) and drop its
+  // "Taking longer than usual" pill if it already appeared.
+  useEffect(() => {
+    (window as unknown as { __homuHydrated?: boolean }).__homuHydrated = true;
+    document.getElementById("homu-watchdog")?.remove();
+  }, []);
+
+  // The service worker answered this page from cache because the network was
+  // slow or down (sw.js marks it with data-homu-stale). Refresh the data once
+  // the server is reachable. The reachability probe matters: router.refresh()
+  // on a dead network makes Next fall back to a full reload, which would land
+  // straight back on the stale copy. The 60s guard is a second backstop
+  // against any refresh → reload → stale loop.
+  useEffect(() => {
+    const html = document.documentElement;
+    if (html.dataset.homuStale !== "1") return;
+    delete html.dataset.homuStale;
+    try {
+      const last = Number(sessionStorage.getItem(STALE_REFRESH_KEY)) || 0;
+      if (Date.now() - last < 60_000) return;
+      sessionStorage.setItem(STALE_REFRESH_KEY, String(Date.now()));
+    } catch {}
+
+    let cancelled = false;
+    async function refreshWhenReachable() {
+      if (await serverReachable()) {
+        if (!cancelled) router.refresh();
+        return;
+      }
+      window.addEventListener("online", onOnline, { once: true });
+    }
+    function onOnline() {
+      void refreshWhenReachable();
+    }
+    void refreshWhenReachable();
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", onOnline);
+    };
+  }, [router]);
+
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 

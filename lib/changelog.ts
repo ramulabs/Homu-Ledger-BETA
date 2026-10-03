@@ -58,6 +58,27 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.46.15",
+    date: "October 3, 2026",
+    changes: [
+      { type: "fix", audience: "user",
+        en: "Fixed the app getting stuck on the Homu logo when opening it on your phone (it only recovered after closing and reopening the app). On a slow or patchy connection Homu now opens the last version of the page you saw and refreshes it as soon as the connection catches up.",
+        id: "Memperbaiki aplikasi yang macet di logo Homu saat dibuka di HP (baru pulih setelah aplikasi ditutup dan dibuka lagi). Di koneksi yang lambat atau putus-putus, Homu sekarang membuka versi halaman terakhir yang kamu lihat dan memperbaruinya begitu koneksi kembali normal." },
+      { type: "improvement", audience: "user",
+        en: "If Homu can't reach the internet at all, you now get a clear 'Can't reach Homu — Try again' screen instead of a frozen logo. If loading takes unusually long, a 'Reload' button appears at the bottom.",
+        id: "Jika Homu sama sekali tidak bisa terhubung ke internet, sekarang muncul layar 'Tidak bisa terhubung ke Homu — Coba lagi', bukan logo yang membeku. Jika memuat terlalu lama, tombol 'Muat ulang' muncul di bawah." },
+      { type: "improvement", audience: "user",
+        en: "Slightly faster app launch.",
+        id: "Aplikasi terbuka sedikit lebih cepat." },
+      { type: "fix", audience: "dev",
+        en: "Root cause: sw.js answered navigations network-first with NO timeout. iOS home-screen PWAs can hang a fetch (radio waking up, flaky network) instead of rejecting it, so the launch screen sat forever until the app was killed. sw.js (v94) now races the network: cached copy → served after 3.5s, marked data-homu-stale on <html>; no cached copy → inline retry page (503, no-store) after 12s. Background network response still refreshes the cache (event.waitUntil). ServiceWorkerRegistrar sees the stale marker, probes /api/version, then router.refresh() — probe-first because a failed RSC refresh makes Next fall back to a full reload, plus a 60s sessionStorage guard against any refresh→reload→stale loop.",
+        id: "Akar masalah: sw.js menjawab navigasi network-first TANPA timeout. PWA layar-utama iOS bisa menggantung fetch (radio baru bangun, jaringan putus-putus) alih-alih menolaknya, sehingga layar pembuka macet sampai aplikasi ditutup paksa. sw.js (v94) kini membalap jaringan: ada salinan cache → disajikan setelah 3,5 dtk, ditandai data-homu-stale di <html>; tanpa cache → halaman retry inline (503, no-store) setelah 12 dtk. Respons jaringan di latar belakang tetap memperbarui cache (event.waitUntil). ServiceWorkerRegistrar membaca penanda stale, mem-probe /api/version, lalu router.refresh() — probe dulu karena refresh RSC yang gagal membuat Next melakukan full reload, plus guard sessionStorage 60 dtk agar tidak terjadi loop refresh→reload→stale." },
+      { type: "fix", audience: "dev",
+        en: "Splash no longer depends on hydration: a CSS failsafe (.splash-failsafe) hides it at ~2.1s even if JS never runs. New beforeInteractive boot guard in app/layout.tsx: reloads once (max every 30s) on ChunkLoadError / failed dynamic import, and shows a 'Reload' pill if window.__homuHydrated isn't set after 8s. Middleware matcher now skips /api/version and /api/sw-kill-switch — both are hit on every launch and need no session; they were costing two extra Supabase getUser() round-trips per launch and got redirected to /login when signed out.",
+        id: "Splash tidak lagi bergantung pada hydration: failsafe CSS (.splash-failsafe) menyembunyikannya di ~2,1 dtk walau JS tidak jalan. Boot guard beforeInteractive baru di app/layout.tsx: reload sekali (maks tiap 30 dtk) saat ChunkLoadError / dynamic import gagal, dan menampilkan pil 'Muat ulang' jika window.__homuHydrated belum di-set setelah 8 dtk. Matcher middleware kini melewati /api/version dan /api/sw-kill-switch — keduanya dipanggil tiap peluncuran dan tidak butuh sesi; sebelumnya memakan dua round-trip getUser() Supabase ekstra per peluncuran dan dialihkan ke /login saat belum masuk." },
+    ],
+  },
+  {
     version: "1.46.14",
     date: "May 28, 2026",
     changes: [
