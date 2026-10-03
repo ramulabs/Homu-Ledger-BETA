@@ -245,6 +245,16 @@ input[type="date"]::-webkit-clear-button {
   will-change: transform, opacity;
 }
 
+/* v1.46.15 — the splash is server-rendered opaque and normally removed by
+   JS shortly after hydration. If hydration is slow (cold mobile network) or
+   never happens, this hides it anyway so the app can't sit on the logo. */
+@keyframes splash-failsafe-hide {
+  to { opacity: 0; visibility: hidden; }
+}
+.splash-failsafe {
+  animation: splash-failsafe-hide 300ms ease-out 1.8s forwards;
+}
+
 /* Bottom-anchored sheet entry: slide up from below the viewport. Used by
    the Filter sheet and any conditionally-rendered bottom sheet that
    should animate in on mount. */

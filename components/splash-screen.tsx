@@ -33,7 +33,7 @@ export default function SplashScreen() {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-[400ms] ease-out ${
+      className={`splash-failsafe fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-[400ms] ease-out ${
         hidden ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       // v1.39.0 — use the design-system background var instead of the
