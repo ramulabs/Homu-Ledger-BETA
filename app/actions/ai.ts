@@ -30,7 +30,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { categorize, logCacheHit, testConnection, GEMINI_DEFAULT_MODEL } from "@/lib/llm/gemini";
 import { candidateKeys, canonicalKey } from "@/lib/llm/normalize";
-import { disambiguate } from "@/lib/llm/disambiguation";
+import { matchCategoryLocally } from "@/lib/categorize-local";
 
 const FEATURE_CATEGORIZE = "auto_categorize";
 
@@ -94,85 +94,23 @@ export async function suggestCategory(
 
   const allowedByType = categories.filter((c) => c.type === type);
   if (allowedByType.length === 0) return { ok: false, reason: "no_categories" };
-  const allowedIds = new Set(allowedByType.map((c) => c.id));
-  // category name (lowercased) → category, for resolving rule + seed
-  // results, which are keyed by name rather than id.
-  const byName = new Map(allowedByType.map((c) => [c.name.toLowerCase(), c]));
 
-  // ── Layer 1: disambiguation rules ─────────────────────────────────
-  // Run regex rules over the literal description. A rule that fires
-  // forces a category by name; if this household owns that category we
-  // return immediately. If it doesn't (e.g. a Personal-template user
-  // has no "Date nights"), the result is discarded and we fall through.
-  const ruled = disambiguate(description, type);
-  if (ruled) {
-    const cat = byName.get(ruled.categoryName.toLowerCase());
-    if (cat) {
-      void logCacheHit({
-        feature: FEATURE_CATEGORIZE,
-        preview: description.slice(0, 80),
-      });
-      return { ok: true, categoryId: cat.id, categoryName: cat.name, source: "rule" };
-    }
-  }
-
-  // ── Layer 2: per-household cache lookup ───────────────────────────
-  // Fetch all matching hints in one query (saves a round-trip per
-  // candidate). Then iterate candidates IN ORDER and pick the first
-  // hint that points to a category of the right type.
-  const { data: hints } = await supabase
-    .from("category_hints")
-    .select("keyword, category_id, hits, source")
-    .eq("household_id", profile.household_id)
-    .in("keyword", candidates);
-
-  if (hints && hints.length > 0) {
-    const hintByKey = new Map(hints.map((h) => [h.keyword, h]));
-    for (const key of candidates) {
-      const hit = hintByKey.get(key);
-      if (hit && allowedIds.has(hit.category_id)) {
-        const cat = allowedByType.find((c) => c.id === hit.category_id);
-        if (cat) {
-          // Fire-and-forget cache-hit log; don't block the response.
-          void logCacheHit({
-            feature: FEATURE_CATEGORIZE,
-            preview: description.slice(0, 80),
-          });
-          return {
-            ok: true,
-            categoryId: cat.id,
-            categoryName: cat.name,
-            source: "cache",
-          };
-        }
-      }
-    }
-  }
-
-  // ── Layer 3: global keyword seed table ────────────────────────────
-  // Same candidate-ordering as the per-household cache: longest /
-  // most-specific key first. The seed maps keyword → category NAME, so
-  // we resolve through byName against the household's own categories.
-  const { data: seeds } = await supabase
-    .from("category_keyword_seeds")
-    .select("keyword, category_name")
-    .in("keyword", candidates);
-
-  if (seeds && seeds.length > 0) {
-    const seedByKey = new Map(seeds.map((s) => [s.keyword, s]));
-    for (const key of candidates) {
-      const seed = seedByKey.get(key);
-      if (seed) {
-        const cat = byName.get(seed.category_name.toLowerCase());
-        if (cat) {
-          void logCacheHit({
-            feature: FEATURE_CATEGORIZE,
-            preview: description.slice(0, 80),
-          });
-          return { ok: true, categoryId: cat.id, categoryName: cat.name, source: "seed" };
-        }
-      }
-    }
+  // ── Layers 1–3: rules → household cache → global seed ─────────────
+  // Shared with the MCP add_transaction tool (lib/categorize-local.ts).
+  const local = await matchCategoryLocally(
+    supabase,
+    profile.household_id,
+    description,
+    type,
+    allowedByType
+  );
+  if (local) {
+    // Fire-and-forget cache-hit log; don't block the response.
+    void logCacheHit({
+      feature: FEATURE_CATEGORIZE,
+      preview: description.slice(0, 80),
+    });
+    return { ok: true, ...local };
   }
 
   // ── Layer 4: cache miss → Gemini ──────────────────────────────────

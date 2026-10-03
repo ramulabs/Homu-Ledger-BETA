@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { AFTER_LOGIN_COOKIE, AFTER_LOGIN_MAX_AGE, isSafeAfterLoginPath } from "@/lib/auth/after-login";
 
 // Routes that are accessible without a session.
 const PUBLIC_ROUTES = ["/login", "/signup", "/privacy"];
@@ -71,12 +72,32 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
+  // OAuth consent (MCP clients like Gemini Spark): remember where the user
+  // was headed so login can send them back. See lib/auth/after-login.ts.
+  if (!user && pathname.startsWith("/oauth/")) {
+    const redirect = NextResponse.redirect(new URL("/login", request.url));
+    redirect.cookies.set(AFTER_LOGIN_COOKIE, pathname + request.nextUrl.search, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: AFTER_LOGIN_MAX_AGE,
+    });
+    return redirect;
+  }
+
   if (!user && !isPublic && !isAuthPassthrough) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (user && isPublic) {
-    return NextResponse.redirect(new URL("/transactions", request.url));
+    // A pending consent wins over the default landing page.
+    const pending = request.cookies.get(AFTER_LOGIN_COOKIE)?.value;
+    const redirect = NextResponse.redirect(
+      new URL(isSafeAfterLoginPath(pending) ? pending : "/transactions", request.url)
+    );
+    if (pending) redirect.cookies.delete(AFTER_LOGIN_COOKIE);
+    return redirect;
   }
 
   return response;

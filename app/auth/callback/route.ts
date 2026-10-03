@@ -12,6 +12,7 @@
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { consumeAfterLoginPath } from "@/lib/auth/after-login";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -59,5 +60,7 @@ export async function GET(request: NextRequest) {
   if (!profile.household_id) {
     return NextResponse.redirect(`${origin}/onboarding`);
   }
-  return NextResponse.redirect(`${origin}/transactions`);
+  // Signed in mid-way through connecting an MCP client → back to consent.
+  const next = await consumeAfterLoginPath();
+  return NextResponse.redirect(`${origin}${next ?? "/transactions"}`);
 }

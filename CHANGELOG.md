@@ -4,6 +4,38 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.47.0 - October 4, 2026
+
+**Homu MCP server — connect AI assistants (Gemini Spark, Claude, …) to your ledger.**
+
+### What it does
+
+AI agents can read the ledger and add transactions on the user's behalf, after the user approves the connection on a Homu consent screen. v1 is read + add only — no edit or delete.
+
+| Tool | Read-only | Purpose |
+|---|---|---|
+| `list_wallets` | ✓ | Wallets, balances (same maths as the Wallets screen), total, currency |
+| `list_categories` | ✓ | Expense / income category names |
+| `list_transactions` | ✓ | Newest first; filter by date range, type, category, wallet, text |
+| `spending_summary` | ✓ | Totals for a range grouped by category / wallet / member / month; excludes transfers |
+| `add_transaction` | — | Records an expense/income. Category from the agent, else Homu's keyword rules, else uncategorised. `idempotency_key` → `client_op_id`, so retries never double-log |
+
+### Architecture
+
+- **Endpoint** `/api/mcp` — `mcp-handler` 2.x (Streamable HTTP; serves the 2026-07-28 spec natively and 2025-era clients via fallback).
+- **Auth** — OAuth 2.1 with **Supabase Auth's OAuth server** as the authorization server. `withMcpAuth` answers unauthenticated calls with `401` + `WWW-Authenticate: Bearer … resource_metadata=…`. `/.well-known/oauth-protected-resource` (RFC 9728) lists Supabase as the authorization server; `/.well-known/oauth-authorization-server` proxies Supabase's RFC 8414 metadata for older clients.
+- **Data isolation** — bearer tokens are validated with `getUser()` (revoked sessions stop working immediately) and used to build a user-scoped Supabase client. Every query goes through the same RLS as the app; no service-role key.
+- **Consent** — `/oauth/consent` (Supabase → OAuth Server → Authorization Path). Signed-out users go through `/login` and come back via a 10-minute httpOnly `homu_after_login` cookie, honoured by password sign-in, the Google callback and middleware. Only `/oauth/consent` paths are accepted (no open redirect).
+- **Middleware** — matcher skips `/api/mcp` (bearer auth, not cookies) and `/.well-known/*` (public metadata).
+- **Refactor** — auto-categorisation layers 1–3 (rules → household cache → global seed) extracted to `lib/categorize-local.ts`, shared by `suggestCategory()` and `add_transaction`. App behaviour unchanged.
+
+### Setup required (Supabase dashboard)
+
+1. Authentication → OAuth Server → **Enable**; Authorization Path **`/oauth/consent`**; **Allow Dynamic Registration** on.
+2. Authentication → URL Configuration → Site URL **`https://homu.ramu.app`**.
+
+Then connect a client to `https://homu.ramu.app/api/mcp`.
+
 ## v1.46.15 - October 3, 2026
 
 **Fix: app stuck on the launch logo on phones.**
