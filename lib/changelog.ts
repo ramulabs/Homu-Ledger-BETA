@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.47.1",
+    date: "October 4, 2026",
+    changes: [
+      { type: "improvement", audience: "user",
+        en: "The sparkle 'Speak to add' button has moved into the Add Transaction sheet. While the sheet is empty, the round button shows the sparkle and opens voice entry; as soon as you type an amount or description (or add a photo) it turns back into the ✓ Save button. The floating sparkle button on the Transactions screen is gone.",
+        id: "Tombol sparkle 'Bicara untuk menambah' kini ada di lembar Tambah Transaksi. Selama lembar masih kosong, tombol bulat menampilkan sparkle dan membuka input suara; begitu kamu mengisi nominal atau deskripsi (atau menambah foto), tombol kembali menjadi ✓ Simpan. Tombol sparkle mengambang di layar Transaksi sudah dihapus." },
+      { type: "improvement", audience: "dev",
+        en: "AddTransactionSheet takes voiceEnabled (same server gate as before). voiceMode = voiceEnabled && !editing && !isTransfer && !recurringMode && no amount/name/photo; in voiceMode the circular button is type=button → router.push('/transactions/voice'), disabled offline. components/speak-to-add-fab.tsx removed.",
+        id: "AddTransactionSheet menerima voiceEnabled (gate server sama seperti sebelumnya). voiceMode = voiceEnabled && !editing && !isTransfer && !recurringMode && tanpa nominal/nama/foto; di voiceMode tombol bulat bertipe button → router.push('/transactions/voice'), nonaktif saat offline. components/speak-to-add-fab.tsx dihapus." },
+    ],
+  },
+  {
     version: "1.47.0",
     date: "October 4, 2026",
     changes: [

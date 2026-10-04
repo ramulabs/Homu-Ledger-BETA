@@ -19,7 +19,6 @@ import { formatAmount } from "@/lib/format";
 import type { DbTransaction, DbCategory, DbWallet, DbMember, DbHouseholdMembership, DbRecurringItem, DbPendingInvitation } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
-import SpeakToAddFab from "@/components/speak-to-add-fab";
 import InboxChip from "@/components/inbox-chip";
 import { type InboxRow } from "@/components/inbox-bento";
 import { markInboxAcceptedAction } from "@/app/actions/inbox";
@@ -616,6 +615,7 @@ export default function TransactionsShell({
         memberships={memberships}
         currentHouseholdId={householdId}
         iconStyle={iconStyle}
+        voiceEnabled={voiceEnabled}
         defaultRecurring={sheetRecurring}
         prefill={inboxPrefill}
         onSaved={inboxEdit ? handleInboxSaved : undefined}
@@ -675,10 +675,6 @@ export default function TransactionsShell({
           </div>
         </>
       )}
-
-      {/* v1.43.1 — sparkle FAB restored to bottom-right floating
-          position above the bottom-nav. Server-gated by `voiceEnabled`. */}
-      {voiceEnabled && <SpeakToAddFab />}
     </>
   );
 }
