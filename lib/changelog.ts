@@ -58,6 +58,27 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.48.0",
+    date: "October 4, 2026",
+    changes: [
+      { type: "new", audience: "user",
+        en: "Pending transactions: your AI assistant (or an email / API source) can now send transactions to a Pending list instead of straight into a ledger. A button with a count appears at the bottom-right when something is waiting. Accept opens the usual Add Transaction screen, pre-filled, where you choose which ledger it goes into; the transaction keeps its own date, not the day you accept it. Delete asks for confirmation.",
+        id: "Transaksi tertunda: asisten AI-mu (atau sumber email / API) sekarang mengirim transaksi ke daftar Tertunda, bukan langsung ke buku. Tombol dengan angka muncul di kanan bawah saat ada yang menunggu. Terima membuka layar Tambah Transaksi biasa yang sudah terisi, di mana kamu memilih buku tujuannya; transaksi tetap memakai tanggalnya sendiri, bukan tanggal saat kamu menerima. Hapus meminta konfirmasi." },
+      { type: "new", audience: "user",
+        en: "Homu learns where things go: once you've put similar transactions (same merchant or description) into the same ledger twice, that ledger is pre-selected next time. If it isn't sure, you choose. It also fills in the category and wallet for the chosen ledger, warns about possible duplicates, and flags amounts in another currency so you can enter them in your ledger's currency.",
+        id: "Homu belajar tujuan transaksimu: setelah kamu dua kali memasukkan transaksi serupa (merchant atau deskripsi sama) ke buku yang sama, buku itu otomatis terpilih berikutnya. Kalau belum yakin, kamu yang memilih. Homu juga mengisi kategori dan dompet sesuai buku yang dipilih, memperingatkan kemungkinan duplikat, dan menandai nominal dalam mata uang lain agar kamu bisa memasukkannya dalam mata uang bukumu." },
+      { type: "improvement", audience: "user",
+        en: "AI assistants connected to Homu can no longer add transactions directly — everything they send waits in Pending for your approval.",
+        id: "Asisten AI yang terhubung ke Homu tidak bisa lagi menambah transaksi langsung — semua yang dikirim menunggu persetujuanmu di Tertunda." },
+      { type: "new", audience: "dev",
+        en: "Built on RAM-25 inbox_items (per-user, pre-ledger). Migration 0035: inbox_items.match_key + accepted_household_id, parse_method 'agent', learning index. lib/pending-server.ts (preparePending / findDuplicates / acceptPending) runs with the service-role client behind explicit household_members checks, because categories/wallets/transactions RLS is scoped to the current ledger; app/actions/pending.ts wraps it. Ledger pre-selection: the user's two most recent accepts for the same match_key agree → that ledger; else the source's suggested ledger; else empty. Accept inserts with client_op_id = item id (double-accept safe), keeps the source's note, teaches that ledger's category_hints.",
+        id: "Dibangun di atas inbox_items RAM-25 (per pengguna, sebelum masuk buku). Migrasi 0035: inbox_items.match_key + accepted_household_id, parse_method 'agent', index pembelajaran. lib/pending-server.ts (preparePending / findDuplicates / acceptPending) berjalan dengan client service-role di balik pengecekan household_members eksplisit, karena RLS categories/wallets/transactions dibatasi ke buku aktif; app/actions/pending.ts membungkusnya. Pemilihan buku: dua penerimaan terakhir untuk match_key yang sama sepakat → buku itu; jika tidak, buku saran sumber; jika tidak, kosong. Terima menyimpan dengan client_op_id = id item (aman dari terima ganda), menyimpan catatan sumber, dan mengajari category_hints buku tersebut." },
+      { type: "improvement", audience: "dev",
+        en: "AddTransactionSheet gains a `pending` mode (ledger <select>, server-loaded categories/wallets, transfer/recurring/photo and current-ledger AI disabled, foreign-currency + duplicate warnings). PendingFab + PendingList replace InboxChip / InboxBento; one-tap accept and markInboxAccepted removed. Pickers take allowAdd (hidden when the target ledger isn't current). MCP: add_transaction replaced by add_pending_transaction; new list_pending_transactions and list_ledgers.",
+        id: "AddTransactionSheet mendapat mode `pending` (<select> buku, kategori/dompet dimuat dari server, transfer/berulang/foto dan AI buku aktif dinonaktifkan, peringatan mata uang asing + duplikat). PendingFab + PendingList menggantikan InboxChip / InboxBento; terima satu ketuk dan markInboxAccepted dihapus. Picker menerima allowAdd (disembunyikan jika buku tujuan bukan buku aktif). MCP: add_transaction diganti add_pending_transaction; tool baru list_pending_transactions dan list_ledgers." },
+    ],
+  },
+  {
     version: "1.47.1",
     date: "October 4, 2026",
     changes: [

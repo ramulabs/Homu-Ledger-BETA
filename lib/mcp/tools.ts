@@ -1,8 +1,9 @@
 // Tool definitions for the Homu MCP server. Wiring only — the data logic
 // lives in lib/mcp/queries.ts.
 //
-// v1 scope: read everything + add transactions. No edit/delete: an agent
-// mistake on a shared family ledger is costly to undo.
+// Scope: read everything; writes go to the user's Pending list only
+// (v1.48.0). Nothing reaches a ledger until the user accepts it in the
+// app and chooses which ledger it belongs to. No edit/delete.
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -10,21 +11,26 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { createUserClient } from "@/lib/mcp/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
 import {
   type HomuContext,
   HomuToolError,
-  addTransaction,
+  addPendingTransaction,
   listCategories,
+  listLedgers,
+  listPendingTransactions,
   listTransactions,
   listWallets,
   loadContext,
   spendingSummary,
 } from "@/lib/mcp/queries";
 
-export const HOMU_INSTRUCTIONS = `Homu is a shared expense tracker for couples and families. Every tool acts on the signed-in user's current ledger, which may be shared with family members.
-- Amounts are plain numbers in the ledger's currency (returned as "currency"; often IDR, where amounts have no decimals).
-- Dates are YYYY-MM-DD. Always pass dates in the user's local timezone, including today's date when adding a transaction.
-- Category and wallet arguments are names; call list_categories / list_wallets if unsure.
+export const HOMU_INSTRUCTIONS = `Homu is a shared expense tracker for couples and families. The user can have several ledgers (e.g. Personal, Business); read tools act on their current ledger.
+- You cannot write to a ledger directly. Use add_pending_transaction: it goes to the user's Pending list, and they accept it into a ledger of their choice in the Homu app.
+- Amounts are plain numbers. Pass "currency" when it isn't the ledger currency (see list_ledgers); the user enters the converted amount when accepting.
+- Dates are YYYY-MM-DD in the user's local timezone. Pass the date the transaction actually happened when you know it.
+- Suggest a ledger (list_ledgers), category (list_categories) and merchant when you can; Homu also learns the user's choices.
+- Check list_pending_transactions first to avoid adding the same item twice, and always pass an idempotency_key.
 - Transfers between the user's own wallets are excluded from spending_summary.`;
 
 const DATE = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
@@ -122,27 +128,52 @@ export function registerHomuTools(server: McpServer) {
   );
 
   server.registerTool(
-    "add_transaction",
+    "list_ledgers",
     {
-      title: "Add a transaction",
+      title: "List ledgers",
+      description: "List the names and currencies of every ledger the user belongs to, and which one is current.",
+      inputSchema: z.object({}),
+      annotations: READ_ONLY,
+    },
+    async (_args, ctx) => run(ctx, (_supabase, homu) => listLedgers(getAdminClient(), homu))
+  );
+
+  server.registerTool(
+    "list_pending_transactions",
+    {
+      title: "List pending transactions",
+      description: "List transactions waiting in the user's Pending list for approval, newest first.",
+      inputSchema: z.object({}),
+      annotations: READ_ONLY,
+    },
+    async (_args, ctx) => run(ctx, (supabase, homu) => listPendingTransactions(supabase, homu))
+  );
+
+  server.registerTool(
+    "add_pending_transaction",
+    {
+      title: "Add a pending transaction",
       description:
-        "Record a new expense or income in the ledger. If no category is given, Homu categorises it from the description using its keyword rules; if that finds nothing it is saved uncategorised. Pass an idempotency_key when retrying so the transaction is never recorded twice.",
+        "Add an expense or income to the user's Pending list for approval. It is NOT recorded in any ledger until the user accepts it in the Homu app and chooses the ledger. Pass an idempotency_key so retries never create duplicates.",
       inputSchema: z.object({
-        amount: z.number().positive().describe("Amount in the ledger currency, e.g. 50000"),
+        amount: z.number().positive().describe("Amount, e.g. 50000"),
         description: z.string().min(1).max(200).describe("What it was, e.g. 'Coffee at Kopi Kenangan'"),
         type: z.enum(["expense", "income"]).optional().describe("Default: expense"),
-        category: z.string().max(60).optional().describe("Category name from list_categories"),
-        wallet: z.string().max(40).optional().describe("Wallet name from list_wallets. Default: the default wallet"),
-        date: DATE.optional().describe("YYYY-MM-DD in the user's local timezone. Pass it explicitly"),
+        date: DATE.optional().describe("When it happened, YYYY-MM-DD in the user's local timezone. If omitted, the day it was added is used"),
+        currency: z.string().length(3).optional().describe("3-letter code, only if not the ledger currency (e.g. AUD)"),
+        merchant: z.string().max(100).optional().describe("Merchant / payee name, e.g. 'Kopi Kenangan'"),
+        note: z.string().max(500).optional().describe("Short context, e.g. 'from Grab receipt email'"),
+        ledger: z.string().max(60).optional().describe("Suggested ledger name from list_ledgers"),
+        category: z.string().max(60).optional().describe("Suggested category name"),
+        wallet: z.string().max(40).optional().describe("Suggested wallet name"),
         idempotency_key: z.string().min(1).max(200).optional().describe("Stable unique key for this transaction"),
       }),
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async (args, ctx) =>
-      run(ctx, async (supabase, homu) => {
-        const result = await addTransaction(supabase, homu, args);
+      run(ctx, async (_supabase, homu) => {
+        const result = await addPendingTransaction(getAdminClient(), homu, args);
         revalidatePath("/transactions");
-        revalidatePath("/reports");
         return result;
       })
   );

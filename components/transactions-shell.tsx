@@ -19,9 +19,9 @@ import { formatAmount } from "@/lib/format";
 import type { DbTransaction, DbCategory, DbWallet, DbMember, DbHouseholdMembership, DbRecurringItem, DbPendingInvitation } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
-import InboxChip from "@/components/inbox-chip";
-import { type InboxRow } from "@/components/inbox-bento";
-import { markInboxAcceptedAction } from "@/app/actions/inbox";
+import PendingFab from "@/components/pending-fab";
+import { foreignCurrency, pendingDate, type PendingRow } from "@/lib/pending";
+import type { PendingAcceptInput } from "@/components/add-transaction-sheet";
 
 type SubTab = "history" | "recurring";
 type DateFilter = "all" | "30d" | "this_month" | "custom";
@@ -141,12 +141,11 @@ export default function TransactionsShell({
 
   // Transaction sheet
   const [showSheet, setShowSheet] = useState(false);
-  // RAM-25 — when set, the next "open" of AddTransactionSheet pre-fills
-  // from this inbox item and onSaved flips its inbox row to accepted.
-  const [inboxEdit, setInboxEdit] = useState<InboxRow | null>(null);
-  // Bump this to force InboxChip to refetch (after the edit-via-sheet
-  // flow completes — the chip otherwise refreshes only on visibility).
-  const [inboxRefresh, setInboxRefresh] = useState(0);
+  // v1.48.0 — Pending transaction being accepted. Opens AddTransactionSheet
+  // in pending mode (ledger picker, pre-filled from the item).
+  const [pendingItem, setPendingItem] = useState<PendingRow | null>(null);
+  // Bump to make PendingFab refetch after an accept.
+  const [pendingRefresh, setPendingRefresh] = useState(0);
   const [editingTx, setEditingTx] = useState<DbTransaction | null>(null);
   // v1.44.0 — true when the unified sheet was opened to create a
   // recurring item (from the Recurring tab / "Add recurring" button).
@@ -388,38 +387,44 @@ export default function TransactionsShell({
     setShowSheet(false);
     setEditingTx(null);
     setSheetRecurring(false);
-    setInboxEdit(null);
+    setPendingItem(null);
     if (typeof window !== "undefined" && window.location.search.includes("new=1")) {
       window.history.replaceState({}, "", "/transactions");
     }
   }
 
-  // RAM-25 — Edit on an inbox row opens AddTransactionSheet with the
-  // parsed fields pre-filled. The sheet's onSaved hook flips the row.
-  function handleInboxEdit(item: InboxRow) {
-    setInboxEdit(item);
+  // v1.48.0 — Accept on a pending item opens AddTransactionSheet in pending
+  // mode: the user picks the ledger, and the item's own date is kept.
+  function handlePendingAccept(item: PendingRow) {
+    setPendingItem(item);
     setEditingTx(null);
     setSheetRecurring(false);
     setShowSheet(true);
   }
-  async function handleInboxSaved() {
-    if (!inboxEdit) return;
-    const fd = new FormData();
-    fd.set("id", inboxEdit.id);
-    await markInboxAcceptedAction(fd);
-    setInboxRefresh((n) => n + 1);
-  }
-  const inboxPrefill = useMemo(() => {
-    if (!inboxEdit?.parsed) return null;
-    const p = inboxEdit.parsed;
+  const pendingPrefill = useMemo(() => {
+    if (!pendingItem) return null;
+    const p = pendingItem.parsed ?? {};
     const type: "expense" | "income" = p.type === "income" ? "income" : "expense";
+    // Another currency → leave the amount for the user to enter in the
+    // ledger currency (the original is shown as a warning).
+    const foreign = foreignCurrency(p, currency);
     return {
       type,
-      amount: typeof p.amount === "number" ? String(p.amount) : "",
-      name: typeof p.name === "string" ? p.name : "",
-      date: typeof p.date === "string" ? p.date : "",
+      amount: !foreign && typeof p.amount === "number" ? String(Math.round(p.amount)) : "",
+      name: typeof p.name === "string" ? p.name : pendingItem.raw_subject ?? "",
+      date: pendingDate(pendingItem),
     };
-  }, [inboxEdit]);
+  }, [pendingItem, currency]);
+  const pendingInput = useMemo<PendingAcceptInput | null>(() => {
+    if (!pendingItem) return null;
+    const p = pendingItem.parsed ?? {};
+    const foreign = foreignCurrency(p, currency);
+    return {
+      itemId: pendingItem.id,
+      ledgers: memberships.map((m) => ({ id: m.household_id, name: m.household.name, symbol: m.household.symbol ?? null })),
+      original: foreign && typeof p.amount === "number" ? { amount: p.amount, currency: foreign } : null,
+    };
+  }, [pendingItem, currency, memberships]);
 
   // v1.44.0 — "Add recurring item" no longer opens a separate sheet.
   // It opens the SAME AddTransactionSheet with the Recurring toggle
@@ -536,12 +541,6 @@ export default function TransactionsShell({
             currency={currency}
           />
 
-          {/* RAM-25 — chip surfaces pending Email Inbox items. Self-fetches
-              + hides when there's nothing pending. onEdit hands the row
-              off to AddTransactionSheet pre-filled; refreshSignal makes
-              the chip re-fetch after that save completes. */}
-          <InboxChip onEdit={handleInboxEdit} refreshSignal={inboxRefresh} />
-
           {/* Filter active banner */}
           {isFiltering && (
             <div className="mx-5 mb-1 flex items-center justify-between rounded-xl bg-[var(--foreground)]/[0.05] px-3.5 py-2">
@@ -617,8 +616,9 @@ export default function TransactionsShell({
         iconStyle={iconStyle}
         voiceEnabled={voiceEnabled}
         defaultRecurring={sheetRecurring}
-        prefill={inboxPrefill}
-        onSaved={inboxEdit ? handleInboxSaved : undefined}
+        prefill={pendingPrefill}
+        pending={pendingInput}
+        onSaved={pendingItem ? () => setPendingRefresh((n) => n + 1) : undefined}
       />
 
       <AddRecurringSheet
@@ -675,6 +675,11 @@ export default function TransactionsShell({
           </div>
         </>
       )}
+
+      {/* v1.48.0 — Pending transactions button. Same spot the old "Speak
+          to add" FAB used (bottom-right, above the bottom nav); only shows
+          while something is pending. */}
+      <PendingFab currency={currency} onAccept={handlePendingAccept} refreshSignal={pendingRefresh} />
     </>
   );
 }

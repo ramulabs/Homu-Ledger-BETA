@@ -478,9 +478,11 @@ export type Database = {
       }
       inbox_items: {
         Row: {
+          accepted_household_id: string | null
           accepted_transaction_id: string | null
           created_at: string
           id: string
+          match_key: string | null
           message_id: string
           parse_confidence: number | null
           parse_error: string | null
@@ -497,9 +499,11 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accepted_household_id?: string | null
           accepted_transaction_id?: string | null
           created_at?: string
           id?: string
+          match_key?: string | null
           message_id: string
           parse_confidence?: number | null
           parse_error?: string | null
@@ -516,9 +520,11 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accepted_household_id?: string | null
           accepted_transaction_id?: string | null
           created_at?: string
           id?: string
+          match_key?: string | null
           message_id?: string
           parse_confidence?: number | null
           parse_error?: string | null
