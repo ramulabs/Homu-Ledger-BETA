@@ -4,6 +4,14 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.47.1 - October 4, 2026
+
+**"Speak to add" moves into the Add Transaction Save button.**
+
+- While a new, plain transaction is empty (no amount, description or photo), the circular Save button shows the sparkle and opens `/transactions/voice`. As soon as anything is filled in, it turns back into ✓ Save.
+- Not offered when editing, in Transfer mode or for recurring items — voice only creates ordinary transactions. Disabled offline.
+- Same server gate as before (`voice_input_enabled` + developer). The floating sparkle FAB on the Transactions screen (`components/speak-to-add-fab.tsx`) is removed.
+
 ## v1.47.0 - October 4, 2026
 
 **Homu MCP server — connect AI assistants (Gemini Spark, Claude, …) to your ledger.**

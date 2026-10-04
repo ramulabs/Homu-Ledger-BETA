@@ -28,7 +28,8 @@
 // transfer pairs, move-to-ledger, recurring creation. None of that
 // changed; only the presentation did.
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2 } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
@@ -62,6 +63,9 @@ type Props = {
   memberships?: DbHouseholdMembership[];
   currentHouseholdId?: string;
   iconStyle?: IconStyle;
+  /** v1.47.1 — when true, the circular Save button doubles as the
+   *  "Speak to add" voice button while the form is still empty. */
+  voiceEnabled?: boolean;
   /** v1.44.0 — pre-tick the Recurring toggle. Set when the sheet is
    *  opened from the Recurring tab / "Add recurring item" button. */
   defaultRecurring?: boolean;
@@ -294,10 +298,12 @@ export default function AddTransactionSheet({
   memberships = [],
   currentHouseholdId,
   iconStyle = "2d",
+  voiceEnabled = false,
   defaultRecurring = false,
   prefill = null,
   onSaved,
 }: Props) {
+  const router = useRouter();
   const tr = useT();
   const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
   const [amount, setAmount] = useState("");
@@ -877,6 +883,25 @@ export default function AddTransactionSheet({
 
   const otherLedgers = memberships.filter((m) => m.household_id !== currentHouseholdId);
   const canSave = !!amount && (!isTransfer ? true : !!toWalletId && toWalletId !== walletId);
+  // v1.47.1 — while a NEW, plain transaction is still completely empty the
+  // circular Save button becomes the "Speak to add" voice button (replaces
+  // the old floating sparkle FAB). The moment anything is filled in it
+  // turns back into ✓ Save. Not offered for edits, transfers or recurring
+  // items — voice only creates ordinary transactions.
+  const isEmpty = !amount && !name.trim() && !photo && !photoPreview;
+  const voiceMode = voiceEnabled && !editing && !isTransfer && !recurringMode && isEmpty;
+  const online = useSyncExternalStore(
+    (cb) => {
+      window.addEventListener("online", cb);
+      window.addEventListener("offline", cb);
+      return () => {
+        window.removeEventListener("online", cb);
+        window.removeEventListener("offline", cb);
+      };
+    },
+    () => navigator.onLine,
+    () => true
+  );
   const editSubPanelOpen = confirmDelete || showMovePicker || showRecurringPicker || recurringSuccess;
 
   // Per-type accent for the segmented tabs.
@@ -1336,21 +1361,43 @@ export default function AddTransactionSheet({
                 )}
               </div>
 
-              {/* Circular Save */}
-              <button
-                type="submit"
-                disabled={!canSave || loading || moving}
-                aria-label={editing ? tr("common.saveChanges") : tr("tx.add")}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-all"
-                style={{
-                  background: !canSave || loading || moving
-                    ? "color-mix(in oklab, #EE6452 35%, var(--background))"
-                    : ATX_CORAL,
-                  boxShadow: !canSave || loading || moving ? "none" : "0 6px 14px rgba(238,100,82,0.30)",
-                }}
-              >
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} /> : <Check className="h-[22px] w-[22px]" strokeWidth={2.75} />}
-              </button>
+              {/* Circular Save — doubles as "Speak to add" while the form is empty */}
+              {voiceMode ? (
+                <button
+                  type="button"
+                  onClick={() => router.push("/transactions/voice")}
+                  disabled={!online}
+                  aria-label={tr("voice.fab.aria") || "Speak to add transactions"}
+                  title={online ? tr("voice.fab.aria") || "Speak to add transactions" : tr("voice.fab.offline") || "Voice needs internet"}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95 disabled:opacity-40 [touch-action:manipulation]"
+                  style={{ background: ATX_CORAL, boxShadow: online ? "0 6px 14px rgba(238,100,82,0.30)" : "none" }}
+                >
+                  <span
+                    aria-hidden
+                    className="inline-flex h-6 w-6 items-center justify-center"
+                    style={{ animation: online ? "ai-sparkle-blink 2.8s ease-in-out infinite" : undefined }}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" }}>
+                      <path d="M12 2 L13.8 10.2 L22 12 L13.8 13.8 L12 22 L10.2 13.8 L2 12 L10.2 10.2 Z" />
+                    </svg>
+                  </span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!canSave || loading || moving}
+                  aria-label={editing ? tr("common.saveChanges") : tr("tx.add")}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-all"
+                  style={{
+                    background: !canSave || loading || moving
+                      ? "color-mix(in oklab, #EE6452 35%, var(--background))"
+                      : ATX_CORAL,
+                    boxShadow: !canSave || loading || moving ? "none" : "0 6px 14px rgba(238,100,82,0.30)",
+                  }}
+                >
+                  {loading ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} /> : <Check className="h-[22px] w-[22px]" strokeWidth={2.75} />}
+                </button>
+              )}
             </div>
 
             {/* In-app numeric keypad — the sheet's bottom section while
