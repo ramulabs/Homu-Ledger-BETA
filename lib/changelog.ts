@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.48.1",
+    date: "October 5, 2026",
+    changes: [
+      { type: "improvement", audience: "user",
+        en: "AI assistants like Gemini Spark can now add pending transactions without asking you to confirm each one. You still approve every item in Homu (Accept and choose the ledger), so nothing reaches a ledger without you. As a safeguard, an assistant can add at most 50 pending items per day.",
+        id: "Asisten AI seperti Gemini Spark sekarang bisa menambah transaksi tertunda tanpa meminta konfirmasi untuk setiap transaksi. Kamu tetap menyetujui setiap item di Homu (Terima dan pilih buku), jadi tidak ada yang masuk ke buku tanpa kamu. Sebagai pengaman, asisten bisa menambah maksimal 50 item tertunda per hari." },
+      { type: "improvement", audience: "dev",
+        en: "MCP add_pending_transaction now advertises readOnlyHint: true. Gemini prompts for every non-read-only tool and Spark has no always-allow; the tool only queues a suggestion that the user must Accept in Homu, so the client prompt was a duplicate approval. New AGENT_DAILY_CAP (50 agent items per user per rolling 24h) bounds abuse, e.g. a prompt injection in an email Spark reads; retries of an existing idempotency_key still succeed at the cap.",
+        id: "MCP add_pending_transaction kini mengumumkan readOnlyHint: true. Gemini meminta konfirmasi untuk tiap tool yang bukan read-only dan Spark tidak punya always-allow; tool ini hanya mengantrekan saran yang harus diterima pengguna di Homu, jadi prompt di klien adalah persetujuan ganda. AGENT_DAILY_CAP baru (50 item agen per pengguna per 24 jam bergulir) membatasi penyalahgunaan, misalnya prompt injection di email yang dibaca Spark; percobaan ulang dengan idempotency_key yang sama tetap berhasil saat batas tercapai." },
+    ],
+  },
+  {
     version: "1.48.0",
     date: "October 4, 2026",
     changes: [
