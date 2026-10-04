@@ -4,6 +4,14 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.48.1 - October 5, 2026
+
+**AI agents add pending transactions without a confirmation prompt; daily cap as a safeguard.**
+
+- MCP `add_pending_transaction` now advertises `readOnlyHint: true`. Gemini (including Spark) asks the user to confirm every tool that isn't read-only, and Spark has no "always allow". The tool never touches a ledger — it only queues a suggestion the user must Accept in Homu — so Pending remains the single review gate.
+- New `AGENT_DAILY_CAP` (`lib/mcp/queries.ts`): at most **50** agent-added items per user per rolling 24 hours. Bounds abuse such as a prompt injection in an email the agent reads. A retry with an existing `idempotency_key` still returns `already_pending` at the cap.
+- Clients must re-sync tools to pick up the new annotation (in Spark: disconnect and reconnect Homu).
+
 ## v1.48.0 - October 4, 2026
 
 **Pending transactions — AI agents (and email / API sources) suggest, you approve into the ledger you choose.**

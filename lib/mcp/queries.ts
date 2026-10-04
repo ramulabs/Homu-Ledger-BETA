@@ -342,7 +342,21 @@ export type AddPendingArgs = {
   idempotency_key?: string;
 };
 
-export async function addPendingTransaction(admin: Client, ctx: HomuContext, args: AddPendingArgs) {
+/**
+ * Most items an agent may add per user per rolling 24 hours (v1.48.1).
+ * add_pending_transaction is flagged read-only so agents like Gemini Spark
+ * run it without asking each time; the cap bounds the damage if an agent is
+ * misled (e.g. by an instruction hidden in an email it reads) into flooding
+ * the Pending list. Nothing reaches a ledger without the user's Accept.
+ */
+export const AGENT_DAILY_CAP = 50;
+
+export async function addPendingTransaction(
+  admin: Client,
+  ctx: HomuContext,
+  args: AddPendingArgs,
+  { dailyCap = AGENT_DAILY_CAP }: { dailyCap?: number } = {}
+) {
   const name = args.description.trim();
   const type: TxType = args.type ?? "expense";
 
@@ -380,6 +394,34 @@ export async function addPendingTransaction(admin: Client, ctx: HomuContext, arg
   const messageId = args.idempotency_key
     ? `mcp:${createHash("sha256").update(`${ctx.userId}:${args.idempotency_key}`).digest("hex").slice(0, 32)}`
     : `mcp:${randomUUID()}`;
+
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count } = await admin
+    .from("inbox_items")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", ctx.userId)
+    .eq("parse_method", "agent")
+    .gte("created_at", since);
+  if ((count ?? 0) >= dailyCap) {
+    // A retry of an item that's already in the list still succeeds.
+    const { data: existing } = await admin
+      .from("inbox_items")
+      .select("id")
+      .eq("user_id", ctx.userId)
+      .eq("message_id", messageId)
+      .maybeSingle();
+    if (existing) {
+      return {
+        pending: true,
+        already_pending: true,
+        message: "Already in Pending transactions.",
+        item: parsed,
+      };
+    }
+    throw new HomuToolError(
+      `Daily limit reached: agents can add at most ${dailyCap} pending transactions per 24 hours. Ask the user to review the Pending list in Homu first.`
+    );
+  }
 
   const { error } = await admin.from("inbox_items").insert({
     user_id: ctx.userId,
