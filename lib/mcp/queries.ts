@@ -3,11 +3,9 @@
 // limits all reads and writes to that user's household. Kept free of
 // Next.js / MCP imports so it can be exercised directly in tests.
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { matchCategoryLocally } from "@/lib/categorize-local";
-import { isClientOpDuplicate } from "@/lib/idempotency";
 import { LIMITS, validateAmount, validateDate, validateName } from "@/lib/validation";
 
 type Client = SupabaseClient<Database>;
@@ -300,90 +298,143 @@ export async function spendingSummary(supabase: Client, ctx: HomuContext, args: 
   };
 }
 
-// ── add_transaction ──────────────────────────────────────────────────
+// ── list_ledgers ─────────────────────────────────────────────────────
 
-export type AddTransactionArgs = {
+/** Every ledger the user belongs to (names for add_pending_transaction). */
+async function userLedgers(admin: Client, userId: string) {
+  const { data: memberships } = await admin
+    .from("household_members")
+    .select("household_id")
+    .eq("profile_id", userId);
+  const ids = (memberships ?? []).map((m) => m.household_id);
+  if (ids.length === 0) return [];
+  const { data } = await admin.from("households").select("id, name, currency").in("id", ids).order("name");
+  return data ?? [];
+}
+
+/** `admin` is the service-role client — membership is read for ctx.userId only. */
+export async function listLedgers(admin: Client, ctx: HomuContext) {
+  const ledgers = await userLedgers(admin, ctx.userId);
+  return {
+    current: ctx.ledgerName,
+    ledgers: ledgers.map((l) => ({ name: l.name, currency: l.currency })),
+  };
+}
+
+// ── add_pending_transaction ──────────────────────────────────────────
+// Agents never write to a ledger directly (v1.48.0): they add to the
+// user's Pending list, and the user accepts each item into a ledger of
+// their choice in the app. Stored in the RAM-25 inbox_items table, which
+// has no client INSERT policy — hence the service-role client, scoped
+// explicitly to ctx.userId (taken from the verified OAuth token).
+
+export type AddPendingArgs = {
   amount: number;
   description: string;
   type?: TxType;
+  date?: string;
+  currency?: string;
+  merchant?: string;
+  note?: string;
+  ledger?: string;
   category?: string;
   wallet?: string;
-  date?: string;
   idempotency_key?: string;
 };
 
-/** Stable UUID for an idempotency key, scoped to the household. */
-function opIdFor(householdId: string, key: string): string {
-  const h = createHash("sha256").update(`${householdId}:${key}`).digest("hex");
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
-}
-
-export async function addTransaction(supabase: Client, ctx: HomuContext, args: AddTransactionArgs) {
-  const type: TxType = args.type ?? "expense";
+export async function addPendingTransaction(admin: Client, ctx: HomuContext, args: AddPendingArgs) {
   const name = args.description.trim();
-  const date = args.date ?? todayUtc();
+  const type: TxType = args.type ?? "expense";
 
-  const nameErr = validateName(name, LIMITS.TX_NAME, "Description");
-  if (nameErr) throw new HomuToolError(nameErr);
-  const amountErr = validateAmount(args.amount);
-  if (amountErr) throw new HomuToolError(amountErr);
-  const dateErr = validateDate(date);
-  if (dateErr) throw new HomuToolError(dateErr);
+  const err = validateName(name, LIMITS.TX_NAME, "Description") ?? validateAmount(args.amount);
+  if (err) throw new HomuToolError(err);
+  if (args.date && validateDate(args.date)) throw new HomuToolError(`Invalid date "${args.date}". Use YYYY-MM-DD.`);
+  const currency = args.currency?.trim().toUpperCase();
+  if (currency && !/^[A-Z]{3}$/.test(currency)) throw new HomuToolError(`Currency must be a 3-letter code like IDR or AUD.`);
 
-  const [cats, wallets] = await Promise.all([fetchCategories(supabase, ctx), fetchWallets(supabase, ctx)]);
-  const ofType = cats.filter((c) => c.type === type);
-
-  // Category: explicit name wins; otherwise Homu's own keyword rules; else
-  // saved uncategorised (the user can fix it in the app).
-  let category: { id: string; name: string } | null = null;
-  let categorySource: "provided" | "rule" | "cache" | "seed" | "none" = "none";
-  if (args.category) {
-    category = resolveByName(ofType, args.category, `${type} category`);
-    categorySource = "provided";
-  } else {
-    const match = await matchCategoryLocally(supabase, ctx.householdId, name, type, ofType);
-    if (match) {
-      category = { id: match.categoryId, name: match.categoryName };
-      categorySource = match.source;
+  let ledger: string | undefined;
+  if (args.ledger) {
+    const ledgers = await userLedgers(admin, ctx.userId);
+    const match = ledgers.find((l) => l.name.trim().toLowerCase() === args.ledger!.trim().toLowerCase());
+    if (!match) {
+      throw new HomuToolError(`No ledger named "${args.ledger}". Available: ${ledgers.map((l) => l.name).join(", ") || "none"}.`);
     }
+    ledger = match.name;
   }
 
-  const wallet = args.wallet
-    ? resolveByName(wallets, args.wallet, "wallet")
-    : wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
-
-  const client_op_id = args.idempotency_key ? opIdFor(ctx.householdId, args.idempotency_key) : undefined;
-
-  const { error } = await supabase.from("transactions").insert({
-    household_id: ctx.householdId,
-    created_by: ctx.userId,
-    type,
+  const clean = (s?: string) => (s && s.trim() ? s.trim() : undefined);
+  const parsed = {
     amount: args.amount,
+    type,
     name,
-    category_id: category?.id ?? null,
-    wallet_id: wallet?.id ?? null,
-    date,
-    ...(client_op_id ? { client_op_id } : {}),
-  });
+    ...(args.date ? { date: args.date } : {}),
+    ...(currency ? { currency } : {}),
+    ...(clean(args.merchant) ? { merchant: clean(args.merchant) } : {}),
+    ...(clean(args.note) ? { note: clean(args.note) } : {}),
+    ...(ledger ? { ledger } : {}),
+    ...(clean(args.category) ? { category: clean(args.category) } : {}),
+    ...(clean(args.wallet) ? { wallet: clean(args.wallet) } : {}),
+  };
 
-  // Same idempotency contract as the offline queue (migration 0028): a
-  // retry with the same key hits the partial unique index → already saved.
-  const alreadyRecorded = !!error && isClientOpDuplicate(error);
-  if (error && !alreadyRecorded) throw new HomuToolError(`Couldn't save the transaction: ${error.message}`);
+  // (user_id, message_id) is unique, so a retry with the same key is a no-op.
+  const messageId = args.idempotency_key
+    ? `mcp:${createHash("sha256").update(`${ctx.userId}:${args.idempotency_key}`).digest("hex").slice(0, 32)}`
+    : `mcp:${randomUUID()}`;
+
+  const { error } = await admin.from("inbox_items").insert({
+    user_id: ctx.userId,
+    source_domain: "mcp",
+    sender_email: "agent@mcp",
+    message_id: messageId,
+    received_at: new Date().toISOString(),
+    raw_subject: name,
+    raw_body: "",
+    raw_body_format: "text",
+    parsed,
+    parse_method: "agent",
+    parse_confidence: 1,
+    status: "pending",
+  });
+  const alreadyPending = error?.code === "23505";
+  if (error && !alreadyPending) throw new HomuToolError(`Couldn't add it to Pending: ${error.message}`);
 
   return {
-    saved: true,
-    already_recorded: alreadyRecorded,
-    ledger: ctx.ledgerName,
-    transaction: {
-      date,
-      description: name,
-      amount: args.amount,
-      currency: ctx.currency,
-      type,
-      category: category?.name ?? null,
-      category_source: categorySource,
-      wallet: wallet?.name ?? null,
-    },
+    pending: true,
+    already_pending: alreadyPending,
+    message: "Added to Pending transactions. The user will review it and choose a ledger in the Homu app.",
+    item: parsed,
+  };
+}
+
+// ── list_pending_transactions ────────────────────────────────────────
+
+export async function listPendingTransactions(supabase: Client, ctx: HomuContext) {
+  // RLS ("select own") already scopes this; the explicit filter is defence
+  // in depth.
+  const { data, error } = await supabase
+    .from("inbox_items")
+    .select("received_at, parsed, source_domain")
+    .eq("user_id", ctx.userId)
+    .eq("status", "pending")
+    .order("received_at", { ascending: false })
+    .limit(100);
+  if (error) throw new HomuToolError(`Couldn't load pending transactions: ${error.message}`);
+  const rows = data ?? [];
+  return {
+    count: rows.length,
+    pending: rows.map((r) => {
+      const p = (r.parsed ?? {}) as Record<string, unknown>;
+      return {
+        added_at: r.received_at,
+        source: r.source_domain === "mcp" ? "agent" : r.source_domain,
+        description: p.name ?? null,
+        amount: p.amount ?? null,
+        currency: p.currency ?? null,
+        type: p.type ?? null,
+        date: p.date ?? null,
+        merchant: p.merchant ?? null,
+        suggested_ledger: p.ledger ?? null,
+      };
+    }),
   };
 }

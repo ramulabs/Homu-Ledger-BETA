@@ -4,6 +4,31 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.48.0 - October 4, 2026
+
+**Pending transactions — AI agents (and email / API sources) suggest, you approve into the ledger you choose.**
+
+### Behaviour
+
+- Sources add to a per-user **Pending** list (not any ledger). The MCP server's direct `add_transaction` is replaced by `add_pending_transaction`; new read-only `list_pending_transactions` and `list_ledgers`.
+- A floating button with a count (bottom-right, where the old "Speak to add" FAB was) appears only while items are pending. Replaces the RAM-25 "N to review" chip.
+- **Accept** opens the Add Transaction sheet in *pending mode*: an "Add to" ledger picker, then the usual fields pre-filled and editable. **Delete** asks for confirmation and soft-deletes (status `rejected`), so a re-sent item doesn't reappear.
+- **Date:** the source's date, else the day the item entered Pending — never the accept date.
+- **Ledger pre-selection:** the user's two most recent accepts of a similar item (same merchant, else description) went to the same ledger → that ledger; else the source's suggested ledger; else empty (the user must choose).
+- **Smart fill per ledger:** the source's category/wallet if the chosen ledger has them, else Homu's keyword rules and the default wallet. Re-runs on ledger change.
+- **Warnings:** possible duplicate (same amount within ±2 days in the chosen ledger); non-ledger currency shows the original amount and the amount field starts empty.
+
+### Implementation
+
+- Migration `0035_pending_transactions.sql`: `inbox_items.match_key`, `inbox_items.accepted_household_id`, `parse_method` allows `'agent'`, partial learning index.
+- `lib/pending-server.ts`: `preparePending`, `findDuplicates`, `acceptPending`. Service-role client with explicit `household_members` checks (RLS on categories/wallets/transactions is scoped to the *current* ledger, and accept may target another). Accept inserts with `client_op_id = item id` (double-accept safe), keeps the source's note, marks the item accepted with ledger + key, and teaches that ledger's `category_hints`.
+- `AddTransactionSheet` `pending` mode: native `<select>` ledger picker, server-loaded categories/wallets, transfer/recurring/photo and current-ledger AI suggestion disabled; pickers' "Add new" hidden unless the target is the current ledger (`allowAdd`).
+- `PendingFab` + `PendingList` replace `InboxChip` / `InboxBento`; the one-tap accept and `markInboxAcceptedAction` (current-ledger only) are removed.
+
+### Verified
+
+End-to-end against production in the owner's *Testing* ledger (all test data removed afterwards): add + idempotent retry, foreign currency, unknown-ledger rejection, ledger suggestion (agent → history after 2 accepts → empty), smart fill from the chosen ledger, membership refusals, accept with the source's date and note, double-accept refusal, duplicate detection.
+
 ## v1.47.1 - October 4, 2026
 
 **"Speak to add" moves into the Add Transaction Save button.**

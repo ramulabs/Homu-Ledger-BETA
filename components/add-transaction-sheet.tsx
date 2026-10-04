@@ -30,7 +30,7 @@
 
 import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2 } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, AlertTriangle } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
@@ -46,11 +46,22 @@ import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
 import { useT } from "@/lib/i18n/provider";
 import { formatShortDate } from "@/lib/format";
+import { acceptPendingAction, findPendingDuplicates, preparePendingAccept, type PendingLedgerData, type PrepareResult } from "@/app/actions/pending";
 import { uploadTransactionPhoto } from "@/lib/upload-photo";
 import { compressPhoto } from "@/lib/compress-photo";
 import PhotoViewer from "@/components/photo-viewer";
 import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership, RecurringFrequency } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
+
+/** v1.48.0 — input for accepting a Pending transaction. */
+export type PendingAcceptInput = {
+  itemId: string;
+  /** Every ledger the user belongs to (choice for "Add to"). */
+  ledgers: { id: string; name: string; symbol: string | null }[];
+  /** Original amount when the source reported another currency — the
+   *  amount field then starts empty for the user to enter it. */
+  original: { amount: number; currency: string } | null;
+};
 
 type Props = {
   open: boolean;
@@ -66,6 +77,11 @@ type Props = {
   /** v1.47.1 — when true, the circular Save button doubles as the
    *  "Speak to add" voice button while the form is still empty. */
   voiceEnabled?: boolean;
+  /** v1.48.0 — accepting a Pending transaction: adds a ledger picker, loads
+   *  the chosen ledger's categories / wallets server-side (they may not be
+   *  the current ledger's), and saves via acceptPendingAction. Transfer,
+   *  recurring and photos are off in this mode. */
+  pending?: PendingAcceptInput | null;
   /** v1.44.0 — pre-tick the Recurring toggle. Set when the sheet is
    *  opened from the Recurring tab / "Add recurring item" button. */
   defaultRecurring?: boolean;
@@ -299,6 +315,7 @@ export default function AddTransactionSheet({
   currentHouseholdId,
   iconStyle = "2d",
   voiceEnabled = false,
+  pending = null,
   defaultRecurring = false,
   prefill = null,
   onSaved,
@@ -336,6 +353,15 @@ export default function AddTransactionSheet({
   const [userTouchedCategory, setUserTouchedCategory] = useState(false);
   const aiSuggestedRef = useRef<string | null>(null);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  // ── Pending-accept mode (v1.48.0) ──
+  const [pendingLedgerId, setPendingLedgerId] = useState<string | null>(null);
+  const [pendingLedgerSource, setPendingLedgerSource] = useState<"history" | "agent" | null>(null);
+  const [pendingLedger, setPendingLedger] = useState<PendingLedgerData | null>(null);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [dupes, setDupes] = useState<{ date: string; name: string; amount: number }[]>([]);
+  // Latest-request guard: switching ledger quickly must not let an older
+  // response overwrite a newer one.
+  const pendingReqRef = useRef(0);
   const previewObjectUrlRef = useRef<string | null>(null);
 
   // v1.45.4 — true when the in-app numeric keypad is showing (the
@@ -498,14 +524,19 @@ export default function AddTransactionSheet({
     };
   }, [open]);
 
+  // In pending mode the lists come from the CHOSEN ledger (loaded server-
+  // side), which may not be the current one.
+  const baseCategories = pending ? pendingLedger?.categories ?? [] : categories;
+  const baseWallets = pending ? pendingLedger?.wallets ?? [] : wallets;
+  const effectiveCurrency = pending ? pendingLedger?.currency ?? currency : currency;
   const allCategories = [
-    ...categories,
-    ...extraCategories.filter((e) => !categories.find((c) => c.id === e.id)),
+    ...baseCategories,
+    ...extraCategories.filter((e) => !baseCategories.find((c) => c.id === e.id)),
   ];
   const selectedCategory = allCategories.find((c) => c.id === categoryId) ?? null;
   const allWallets = [
-    ...wallets,
-    ...extraWallets.filter((e) => !wallets.find((w) => w.id === e.id)),
+    ...baseWallets,
+    ...extraWallets.filter((e) => !baseWallets.find((w) => w.id === e.id)),
   ];
   const selectedWallet = allWallets.find((w) => w.id === walletId) ?? null;
   const selectedToWallet = allWallets.find((w) => w.id === toWalletId) ?? null;
@@ -572,12 +603,13 @@ export default function AddTransactionSheet({
       setAmount(prefill?.amount ?? "");
       setName(prefill?.name ?? "");
       setCategoryId(null);
-      setWalletId(defaultWallet?.id ?? null);
+      // Pending mode: the wallet comes from the chosen ledger once loaded.
+      setWalletId(pending ? null : defaultWallet?.id ?? null);
       setToWalletId(altWallet?.id ?? null);
       setDate(prefill?.date ?? todayString());
       setPhotoPreview(null);
       // Recurring is pre-ticked when opened from the Recurring tab.
-      setRecurringMode(!!defaultRecurring);
+      setRecurringMode(!pending && !!defaultRecurring);
     }
     setPhoto(null);
     setExtraCategories([]);
@@ -605,7 +637,73 @@ export default function AddTransactionSheet({
     setAiSource(null);
     setUserTouchedCategory(!!editing);
     aiSuggestedRef.current = null;
-  }, [open, editing, wallets, defaultRecurring, prefill]);
+    setPendingLedgerId(null);
+    setPendingLedgerSource(null);
+    setPendingLedger(null);
+    setPendingLoading(!!pending);
+    setDupes([]);
+  }, [open, editing, wallets, defaultRecurring, prefill, pending]);
+
+  // ── Pending mode: pick + load the ledger (v1.48.0) ──────────────────
+  function applyPendingResult(res: PrepareResult) {
+    setPendingLoading(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    setPendingLedgerId(res.householdId);
+    setPendingLedger(res.ledger);
+    setCategoryId(res.ledger?.categoryId ?? null);
+    setWalletId(res.ledger?.walletId ?? null);
+    const src = res.ledger?.categorySource ?? null;
+    setAiSource(src === "agent" ? "ai" : src);
+    setUserTouchedCategory(false);
+  }
+
+  // First load: server suggests the ledger (history → agent → none).
+  useEffect(() => {
+    if (!open || !pending) return;
+    const req = ++pendingReqRef.current;
+    preparePendingAccept({ itemId: pending.itemId }).then((res) => {
+      if (req !== pendingReqRef.current) return;
+      if (res.ok) setPendingLedgerSource(res.source);
+      applyPendingResult(res);
+    });
+  }, [open, pending]);
+
+  // User picked a ledger: reload its lists + re-run the smart fill against
+  // what's currently typed.
+  async function changePendingLedger(householdId: string) {
+    if (!pending || !householdId) return;
+    const req = ++pendingReqRef.current;
+    setPendingLedgerId(householdId);
+    setPendingLedgerSource(null);
+    setPendingLoading(true);
+    setDupes([]);
+    setError(null);
+    const res = await preparePendingAccept({
+      itemId: pending.itemId,
+      householdId,
+      description: name,
+      type: type === "income" ? "income" : "expense",
+    });
+    if (req !== pendingReqRef.current) return;
+    applyPendingResult(res);
+  }
+
+  // Duplicate warning: same amount in the chosen ledger within ±2 days.
+  useEffect(() => {
+    if (!open || !pending || !pendingLedgerId || !amount) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const matches = await findPendingDuplicates({ householdId: pendingLedgerId, amount, date });
+      if (!cancelled) setDupes(matches);
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [open, pending, pendingLedgerId, amount, date]);
 
   // Desktop: focus the amount field on open so the user can type with
   // their physical keyboard immediately, without an extra click.
@@ -639,7 +737,9 @@ export default function AddTransactionSheet({
 
   // ── AI auto-categorisation (unchanged) ──────────────────────────────
   useEffect(() => {
-    if (!open || editing || isTransfer) return;
+    // Pending mode: suggestCategory() only knows the CURRENT ledger; the
+    // chosen ledger's smart fill comes from preparePendingAccept instead.
+    if (!open || editing || isTransfer || pending) return;
     if (userTouchedCategory) return;
     const trimmed = name.trim();
     if (trimmed.length < 2) return;
@@ -671,7 +771,7 @@ export default function AddTransactionSheet({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [open, editing, isTransfer, userTouchedCategory, name, type]);
+  }, [open, editing, isTransfer, pending, userTouchedCategory, name, type]);
 
   const userTouchedCategoryRef = useRef(userTouchedCategory);
   useEffect(() => {
@@ -712,6 +812,34 @@ export default function AddTransactionSheet({
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Pending mode → accept into the chosen ledger (server-side, may not be
+    // the current ledger). Date = the item's date, set in prefill.
+    if (pending) {
+      if (!pendingLedgerId) {
+        setError(tr("pending.chooseLedger"));
+        setLoading(false);
+        return;
+      }
+      const res = await acceptPendingAction({
+        itemId: pending.itemId,
+        householdId: pendingLedgerId,
+        type,
+        amount,
+        name,
+        categoryId,
+        walletId,
+        date,
+      });
+      if (!res.ok) {
+        setError(res.error);
+        setLoading(false);
+        return;
+      }
+      onSaved?.();
+      onClose();
+      return;
+    }
 
     // Recurring mode → create a recurring rule (not a one-off).
     if (recurringMode && !isTransfer) {
@@ -882,14 +1010,18 @@ export default function AddTransactionSheet({
   }
 
   const otherLedgers = memberships.filter((m) => m.household_id !== currentHouseholdId);
-  const canSave = !!amount && (!isTransfer ? true : !!toWalletId && toWalletId !== walletId);
+  const canSave = !!amount && (
+    pending
+      ? !!pendingLedgerId && !pendingLoading
+      : !isTransfer ? true : !!toWalletId && toWalletId !== walletId
+  );
   // v1.47.1 — while a NEW, plain transaction is still completely empty the
   // circular Save button becomes the "Speak to add" voice button (replaces
   // the old floating sparkle FAB). The moment anything is filled in it
   // turns back into ✓ Save. Not offered for edits, transfers or recurring
   // items — voice only creates ordinary transactions.
   const isEmpty = !amount && !name.trim() && !photo && !photoPreview;
-  const voiceMode = voiceEnabled && !editing && !isTransfer && !recurringMode && isEmpty;
+  const voiceMode = voiceEnabled && !editing && !pending && !isTransfer && !recurringMode && isEmpty;
   const online = useSyncExternalStore(
     (cb) => {
       window.addEventListener("online", cb);
@@ -988,6 +1120,59 @@ export default function AddTransactionSheet({
             <div className="h-1 w-10 rounded-full bg-black/10" />
           </div>
 
+          {/* Pending mode: "Add to [ledger]" picker (v1.48.0). Native <select>
+              under a styled pill — same pattern as the date pill. */}
+          {pending && (
+            <div className="shrink-0 px-5 pb-2">
+              <p className="mb-1.5 text-center text-[11.5px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+                {tr("pending.review")}
+              </p>
+              <div className="relative h-11">
+                <div
+                  className="pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border bg-[var(--background)] px-4"
+                  style={{ borderColor: pendingLedgerId ? "var(--separator)" : ATX_CORAL }}
+                >
+                  <span className="shrink-0 text-[13px] text-[var(--label-secondary)]">{tr("pending.addTo")}</span>
+                  <span
+                    className="flex-1 truncate text-[14.5px] font-semibold"
+                    style={{ color: pendingLedgerId ? "var(--foreground)" : ATX_CORAL }}
+                  >
+                    {(() => {
+                      const l = pending.ledgers.find((x) => x.id === pendingLedgerId);
+                      if (l) return `${l.symbol ?? ""} ${l.name}`.trim();
+                      return pendingLoading ? tr("pending.loadingLedger") : tr("pending.chooseLedger");
+                    })()}
+                  </span>
+                  {pendingLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-[var(--label-tertiary)]" strokeWidth={2.25} />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />
+                  )}
+                </div>
+                <select
+                  value={pendingLedgerId ?? ""}
+                  onChange={(e) => void changePendingLedger(e.target.value)}
+                  aria-label={tr("pending.addTo")}
+                  className="absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-full opacity-0"
+                >
+                  <option value="" disabled>
+                    {tr("pending.chooseLedger")}
+                  </option>
+                  {pending.ledgers.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {pendingLedgerId && pendingLedgerSource && (
+                <p className="mt-1 text-center text-[11.5px] text-[var(--label-tertiary)]">
+                  {pendingLedgerSource === "history" ? tr("pending.fromHistory") : tr("pending.fromAgentSuggestion")}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* "New recurring item" pill — surfaces the recurring intent. */}
           {recurringMode && !editing && (
             <div className="flex shrink-0 justify-center px-5 pb-1.5">
@@ -1004,7 +1189,7 @@ export default function AddTransactionSheet({
           {/* Type tabs — compact, centered, color-coded */}
           <div className="flex shrink-0 justify-center px-5 pb-1.5">
             <div className="inline-flex gap-1 rounded-full bg-black/[0.05] p-1">
-              {(editing
+              {(editing || pending
                 ? (["expense", "income"] as const)
                 : (["expense", "income", "transfer"] as const)
               ).map((t) => {
@@ -1130,7 +1315,7 @@ export default function AddTransactionSheet({
                     className="h-full w-full cursor-pointer rounded-full border-0 bg-transparent opacity-0 [color-scheme:light]"
                   />
                 </div>
-                {!isTransfer && !editing && (
+                {!isTransfer && !editing && !pending && (
                   <button
                     type="button"
                     // preventDefault on mousedown keeps the currently
@@ -1188,6 +1373,33 @@ export default function AddTransactionSheet({
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelected(f); }} />
               <input ref={fileRef} type="file" accept="image/*" className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelected(f); }} />
+
+              {/* Pending mode warnings (v1.48.0) */}
+              {pending?.original && (
+                <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 ring-1 ring-amber-200">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" strokeWidth={2.25} />
+                  <p className="text-[12.5px] text-amber-900">
+                    {tr("pending.originalAmount")}:{" "}
+                    <span className="font-semibold">
+                      {pending.original.currency} {pending.original.amount.toLocaleString("en", { maximumFractionDigits: 2 })}
+                    </span>
+                    . {tr("pending.enterAmountIn")} {effectiveCurrency}.
+                  </p>
+                </div>
+              )}
+              {pending && !!amount && !pendingLoading && dupes.length > 0 && (
+                <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 ring-1 ring-amber-200">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" strokeWidth={2.25} />
+                  <div className="min-w-0 text-[12.5px] text-amber-900">
+                    <p className="font-semibold">{tr("pending.possibleDuplicate")}</p>
+                    {dupes.map((d, i) => (
+                      <p key={i} className="truncate">
+                        {formatShortDate(d.date)} · {d.name}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-[13px] text-rose-700 ring-1 ring-rose-200">
@@ -1353,7 +1565,7 @@ export default function AddTransactionSheet({
                   </div>
                 )}
                 {/* Photo chips (create mode, no photo yet) */}
-                {!editing && !isTransfer && !recurringMode && !photoPreview && (
+                {!editing && !pending && !isTransfer && !recurringMode && !photoPreview && (
                   <>
                     <PhotoChip icon="camera" label="Camera" onClick={() => cameraRef.current?.click()} />
                     <PhotoChip icon="gallery" label="Gallery" onClick={() => fileRef.current?.click()} />
@@ -1445,6 +1657,7 @@ export default function AddTransactionSheet({
           onCloseStart={() => setPickerVisible(false)}
           onClose={() => setShowCategoryPicker(false)}
           onCategoryAdded={(cat) => setExtraCategories((prev) => [...prev, cat])}
+          allowAdd={!pending || pendingLedgerId === currentHouseholdId}
           iconStyle={iconStyle}
         />
       )}
@@ -1467,8 +1680,9 @@ export default function AddTransactionSheet({
             setExtraWallets((prev) => [...prev, w]);
             onWalletAdded?.(w);
           }}
+          allowAdd={!pending || pendingLedgerId === currentHouseholdId}
           iconStyle={iconStyle}
-          currency={currency}
+          currency={effectiveCurrency}
         />
       )}
 

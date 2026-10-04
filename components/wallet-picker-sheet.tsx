@@ -23,6 +23,9 @@ type Props = {
   onSelect: (id: string) => void;
   onClose: () => void;
   onWalletAdded: (w: DbWallet) => void;
+  /** v1.48.0 — hide "Add new" when the list belongs to a ledger other than
+   *  the current one (new items are always created in the current ledger). */
+  allowAdd?: boolean;
   iconStyle?: IconStyle;
   currency?: string;
   /** Header label override — e.g. "From wallet" / "To wallet". */
@@ -38,6 +41,7 @@ export default function WalletPickerSheet({
   onSelect,
   onClose,
   onWalletAdded,
+  allowAdd = true,
   iconStyle = "2d",
   currency = "IDR",
   title,
@@ -164,6 +168,7 @@ export default function WalletPickerSheet({
             )}
           </div>
 
+          {allowAdd && (
           <div className="px-3 pt-3">
             <button
               type="button"
@@ -174,6 +179,7 @@ export default function WalletPickerSheet({
               {tr("wallet.addNew")}
             </button>
           </div>
+          )}
         </div>
       </div>
 

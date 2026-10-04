@@ -37,6 +37,9 @@ type Props = {
   onSelect: (id: string | null) => void;
   onClose: () => void;
   onCategoryAdded: (cat: DbCategory) => void;
+  /** v1.48.0 — hide "Add new" when the list belongs to a ledger other than
+   *  the current one (new items are always created in the current ledger). */
+  allowAdd?: boolean;
   iconStyle?: IconStyle;
   /** v1.44.0 — fired synchronously when the picker starts its exit
    *  animation, BEFORE onClose. Lets the parent sheet rise back up in
@@ -51,6 +54,7 @@ export default function CategoryPicker({
   onSelect,
   onClose,
   onCategoryAdded,
+  allowAdd = true,
   iconStyle = "2d",
   onCloseStart,
 }: Props) {
@@ -192,6 +196,7 @@ export default function CategoryPicker({
           </div>
 
           {/* Footer — inline add */}
+          {allowAdd && (
           <div className="px-3 pt-3">
             <button
               type="button"
@@ -202,6 +207,7 @@ export default function CategoryPicker({
               Add new category
             </button>
           </div>
+          )}
         </div>
       </div>
 
