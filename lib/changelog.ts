@@ -58,6 +58,15 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.48.2",
+    date: "October 6, 2026",
+    changes: [
+      { type: "fix", audience: "dev",
+        en: "Middleware no longer runs cookie auth on /api/inbox/*. Both ingestion endpoints authenticate themselves (API-key Bearer on /api/inbox/transactions, Cloudflare HMAC on /api/inbox/email), but the matcher sent every caller a 307 to /login — so the API-key (n8n / scripts) and email-forwarding paths had never worked in production. Now they return their own 401s / results.",
+        id: "Middleware tidak lagi menjalankan auth cookie di /api/inbox/*. Kedua endpoint ingest mengautentikasi sendiri (Bearer API key di /api/inbox/transactions, HMAC Cloudflare di /api/inbox/email), tapi matcher mengirim 307 ke /login ke setiap pemanggil — jadi jalur API key (n8n / skrip) dan forwarding email belum pernah berfungsi di produksi. Kini keduanya mengembalikan 401 / hasilnya sendiri." },
+    ],
+  },
+  {
     version: "1.48.1",
     date: "October 5, 2026",
     changes: [
