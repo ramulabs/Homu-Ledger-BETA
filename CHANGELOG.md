@@ -4,6 +4,10 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.48.2 - October 6, 2026
+
+**Fix: inbox ingestion endpoints were unreachable.** The middleware matcher ran cookie auth on `/api/inbox/*` and redirected every caller to `/login` (307), so the API-key path (`/api/inbox/transactions`, n8n / scripts) and the email-forwarding webhook (`/api/inbox/email`) had never worked in production. Both endpoints authenticate themselves (API-key Bearer, Cloudflare HMAC) and are now excluded from the matcher.
+
 ## v1.48.1 - October 5, 2026
 
 **AI agents add pending transactions without a confirmation prompt; daily cap as a safeguard.**

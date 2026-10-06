@@ -13,6 +13,10 @@ export const config = {
     // round-trips per launch (and redirected them to /login when signed out).
     // /api/mcp authenticates with OAuth Bearer tokens, not cookies, and
     // /.well-known/* is public OAuth discovery metadata.
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|api/version|api/sw-kill-switch|api/mcp|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // /api/inbox/* authenticates itself (API-key Bearer for
+    // /api/inbox/transactions, Cloudflare HMAC signature for
+    // /api/inbox/email). Running cookie auth on them redirected every
+    // caller to /login, so neither ingestion path could ever work (v1.48.2).
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|api/version|api/sw-kill-switch|api/mcp|api/inbox|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
