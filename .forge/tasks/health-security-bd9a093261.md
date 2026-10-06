@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.518Z
-updated_at: 2026-09-04T19:16:13.137Z
+updated_at: 2026-10-06T19:06:50.992Z
 ---
 
 ## Finding
@@ -54,4 +54,4 @@ Also verify the RLS UPDATE policy on `recurring_items` scopes by household membe
 
 
 **RLS verified (2026-09-04 health check):** the `recurring_items` UPDATE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
-Last seen by health check: 2026-09-04T19:16:13.137Z
+Last seen by health check: 2026-10-06T19:06:50.992Z
