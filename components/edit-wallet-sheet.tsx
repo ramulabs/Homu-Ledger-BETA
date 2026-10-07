@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Trash2, Star } from "lucide-react";
 import { updateWallet, deleteWallet, setDefaultWallet } from "@/app/actions/wallets";
 import { cn } from "@/lib/cn";
@@ -39,17 +39,27 @@ export default function EditWalletSheet({
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // v1.48.3 — reset when the sheet opens or switches wallet, keyed on the
+  // wallet id. "Set as default" hands back a new wallet object (is_default
+  // flipped); keying on the object wiped any unsaved name / icon / balance
+  // edits the moment it was tapped.
+  const walletRef = useRef(wallet);
   useEffect(() => {
-    if (open && wallet) {
-      setName(wallet.name);
-      setSelectedSymbol(wallet.symbol);
-      setSelectedColor(wallet.color);
-      setInitialBalance(String(Math.round(Number(wallet.initial_balance ?? 0))));
+    walletRef.current = wallet;
+  });
+  const walletId = wallet?.id ?? null;
+  useEffect(() => {
+    const w = walletRef.current;
+    if (open && w) {
+      setName(w.name);
+      setSelectedSymbol(w.symbol);
+      setSelectedColor(w.color);
+      setInitialBalance(String(Math.round(Number(w.initial_balance ?? 0))));
       setError(null);
       setConfirmDelete(false);
       setLoading(false);
     }
-  }, [open, wallet]);
+  }, [open, walletId]);
 
   function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInitialBalance(e.target.value.replace(/\D/g, ""));
@@ -311,7 +321,7 @@ export default function EditWalletSheet({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(false)}
-                    className="flex h-10 flex-1 items-center justify-center rounded-xl bg-white text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08]"
+                    className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08]"
                   >
                     {tr("common.cancel")}
                   </button>

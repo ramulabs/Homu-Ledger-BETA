@@ -44,13 +44,22 @@ export default async function SettingsPage() {
     emerald: "bg-emerald-100 text-emerald-700",
   };
 
-  const { data: household } = profile?.household_id
-    ? await supabase
-        .from("households")
-        .select("id, name, invite_code, owner_id, currency, symbol, ai_language")
-        .eq("id", profile.household_id)
-        .single()
-    : { data: null };
+  // v1.48.3 — household + (developers only) open-ticket count in parallel.
+  // The count is only fetched for developers: RLS lets a dev SELECT all
+  // feedback, non-devs only their own, so it would be wrong for them.
+  const [{ data: household }, { count: openTickets }] = await Promise.all([
+    profile?.household_id
+      ? supabase
+          .from("households")
+          .select("id, name, invite_code, owner_id, currency, symbol, ai_language")
+          .eq("id", profile.household_id)
+          .single()
+      : Promise.resolve({ data: null }),
+    profile?.is_developer
+      ? supabase.from("feedback").select("id", { count: "exact", head: true }).eq("status", "open")
+      : Promise.resolve({ count: 0 }),
+  ]);
+  const openTicketCount = openTickets ?? 0;
 
   // Helper to display the household's current AI-language pick on the
   // RowLink without forcing the user to dive in just to see the value.
@@ -62,30 +71,17 @@ export default async function SettingsPage() {
       ? "Indonesian"
       : t("ai.lang.auto");
 
-  // Open-tickets count for the dev badge. We only fetch this for developers
-  // (RLS lets a dev SELECT all feedback; non-devs can only see their own,
-  // so the count would be wrong if queried unconditionally).
-  let openTicketCount = 0;
-  if (profile?.is_developer) {
-    const { count } = await supabase
-      .from("feedback")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "open");
-    openTicketCount = count ?? 0;
-  }
-
-
   return (
     // Bottom-nav is hidden on Settings (see bottom-nav.tsx), so the layout's
     // 7rem bottom padding leaves a big empty gap below the version label.
     // Cancel ~6rem of it via negative margin; keep ~1rem + safe-area for breathing room.
     <div className="pb-4" style={{ marginBottom: "calc(-7rem + 1rem)" }}>
       <TrackView event="settings_opened" />
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-2 backdrop-blur">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
         <TapLink
           href="/transactions"
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform [touch-action:manipulation]"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
         >
           <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
         </TapLink>

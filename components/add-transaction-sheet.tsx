@@ -31,7 +31,7 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, AlertTriangle } from "lucide-react";
-import { updateTransaction, deleteTransaction, moveTransaction, addTransfer } from "@/app/actions/transactions";
+import { updateTransaction, deleteTransaction, moveTransaction, prepareMoveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
 import { withTimeout } from "@/lib/with-timeout";
@@ -52,6 +52,7 @@ import { compressPhoto } from "@/lib/compress-photo";
 import PhotoViewer from "@/components/photo-viewer";
 import type { DbTransaction, DbCategory, DbWallet, DbHouseholdMembership, RecurringFrequency } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
+import type { MoveTarget } from "@/lib/move-server";
 
 /** v1.48.0 — input for accepting a Pending transaction. */
 export type PendingAcceptInput = {
@@ -341,6 +342,12 @@ export default function AddTransactionSheet({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showMovePicker, setShowMovePicker] = useState(false);
   const [moving, setMoving] = useState(false);
+  // v1.48.3 — two-step move: pick the ledger, then confirm the wallet and
+  // category it lands in (wallets / categories belong to one ledger).
+  const [moveTarget, setMoveTarget] = useState<MoveTarget | null>(null);
+  const [moveLoading, setMoveLoading] = useState<string | null>(null);
+  const [moveWalletId, setMoveWalletId] = useState<string | null>(null);
+  const [moveCategoryId, setMoveCategoryId] = useState<string | null>(null);
   const [showRecurringPicker, setShowRecurringPicker] = useState(false);
   const [creatingRecurring, setCreatingRecurring] = useState(false);
   const [recurringSuccess, setRecurringSuccess] = useState(false);
@@ -577,8 +584,24 @@ export default function AddTransactionSheet({
   }
 
   // ── Reset on (re-)open ──────────────────────────────────────────────
+  // v1.48.3 — keyed on the sheet SESSION (open + which transaction / pending
+  // item), never on list identity. Adding a category or wallet runs a server
+  // action that calls revalidatePath("/transactions"); Next re-renders the
+  // page in place and hands the shell fresh `wallets` / `memberships` arrays.
+  // While `wallets` and the `pending` object were deps here, that re-render
+  // re-ran this reset and wiped the amount, description and category the
+  // user had already filled in. Sync replay, pull-to-refresh and the
+  // service worker's stale-page refresh hit the same path. The latest
+  // wallet list is read through a ref instead.
+  const walletsRef = useRef(wallets);
+  useEffect(() => {
+    walletsRef.current = wallets;
+  });
+  const pendingMode = !!pending;
+  const pendingItemId = pending?.itemId ?? null;
   useEffect(() => {
     if (!open) return;
+    const wallets = walletsRef.current;
     const defaultWallet = wallets.find((w) => w.is_default) ?? wallets[0] ?? null;
     const altWallet = wallets.find((w) => w.id !== defaultWallet?.id) ?? null;
     if (editing) {
@@ -604,12 +627,12 @@ export default function AddTransactionSheet({
       setName(prefill?.name ?? "");
       setCategoryId(null);
       // Pending mode: the wallet comes from the chosen ledger once loaded.
-      setWalletId(pending ? null : defaultWallet?.id ?? null);
+      setWalletId(pendingMode ? null : defaultWallet?.id ?? null);
       setToWalletId(altWallet?.id ?? null);
       setDate(prefill?.date ?? todayString());
       setPhotoPreview(null);
       // Recurring is pre-ticked when opened from the Recurring tab.
-      setRecurringMode(!pending && !!defaultRecurring);
+      setRecurringMode(!pendingMode && !!defaultRecurring);
     }
     setPhoto(null);
     setExtraCategories([]);
@@ -640,9 +663,11 @@ export default function AddTransactionSheet({
     setPendingLedgerId(null);
     setPendingLedgerSource(null);
     setPendingLedger(null);
-    setPendingLoading(!!pending);
+    setPendingLoading(pendingMode);
     setDupes([]);
-  }, [open, editing, wallets, defaultRecurring, prefill, pending]);
+    setMoveTarget(null);
+    setMoveLoading(null);
+  }, [open, editing, defaultRecurring, prefill, pendingMode, pendingItemId]);
 
   // ── Pending mode: pick + load the ledger (v1.48.0) ──────────────────
   function applyPendingResult(res: PrepareResult) {
@@ -661,15 +686,16 @@ export default function AddTransactionSheet({
   }
 
   // First load: server suggests the ledger (history → agent → none).
+  // Keyed on the item id, not the `pending` object — see the reset effect.
   useEffect(() => {
-    if (!open || !pending) return;
+    if (!open || !pendingItemId) return;
     const req = ++pendingReqRef.current;
-    preparePendingAccept({ itemId: pending.itemId }).then((res) => {
+    preparePendingAccept({ itemId: pendingItemId }).then((res) => {
       if (req !== pendingReqRef.current) return;
       if (res.ok) setPendingLedgerSource(res.source);
       applyPendingResult(res);
     });
-  }, [open, pending]);
+  }, [open, pendingItemId]);
 
   // User picked a ledger: reload its lists + re-run the smart fill against
   // what's currently typed.
@@ -693,7 +719,7 @@ export default function AddTransactionSheet({
 
   // Duplicate warning: same amount in the chosen ledger within ±2 days.
   useEffect(() => {
-    if (!open || !pending || !pendingLedgerId || !amount) return;
+    if (!open || !pendingMode || !pendingLedgerId || !amount) return;
     let cancelled = false;
     const timer = setTimeout(async () => {
       const matches = await findPendingDuplicates({ householdId: pendingLedgerId, amount, date });
@@ -703,7 +729,7 @@ export default function AddTransactionSheet({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [open, pending, pendingLedgerId, amount, date]);
+  }, [open, pendingMode, pendingLedgerId, amount, date]);
 
   // Desktop: focus the amount field on open so the user can type with
   // their physical keyboard immediately, without an extra click.
@@ -739,7 +765,7 @@ export default function AddTransactionSheet({
   useEffect(() => {
     // Pending mode: suggestCategory() only knows the CURRENT ledger; the
     // chosen ledger's smart fill comes from preparePendingAccept instead.
-    if (!open || editing || isTransfer || pending) return;
+    if (!open || editing || isTransfer || pendingMode) return;
     if (userTouchedCategory) return;
     const trimmed = name.trim();
     if (trimmed.length < 2) return;
@@ -771,7 +797,7 @@ export default function AddTransactionSheet({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [open, editing, isTransfer, pending, userTouchedCategory, name, type]);
+  }, [open, editing, isTransfer, pendingMode, userTouchedCategory, name, type]);
 
   const userTouchedCategoryRef = useRef(userTouchedCategory);
   useEffect(() => {
@@ -871,12 +897,12 @@ export default function AddTransactionSheet({
 
     if (isTransfer) {
       if (!walletId || !toWalletId) {
-        setError("Pick both From and To wallets");
+        setError(tr("tx.pickBothWallets"));
         setLoading(false);
         return;
       }
       if (walletId === toWalletId) {
-        setError("Source and destination wallets must differ");
+        setError(tr("tx.walletsMustDiffer"));
         setLoading(false);
         return;
       }
@@ -961,14 +987,40 @@ export default function AddTransactionSheet({
     onClose();
   }
 
-  async function handleMove(targetHouseholdId: string) {
-    if (!editing) return;
+  // Step 1 — a ledger was tapped: load its wallets / categories and the
+  // suggested mapping (same name → default wallet / keyword rules).
+  async function chooseMoveLedger(targetHouseholdId: string) {
+    if (!editing || moveLoading) return;
+    setError(null);
+    setMoveLoading(targetHouseholdId);
+    const res = await prepareMoveTransaction(editing.id, targetHouseholdId);
+    setMoveLoading(null);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    setMoveTarget(res.target);
+    setMoveWalletId(res.target.walletId);
+    setMoveCategoryId(res.target.categoryId);
+  }
+
+  function closeMovePicker() {
+    setShowMovePicker(false);
+    setMoveTarget(null);
+  }
+
+  // Step 2 — move with the confirmed wallet / category.
+  async function handleMove() {
+    if (!editing || !moveTarget) return;
     setMoving(true);
-    const result = await moveTransaction(editing.id, targetHouseholdId);
+    setError(null);
+    const result = await moveTransaction(editing.id, moveTarget.householdId, {
+      walletId: moveWalletId,
+      categoryId: moveCategoryId,
+    });
     if (result?.error) {
       setError(result.error);
       setMoving(false);
-      setShowMovePicker(false);
     } else {
       onClose();
     }
@@ -1364,8 +1416,8 @@ export default function AddTransactionSheet({
               {/* Photo chips for EDIT mode (create mode uses the action row) */}
               {!isTransfer && !recurringMode && editing && !editing._pending && !photoPreview && (
                 <div className="flex gap-2">
-                  <PhotoChip icon="camera" label="Camera" onClick={() => cameraRef.current?.click()} />
-                  <PhotoChip icon="gallery" label="Gallery" onClick={() => fileRef.current?.click()} />
+                  <PhotoChip icon="camera" label={tr("tx.camera")} onClick={() => cameraRef.current?.click()} />
+                  <PhotoChip icon="gallery" label={tr("tx.gallery")} onClick={() => fileRef.current?.click()} />
                 </div>
               )}
 
@@ -1416,7 +1468,7 @@ export default function AddTransactionSheet({
                     <p className="text-center text-[13px] font-medium text-rose-700">{tr("tx.deleteConfirm")}</p>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => setConfirmDelete(false)}
-                        className="flex h-10 flex-1 items-center justify-center rounded-xl bg-white text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08]">
+                        className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08]">
                         {tr("common.cancel")}
                       </button>
                       <button type="button" onClick={handleDelete} disabled={loading}
@@ -1429,13 +1481,13 @@ export default function AddTransactionSheet({
                 {showRecurringPicker && (
                   <div className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-black/[0.08]">
                     <p className="px-4 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
-                      Repeat this transaction
+                      {tr("tx.repeatThis")}
                     </p>
                     <div className="grid grid-cols-3 gap-2 px-3 pb-3 pt-1">
                       {(["weekly", "monthly", "yearly"] as const).map((f) => (
                         <button key={f} type="button" onClick={() => handleCreateRecurring(f)} disabled={creatingRecurring}
-                          className="flex h-11 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-semibold capitalize text-[var(--foreground)] ring-1 ring-black/[0.06] transition-transform active:scale-[0.98] disabled:opacity-60">
-                          {creatingRecurring ? "…" : f}
+                          className="flex h-11 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.06] transition-transform active:scale-[0.98] disabled:opacity-60">
+                          {creatingRecurring ? "…" : tr(`recurring.${f}`)}
                         </button>
                       ))}
                     </div>
@@ -1448,26 +1500,106 @@ export default function AddTransactionSheet({
                 {recurringSuccess && (
                   <div className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-emerald-50 text-[13px] font-medium text-emerald-700 ring-1 ring-emerald-200">
                     <Check className="h-4 w-4" strokeWidth={2.5} />
-                    Added to recurring
+                    {tr("tx.addedToRecurring")}
                   </div>
                 )}
-                {showMovePicker && (
+                {showMovePicker && !moveTarget && (
                   <div className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-black/[0.08]">
-                    <p className="px-4 pb-2 pt-3 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">Move to</p>
+                    <p className="px-4 pb-2 pt-3 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{tr("tx.moveTo")}</p>
                     {otherLedgers.map(({ household_id, household }) => (
-                      <button key={household_id} type="button" onClick={() => handleMove(household_id)} disabled={moving}
+                      <button key={household_id} type="button" onClick={() => chooseMoveLedger(household_id)} disabled={!!moveLoading}
                         className="flex w-full items-center gap-3 border-t border-[var(--separator)] px-4 py-3 active:bg-black/[0.02] disabled:opacity-60">
                         <span className="text-[20px]">{household.symbol ?? "🏠"}</span>
                         <span className="flex-1 text-left text-[14px] font-medium text-[var(--foreground)]">{household.name}</span>
-                        {moving && <span className="text-[12px] text-[var(--label-secondary)]">Moving…</span>}
+                        {moveLoading === household_id
+                          ? <Loader2 className="h-4 w-4 animate-spin text-[var(--label-tertiary)]" strokeWidth={2.25} />
+                          : <ChevronRight className="h-4 w-4 text-[var(--label-tertiary)]" strokeWidth={2} />}
                       </button>
                     ))}
-                    <button type="button" onClick={() => setShowMovePicker(false)}
+                    <button type="button" onClick={closeMovePicker}
                       className="flex w-full items-center justify-center border-t border-[var(--separator)] py-2.5 text-[13px] font-medium text-[var(--label-secondary)]">
                       {tr("common.cancel")}
                     </button>
                   </div>
                 )}
+                {showMovePicker && moveTarget && (() => {
+                  const ledger = otherLedgers.find((m) => m.household_id === moveTarget.householdId)?.household;
+                  const ledgerLabel = ledger ? `${ledger.symbol ?? "🏠"} ${ledger.name}` : "";
+                  const wallet = moveTarget.wallets.find((w) => w.id === moveWalletId) ?? null;
+                  const category = moveTarget.categories.find((c) => c.id === moveCategoryId) ?? null;
+                  const fallbackWallet = moveTarget.walletMatch === "default" && moveTarget.sourceWalletName && wallet && moveWalletId === moveTarget.walletId;
+                  const guessedCategory = !!category && moveCategoryId === moveTarget.categoryId && moveTarget.categoryMatch !== null && moveTarget.categoryMatch !== "same-name";
+                  return (
+                    <div className="space-y-2 rounded-2xl bg-[var(--background)] px-3 pb-3 pt-2.5 ring-1 ring-black/[0.08]">
+                      <p className="truncate px-1 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+                        {tr("tx.moveTo")} <span className="normal-case tracking-normal text-[var(--foreground)]">{ledgerLabel}</span>
+                      </p>
+                      <div className="flex gap-2">
+                        <SelectPill
+                          ariaLabel={tr("tx.wallet")}
+                          value={moveWalletId ?? ""}
+                          onChange={(v) => setMoveWalletId(v || null)}
+                          disabled={moving || moveTarget.wallets.length === 0}
+                          options={moveTarget.wallets.map((w) => ({ value: w.id, label: w.name }))}
+                          display={
+                            wallet ? (
+                              <>
+                                <IconDot symbol={wallet.symbol} color={wallet.color} iconStyle={iconStyle} />
+                                <span className="min-w-0 flex-1 truncate">{wallet.name}</span>
+                              </>
+                            ) : (
+                              <span className="min-w-0 flex-1 truncate text-[var(--label-tertiary)]">{tr("tx.moveNoWallet")}</span>
+                            )
+                          }
+                        />
+                        <SelectPill
+                          ariaLabel={tr("tx.category")}
+                          value={moveCategoryId ?? ""}
+                          onChange={(v) => setMoveCategoryId(v || null)}
+                          disabled={moving}
+                          options={[
+                            { value: "", label: tr("tx.moveNoCategory") },
+                            ...moveTarget.categories.map((c) => ({ value: c.id, label: c.name })),
+                          ]}
+                          display={
+                            category ? (
+                              <>
+                                <IconDot symbol={category.symbol} color={category.color} iconStyle={iconStyle} />
+                                <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                                {guessedCategory && <Sparkles className="h-3.5 w-3.5 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2.25} />}
+                              </>
+                            ) : (
+                              <span className="min-w-0 flex-1 truncate text-[var(--label-tertiary)]">{tr("tx.moveNoCategory")}</span>
+                            )
+                          }
+                        />
+                      </div>
+                      {fallbackWallet && (
+                        <p className="px-1 text-[12px] leading-snug text-[var(--label-secondary)]">
+                          {tr("tx.moveWalletFallback")
+                            .replace("{wallet}", moveTarget.sourceWalletName ?? "")
+                            .replace("{ledger}", ledger?.name ?? "")
+                            .replace("{target}", wallet?.name ?? "")}
+                        </p>
+                      )}
+                      {guessedCategory && (
+                        <p className="px-1 text-[12px] leading-snug text-[var(--label-secondary)]">{tr("tx.moveCategoryGuess")}</p>
+                      )}
+                      <div className="flex gap-2 pt-0.5">
+                        <button type="button" onClick={() => setMoveTarget(null)} disabled={moving}
+                          className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60">
+                          {tr("common.back")}
+                        </button>
+                        <button type="button" onClick={handleMove} disabled={moving}
+                          className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl text-[13px] font-semibold text-white disabled:opacity-60"
+                          style={{ background: ATX_CORAL }}>
+                          {moving ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} /> : <ArrowRightLeft className="h-4 w-4" strokeWidth={2.25} />}
+                          {moving ? tr("tx.moving") : tr("tx.moveShort")}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -1509,14 +1641,14 @@ export default function AddTransactionSheet({
                       <button type="button" onClick={() => setShowRecurringPicker(true)} disabled={loading || moving || creatingRecurring}
                         className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-60">
                         <Repeat className="h-[14px] w-[14px]" strokeWidth={2} />
-                        Recurring
+                        {tr("tx.recurring")}
                       </button>
                     )}
                     {!editing._pending && otherLedgers.length > 0 && (
                       <button type="button" onClick={() => setShowMovePicker(true)} disabled={loading || moving || creatingRecurring}
                         className="inline-flex h-9 items-center gap-1 rounded-full px-2.5 text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-60">
                         <ArrowRightLeft className="h-[14px] w-[14px]" strokeWidth={2} />
-                        Move
+                        {tr("tx.moveShort")}
                       </button>
                     )}
                   </>
@@ -1567,8 +1699,8 @@ export default function AddTransactionSheet({
                 {/* Photo chips (create mode, no photo yet) */}
                 {!editing && !pending && !isTransfer && !recurringMode && !photoPreview && (
                   <>
-                    <PhotoChip icon="camera" label="Camera" onClick={() => cameraRef.current?.click()} />
-                    <PhotoChip icon="gallery" label="Gallery" onClick={() => fileRef.current?.click()} />
+                    <PhotoChip icon="camera" label={tr("tx.camera")} onClick={() => cameraRef.current?.click()} />
+                    <PhotoChip icon="gallery" label={tr("tx.gallery")} onClick={() => fileRef.current?.click()} />
                   </>
                 )}
               </div>
@@ -1773,5 +1905,55 @@ function PhotoChip({ icon, label, onClick }: { icon: "camera" | "gallery"; label
       {icon === "camera" ? <Camera className="h-[15px] w-[15px]" strokeWidth={2} /> : <ImagePlus className="h-[15px] w-[15px]" strokeWidth={2} />}
       {label}
     </button>
+  );
+}
+
+// Icon in a tinted circle — the wallet / category glyph used by the pills.
+function IconDot({ symbol, color, iconStyle }: { symbol: string; color: string; iconStyle: IconStyle }) {
+  return (
+    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${color}26` }}>
+      <CategoryIcon symbol={symbol} iconStyle={iconStyle} size={13} emojiSize="12px" color={iconStyle === "2d" ? color : undefined} />
+    </span>
+  );
+}
+
+// Native <select> under a styled pill (same pattern as the pending "Add to"
+// ledger pill and the date pill) — the OS picker does the choosing.
+function SelectPill({
+  ariaLabel,
+  value,
+  onChange,
+  options,
+  display,
+  disabled,
+}: {
+  ariaLabel: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  display: React.ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="relative h-11 min-w-0 flex-1">
+      <div className="pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--surface)] pl-2.5 pr-3 text-[13.5px] font-medium text-[var(--foreground)]">
+        {display}
+        <ChevronDown className="h-4 w-4 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
+      </div>
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none rounded-full opacity-0 disabled:cursor-default"
+        style={{ fontSize: 16 }}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

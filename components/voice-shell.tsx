@@ -32,6 +32,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { todayLocal } from "@/lib/format";
 import VoiceAurora from "@/components/voice-aurora";
 import VoiceWaveform from "@/components/voice-waveform";
 import VoiceRow from "@/components/voice-row";
@@ -713,7 +714,9 @@ export default function VoiceShell({
     // captured utterance with the navigation away.
     micRef.current?.pause();
 
-    const today = new Date().toISOString().split("T")[0];
+    // v1.48.3 — the device's date, not UTC: voice entries made before 07:00
+    // WIB were being saved on the previous day.
+    const today = todayLocal();
     const defaultWalletId = wallets.find((w) => w.is_default)?.id ?? wallets[0]?.id ?? "";
 
     try {

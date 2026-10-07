@@ -1098,8 +1098,17 @@ export type Database = {
       }
       materialize_due_recurring_items: { Args: never; Returns: number }
       move_transaction: {
-        Args: { p_target_household_id: string; p_transaction_id: string }
-        Returns: undefined
+        Args: {
+          p_category_id?: string
+          p_remap?: boolean
+          p_target_household_id: string
+          p_transaction_id: string
+          p_wallet_id?: string
+        }
+        Returns: {
+          new_category_id: string
+          new_wallet_id: string
+        }[]
       }
       redeem_promo_code: {
         Args: { p_code: string }

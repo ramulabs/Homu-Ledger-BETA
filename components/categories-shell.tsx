@@ -55,7 +55,7 @@ export default function CategoriesShell({ categories: initial, iconStyle = "2d" 
             <button
               onClick={() => router.back()}
               aria-label="Back"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
             >
               <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
             </button>

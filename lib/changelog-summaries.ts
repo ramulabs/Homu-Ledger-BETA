@@ -7,6 +7,34 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.48.3": {
+    en: "Move transactions to another ledger even when its wallets have different names, keep what you typed when adding a new category, a proper dark mode for confirmations and warnings, and faster screens.",
+    id: "Pindahkan transaksi ke buku lain meski nama dompetnya berbeda, isian tetap tersimpan saat menambah kategori baru, mode gelap yang rapi untuk konfirmasi dan peringatan, serta layar yang lebih cepat.",
+  },
+  "1.48.2": {
+    en: "Forwarding transactions into Pending by email or from your own scripts now works.",
+    id: "Meneruskan transaksi ke Tertunda lewat email atau dari skripmu sendiri kini berfungsi.",
+  },
+  "1.48.1": {
+    en: "AI assistants can add pending transactions without asking you each time — you still approve every one in Homu.",
+    id: "Asisten AI bisa menambah transaksi tertunda tanpa bertanya setiap kali — kamu tetap menyetujui semuanya di Homu.",
+  },
+  "1.48.0": {
+    en: "New Pending list: transactions from your AI assistant or email wait for you to approve them and choose the ledger.",
+    id: "Daftar Tertunda baru: transaksi dari asisten AI atau email menunggu kamu setujui dan pilihkan bukunya.",
+  },
+  "1.47.1": {
+    en: "Speak to add now lives in the Add Transaction Save button — tap it while the form is still empty.",
+    id: "Bicara untuk menambah kini ada di tombol Simpan pada Tambah Transaksi — ketuk selagi isian masih kosong.",
+  },
+  "1.47.0": {
+    en: "Connect AI assistants like Gemini or Claude to Homu so they can read your ledger and help log transactions.",
+    id: "Hubungkan asisten AI seperti Gemini atau Claude ke Homu agar bisa membaca bukumu dan membantu mencatat transaksi.",
+  },
+  "1.46.15": {
+    en: "Homu opens reliably on phones, even on a slow or patchy connection.",
+    id: "Homu terbuka dengan andal di ponsel, bahkan saat koneksi lambat atau tidak stabil.",
+  },
   "1.46.14": {
     en: "New ledgers now start with three wallets (Cash, Savings, Credit), new sign-ups default to the 2D icon style, and the example name on the sign-up screen is fresher.",
     id: "Buku baru kini dimulai dengan tiga dompet (Cash, Savings, Credit), pendaftar baru default ke gaya ikon 2D, dan contoh nama di layar pendaftaran lebih segar.",

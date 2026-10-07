@@ -93,11 +93,11 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
 
   return (
     <div className="pb-4" style={{ marginBottom: "calc(-7rem + 1rem)" }}>
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-2 backdrop-blur">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
         <TapLink
           href="/settings"
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform [touch-action:manipulation]"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
         >
           <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
         </TapLink>
@@ -187,7 +187,7 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
                   Copy this key now — it won&apos;t be shown again.
                 </p>
               </div>
-              <div className="mt-2 flex items-center gap-2 rounded-lg bg-white px-2.5 py-2 ring-1 ring-amber-200">
+              <div className="mt-2 flex items-center gap-2 rounded-lg bg-[var(--surface)] px-2.5 py-2 ring-1 ring-amber-200">
                 <code className="min-w-0 flex-1 truncate font-mono text-[12px]">
                   {newKey.key}
                 </code>

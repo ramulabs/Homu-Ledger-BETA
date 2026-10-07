@@ -23,11 +23,20 @@ export default async function MembersPage() {
   // here used to make Supabase silently return zero rows — which is why
   // the M&D ledger's Members page rendered as an empty container even
   // though Marcel and Della were both in the table.
-  const { data: memberRows } = await supabase
-    .from("household_members")
-    .select("joined_at, profile:profiles(id, name, initials, avatar_color)")
-    .eq("household_id", household.id)
-    .order("joined_at", { ascending: true });
+  // v1.48.3 — members + pending invitations in parallel.
+  const [{ data: memberRows }, { data: pending }] = await Promise.all([
+    supabase
+      .from("household_members")
+      .select("joined_at, profile:profiles(id, name, initials, avatar_color)")
+      .eq("household_id", household.id)
+      .order("joined_at", { ascending: true }),
+    supabase
+      .from("household_invitations")
+      .select("id, created_at, invited_user:profiles!household_invitations_invited_user_id_fkey(id, name, initials, avatar_color)")
+      .eq("household_id", household.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false }),
+  ]);
 
   const members = (memberRows ?? [])
     .map((row: any) => {
@@ -35,13 +44,6 @@ export default async function MembersPage() {
       return p ? { ...p, joined_at: row.joined_at } : null;
     })
     .filter(Boolean);
-
-  const { data: pending } = await supabase
-    .from("household_invitations")
-    .select("id, created_at, invited_user:profiles!household_invitations_invited_user_id_fkey(id, name, initials, avatar_color)")
-    .eq("household_id", household.id)
-    .eq("status", "pending")
-    .order("created_at", { ascending: false });
 
   const pendingInvitations = (pending ?? []).map((p: any) => ({
     id: p.id,
@@ -51,11 +53,11 @@ export default async function MembersPage() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-2 backdrop-blur">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
         <Link
           href="/settings"
           aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
         >
           <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
         </Link>

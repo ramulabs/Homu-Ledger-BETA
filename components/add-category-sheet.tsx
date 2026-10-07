@@ -23,6 +23,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import type { DbCategory, TransactionType } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 import { readViewportHeight, readViewportOffsetTop } from "@/lib/viewport";
+import { useT } from "@/lib/i18n/provider";
 
 const SOFT_PALETTE = [
   "#f97316", "#3b82f6", "#8b5cf6", "#ef4444",
@@ -60,6 +61,7 @@ type Props = {
 type IconMode = "emoji" | "symbol";
 
 export default function AddCategorySheet({ open, type = "expense", onClose, onAdded, iconStyle = "2d" }: Props) {
+  const tr = useT();
   const firstSymbol = iconStyle === "2d" ? makeLucideSymbol(LUCIDE_PICKER[0]?.id ?? "home") : SYMBOLS[0];
 
   const [name, setName] = useState("");
@@ -207,13 +209,13 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
           {/* Header */}
           <div className="flex shrink-0 items-center justify-between px-[18px] pb-2.5 pt-1">
             <span className="text-[15px] font-bold">
-              New {type === "income" ? "Income" : "Expense"} Category
+              {type === "income" ? tr("category.newIncome") : tr("category.newExpense")}
             </span>
             <button
               type="button"
               onClick={handleClose}
               className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
-              aria-label="Close"
+              aria-label={tr("common.close")}
             >
               <X className="h-4 w-4" strokeWidth={2.25} />
             </button>
@@ -245,7 +247,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                     !name && "text-[var(--label-tertiary)]"
                   )}
                 >
-                  {name || "Category name"}
+                  {name || tr("category.namePlaceholder")}
                 </span>
               </div>
 
@@ -254,8 +256,8 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                placeholder="Category name"
-                aria-label="Category name"
+                placeholder={tr("category.namePlaceholder")}
+                aria-label={tr("category.namePlaceholder")}
                 className="h-11 w-full rounded-[16px] border border-[var(--separator)] bg-[var(--background)] px-4 text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
               />
             </div>
@@ -278,7 +280,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                         : "text-[var(--label-secondary)]"
                     )}
                   >
-                    {m === "emoji" ? "Custom" : iconStyle === "2d" ? "Icons" : "Symbols"}
+                    {m === "emoji" ? tr("category.custom") : iconStyle === "2d" ? tr("category.icons") : tr("category.symbols")}
                   </button>
                 ))}
               </div>
@@ -288,8 +290,8 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                   type="text"
                   value={emoji}
                   onChange={(e) => setEmoji(e.target.value.slice(0, 4))}
-                  placeholder="Paste an emoji"
-                  aria-label="Custom emoji"
+                  placeholder={tr("category.pasteEmoji")}
+                  aria-label={tr("category.pasteEmoji")}
                   className="h-11 w-full shrink-0 rounded-[14px] border border-[var(--separator)] bg-[var(--background)] px-4 text-center text-[18px] outline-none focus:border-[var(--foreground)]/30"
                 />
               ) : (
@@ -339,7 +341,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
 
               {/* Colour */}
               <p className="mb-1.5 mt-3 shrink-0 text-[12px] font-semibold text-[var(--label-secondary)]">
-                Color
+                {tr("category.color")}
               </p>
               <div className="flex shrink-0 flex-wrap gap-2 pb-0.5">
                 {SOFT_PALETTE.map((c) => {
@@ -375,7 +377,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                 disabled={!canSave}
                 className="flex h-12 w-full items-center justify-center rounded-[18px] bg-[var(--foreground)] text-[14.5px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-50"
               >
-                {loading ? "Adding…" : "Add Category"}
+                {loading ? tr("common.adding") : tr("category.addCategory")}
               </button>
             </div>
           </form>

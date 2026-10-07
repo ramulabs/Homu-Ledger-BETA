@@ -207,7 +207,7 @@ function PendingRowCard({
               type="button"
               onClick={() => setConfirming(false)}
               disabled={busy}
-              className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.08]"
+              className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[var(--surface)] text-[12px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.08]"
             >
               {t("common.cancel")}
             </button>
