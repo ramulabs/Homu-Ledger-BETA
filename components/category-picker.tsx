@@ -150,7 +150,7 @@ export default function CategoryPicker({
           <div className="grid min-h-0 grid-cols-2 gap-2 overflow-y-auto px-3">
             {visibleCategories.length === 0 ? (
               <p className="col-span-2 py-8 text-center text-[14px] text-[var(--label-secondary)]">
-                No {type} categories yet. Add one below.
+                {type === "income" ? tr("category.emptyIncome") : tr("category.emptyExpense")}
               </p>
             ) : (
               visibleCategories.map((cat) => {
@@ -204,7 +204,7 @@ export default function CategoryPicker({
               className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--background)] py-3 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] transition-colors active:bg-black/[0.04]"
             >
               <Plus className="h-4 w-4" strokeWidth={2.25} />
-              Add new category
+              {tr("category.addNew")}
             </button>
           </div>
           )}

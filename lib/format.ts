@@ -82,3 +82,13 @@ export function formatShortDate(date: string, todayKey?: string | null): string 
   if (todayKey && todayKey === date) return "Today";
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
+
+/**
+ * Today's date as YYYY-MM-DD in the DEVICE's timezone. Use this for any
+ * "today" a user sees or saves — `new Date().toISOString()` is UTC, which in
+ * Indonesia (UTC+7..+9) is still yesterday until 07:00–09:00 local time.
+ */
+export function todayLocal(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}

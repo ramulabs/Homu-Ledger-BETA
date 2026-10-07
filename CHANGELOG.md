@@ -4,6 +4,35 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.48.3 - October 8, 2026
+
+**Fixes: move to another ledger, form wiped when adding a category · performance · dark mode & consistency.**
+
+### Move to another ledger (migration `0036_move_transaction_remap.sql`)
+
+- **Root cause:** the production `move_transaction` cleared `category_id` but kept `wallet_id`. Wallets belong to one ledger, so the `validate_transaction_ledger_refs` trigger rejected every move of a transaction that had a wallet ("Wallet does not belong to this ledger") — effectively all of them.
+- New signature `move_transaction(p_transaction_id, p_target_household_id, p_wallet_id = null, p_category_id = null, p_remap = true)`. Wallet: given → validated against the target; else same name (case/space-insensitive) → target default → oldest. Category: given → validated (same ledger + type); else same name + type → none. Clears `recurring_item_id`, refuses transfers and same-ledger moves, `created_by` = mover (unchanged). `anon` EXECUTE revoked. The old 2-argument call keeps working.
+- UI: Move is now two steps — pick the ledger, then confirm the wallet and category (native selects, pre-filled by `prepareMove` in `lib/move-server.ts`: same name → default wallet; same-name category → Homu keyword rules). A hint explains when the wallet fell back to the default ("No “BCA” wallet in Family — using Cash").
+- Receipt photos are copied into the target ledger's storage folder (storage RLS is per ledger folder), then the old object is removed.
+
+### Form wiped when adding a category
+
+- **Root cause:** `AddTransactionSheet`'s reset effect depended on `wallets` and the `pending` object. Adding a category/wallet runs a server action with `revalidatePath("/transactions")`; Next re-renders the page in place with new arrays, so the reset re-ran and cleared amount, description and category. Sync replay, pull-to-refresh and the service worker's stale refresh hit the same path.
+- Reset is now keyed on the sheet session (`open`, `editing`, pending item id); the wallet list is read through a ref. Same class of bug fixed in `EditWalletSheet` (Set as default wiped unsaved edits).
+
+### Performance
+
+- `/transactions`: two parallel stages instead of household → materialise RPC → batch; totals from the existing `get_ledger_totals()` aggregate instead of paging every row (verified identical for all 16 active ledgers). Every save's revalidation re-renders this page, so saves return sooner too.
+- Reports, Settings and Members fetch in parallel. Wallets page balances are now paged — the unpaged select was capped at 1,000 rows by PostgREST.
+
+### Design & consistency
+
+- Dark mode: Tailwind's pastel status shades (rose/amber/emerald/blue/violet 50–200, 700–900) are remapped to dark tints in `globals.css`, fixing ~150 bright banners/confirm panels at once; `bg-white` panels whose text is `--foreground` (white-on-white in dark) use `--surface`; the `dark:` variant follows the app theme.
+- 22 Settings-family headers normalised to one spec (`pt-2 pb-3`, token ring/shadow).
+- `AddRecurringSheet` no longer pins `<body>` with `position:fixed` (iOS standalone cream box, same fix as v1.46.5).
+- Voice entries and the recurring start date use the device date (`todayLocal()`), not UTC.
+- Category picker, New Category sheet, filter sheet and edit panels fully translated (EN/ID). Settings → Updates summaries back-filled for v1.46.15–v1.48.2 (they were hidden).
+
 ## v1.48.2 - October 6, 2026
 
 **Fix: inbox ingestion endpoints were unreachable.** The middleware matcher ran cookie auth on `/api/inbox/*` and redirected every caller to `/login` (307), so the API-key path (`/api/inbox/transactions`, n8n / scripts) and the email-forwarding webhook (`/api/inbox/email`) had never worked in production. Both endpoints authenticate themselves (API-key Bearer, Cloudflare HMAC) and are now excluded from the matcher.

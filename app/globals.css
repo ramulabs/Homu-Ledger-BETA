@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+/* `dark:` utilities follow the APP theme (Settings → Theme writes
+   data-theme on <html>), not just the OS — and still follow the OS in
+   auto mode (no data-theme). Tailwind's default `dark:` only reads the OS
+   setting, so it disagreed with the app whenever the two differed. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS
    ─────────────────────────────────────────────────────────────────────────
@@ -135,6 +150,40 @@
   --shadow-float:      0 6px 24px rgba(0, 0, 0, 0.55),
                        0 1px 4px rgba(0, 0, 0, 0.40);
   --shadow-sheet:      0 -8px 28px rgba(0, 0, 0, 0.55);
+
+  /* ── Status palette remap · dark (v1.48.3) ────────────────────────────
+     Banners, warnings and confirm panels across the app use Tailwind's
+     pastel status shades directly (bg-rose-50 / ring-rose-200 /
+     text-rose-700, amber, emerald, …) — ~150 uses. Those are light-mode
+     colours: in dark mode they rendered as bright pastel boxes. Tailwind v4
+     utilities read var(--color-*), so remapping the PASTEL shades here
+     (50/100/200 fills + rings → translucent tints, 700/800/900 text →
+     light tones, matching the --tint-* tokens) fixes every use at once.
+     Solid fills (500/600, used with white text) are left alone. New code
+     should use the --tint-* tokens directly. */
+  --color-rose-50:     rgba(244, 63, 94, 0.14);
+  --color-rose-100:    rgba(244, 63, 94, 0.20);
+  --color-rose-200:    rgba(244, 63, 94, 0.32);
+  --color-rose-700:    #fda4af;
+  --color-rose-800:    #fecdd3;
+  --color-rose-900:    #ffe4e6;
+  --color-amber-50:    rgba(245, 158, 11, 0.14);
+  --color-amber-100:   rgba(245, 158, 11, 0.20);
+  --color-amber-200:   rgba(245, 158, 11, 0.32);
+  --color-amber-700:   #fcd34d;
+  --color-amber-800:   #fde68a;
+  --color-amber-900:   #fef3c7;
+  --color-emerald-50:  rgba(16, 185, 129, 0.14);
+  --color-emerald-100: rgba(16, 185, 129, 0.20);
+  --color-emerald-200: rgba(16, 185, 129, 0.32);
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+  --color-emerald-900: #d1fae5;
+  --color-blue-100:    rgba(59, 130, 246, 0.20);
+  --color-blue-700:    #93c5fd;
+  --color-blue-800:    #bfdbfe;
+  --color-violet-100:  rgba(139, 92, 246, 0.22);
+  --color-violet-700:  #c4b5fd;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -169,6 +218,31 @@
     --shadow-float:      0 6px 24px rgba(0, 0, 0, 0.55),
                          0 1px 4px rgba(0, 0, 0, 0.40);
     --shadow-sheet:      0 -8px 28px rgba(0, 0, 0, 0.55);
+
+    /* Status palette remap (v1.48.3) — see [data-theme="dark"] above. */
+    --color-rose-50:     rgba(244, 63, 94, 0.14);
+    --color-rose-100:    rgba(244, 63, 94, 0.20);
+    --color-rose-200:    rgba(244, 63, 94, 0.32);
+    --color-rose-700:    #fda4af;
+    --color-rose-800:    #fecdd3;
+    --color-rose-900:    #ffe4e6;
+    --color-amber-50:    rgba(245, 158, 11, 0.14);
+    --color-amber-100:   rgba(245, 158, 11, 0.20);
+    --color-amber-200:   rgba(245, 158, 11, 0.32);
+    --color-amber-700:   #fcd34d;
+    --color-amber-800:   #fde68a;
+    --color-amber-900:   #fef3c7;
+    --color-emerald-50:  rgba(16, 185, 129, 0.14);
+    --color-emerald-100: rgba(16, 185, 129, 0.20);
+    --color-emerald-200: rgba(16, 185, 129, 0.32);
+    --color-emerald-700: #6ee7b7;
+    --color-emerald-800: #a7f3d0;
+    --color-emerald-900: #d1fae5;
+    --color-blue-100:    rgba(59, 130, 246, 0.20);
+    --color-blue-700:    #93c5fd;
+    --color-blue-800:    #bfdbfe;
+    --color-violet-100:  rgba(139, 92, 246, 0.22);
+    --color-violet-700:  #c4b5fd;
   }
 }
 

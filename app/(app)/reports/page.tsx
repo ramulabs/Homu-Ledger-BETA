@@ -52,31 +52,34 @@ export default async function ReportsPage() {
   const { supabase, profile } = await requireSession();
   if (!profile?.household_id) redirect("/onboarding");
 
-  const { data: household } = await supabase
-    .from("households")
-    .select("id, currency")
-    .eq("id", profile.household_id)
-    .single();
+  const householdId = profile.household_id;
 
-  if (!household) redirect("/onboarding");
-
-  const [transactions, { data: membersRaw }, { data: categoriesRaw }, { data: walletsRaw }] = await Promise.all([
-    fetchReportTransactions(supabase, household.id),
+  // v1.48.3 — the household row is fetched alongside everything else (its id
+  // is already known from the profile) instead of first, on its own.
+  const [{ data: household }, transactions, { data: membersRaw }, { data: categoriesRaw }, { data: walletsRaw }] = await Promise.all([
+    supabase
+      .from("households")
+      .select("id, currency")
+      .eq("id", householdId)
+      .single(),
+    fetchReportTransactions(supabase, householdId),
     supabase
       .from("household_members")
       .select("profile:profiles(id, name, initials, avatar_color)")
-      .eq("household_id", household.id),
+      .eq("household_id", householdId),
     supabase
       .from("categories")
       .select("id, name, symbol, color, type")
-      .eq("household_id", household.id)
+      .eq("household_id", householdId)
       .order("created_at", { ascending: true }),
     supabase
       .from("wallets")
       .select("id, name, symbol, color, initial_balance, is_default")
-      .eq("household_id", household.id)
+      .eq("household_id", householdId)
       .order("created_at", { ascending: true }),
   ]);
+
+  if (!household) redirect("/onboarding");
 
   const members: Record<string, DbMember> = {};
   for (const row of membersRaw ?? []) {

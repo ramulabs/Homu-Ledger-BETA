@@ -6,7 +6,7 @@ import { addRecurringItem, updateRecurringItem, deleteRecurringItem } from "@/ap
 import CategoryPicker from "@/components/category-picker";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
-import { formatShortDate } from "@/lib/format";
+import { formatShortDate, todayLocal } from "@/lib/format";
 import { useT, useLang } from "@/lib/i18n/provider";
 import type { DbRecurringItem, DbCategory, RecurringFrequency } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
@@ -14,9 +14,8 @@ import { readViewportHeight } from "@/lib/viewport";
 
 type RepeatUntilMode = "forever" | "date";
 
-function todayString() {
-  return new Date().toISOString().split("T")[0];
-}
+// v1.48.3 — local date, not UTC (see todayLocal).
+const todayString = todayLocal;
 
 type Props = {
   open: boolean;
@@ -95,34 +94,27 @@ export default function AddRecurringSheet({
     return () => cancelAnimationFrame(id);
   }, [open, editing]);
 
-  // Body-scroll lock. See add-transaction-sheet.tsx for the v1.26.0
-  // notes on why position:fixed body is needed in addition to
-  // overflow:hidden — iOS PWA was bleeding momentum scroll through to
-  // the background page when the keyboard was up. Mirror that fix
-  // here for the recurring entry point.
+  // Body-scroll lock — same approach as AddTransactionSheet (v1.46.5).
+  // v1.48.3: this sheet still pinned <body> with position:fixed, the trick
+  // AddTransactionSheet dropped because in the iOS home-screen app it makes
+  // nested fixed overlays (the category picker / new-category bento opened
+  // from here) size to the fixed <body> instead of the screen, leaving the
+  // "cream box" at the bottom. overflow:hidden + touch-action + the
+  // touchmove guard below keep the page locked without it, and the page
+  // keeps its scroll position for free.
   useEffect(() => {
     if (!open) return;
-
-    const scrollY = window.scrollY;
     const html = document.documentElement;
     const body = document.body;
-
     const prev = {
       htmlOverflow: html.style.overflow,
       bodyOverflow: body.style.overflow,
       htmlTouchAction: html.style.touchAction,
-      bodyPosition: body.style.position,
-      bodyTop: body.style.top,
-      bodyWidth: body.style.width,
       bodyOverscroll: body.style.overscrollBehavior,
     };
-
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
     html.style.touchAction = "none";
-    body.style.position = "fixed";
-    body.style.top = `-${scrollY}px`;
-    body.style.width = "100%";
     body.style.overscrollBehavior = "none";
 
     function onTouchMove(e: TouchEvent) {
@@ -138,11 +130,7 @@ export default function AddRecurringSheet({
       html.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
       html.style.touchAction = prev.htmlTouchAction;
-      body.style.position = prev.bodyPosition;
-      body.style.top = prev.bodyTop;
-      body.style.width = prev.bodyWidth;
       body.style.overscrollBehavior = prev.bodyOverscroll;
-      window.scrollTo(0, scrollY);
       document.removeEventListener("touchmove", onTouchMove);
     };
   }, [open]);

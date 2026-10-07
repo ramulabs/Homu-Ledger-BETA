@@ -545,7 +545,9 @@ export default function TransactionsShell({
           {isFiltering && (
             <div className="mx-5 mb-1 flex items-center justify-between rounded-xl bg-[var(--foreground)]/[0.05] px-3.5 py-2">
               <p className="text-[12px] font-medium text-[var(--foreground)]">
-                {filteredTransactions.length} result{filteredTransactions.length !== 1 ? "s" : ""} filtered
+                {filteredTransactions.length === 1
+                  ? t("filter.resultsOne")
+                  : t("filter.resultsMany").replace("{n}", String(filteredTransactions.length))}
               </p>
               <button
                 onClick={() => { setActiveCategories([]); setActiveWallets([]); setActiveDateFilter("all"); setSearchQuery(""); setSearchOpen(false); }}
@@ -587,7 +589,7 @@ export default function TransactionsShell({
                 {/* Infinite scroll sentinel */}
                 <div ref={sentinelRef} className="h-1" />
                 {hasMore && (
-                  <p className="py-4 text-center text-[12px] text-[var(--label-tertiary)]">Loading more…</p>
+                  <p className="py-4 text-center text-[12px] text-[var(--label-tertiary)]">{t("tx.loadingMore")}</p>
                 )}
               </>
             ) : (
@@ -749,7 +751,7 @@ function FilterSheet({
           <h2 className="text-[17px] font-semibold text-[var(--foreground)]">{t("filter.title")}</h2>
           {hasActive && (
             <button onClick={onClear} className="text-[13px] font-semibold text-rose-500">
-              Clear filter
+              {t("filter.clear")}
             </button>
           )}
         </div>
@@ -758,7 +760,7 @@ function FilterSheet({
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5">
         {/* Date filter */}
-        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">Date</p>
+        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{t("filter.date")}</p>
         <div className="flex flex-wrap gap-2 mb-4">
           {DATE_OPTIONS.map(({ key, label }) => (
             <button
@@ -779,7 +781,7 @@ function FilterSheet({
         {pendingDateFilter === "custom" && (
           <div className="mb-4 flex gap-3">
             <div className="flex-1">
-              <p className="mb-1 text-[11px] font-medium text-[var(--label-tertiary)]">From</p>
+              <p className="mb-1 text-[11px] font-medium text-[var(--label-tertiary)]">{t("filter.from")}</p>
               <input
                 type="date"
                 value={pendingCustomStart}
@@ -789,7 +791,7 @@ function FilterSheet({
               />
             </div>
             <div className="flex-1">
-              <p className="mb-1 text-[11px] font-medium text-[var(--label-tertiary)]">To</p>
+              <p className="mb-1 text-[11px] font-medium text-[var(--label-tertiary)]">{t("filter.to")}</p>
               <input
                 type="date"
                 value={pendingCustomEnd}
@@ -838,7 +840,7 @@ function FilterSheet({
         )}
 
         {/* Category filter */}
-        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">Category</p>
+        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{t("tx.category")}</p>
         <div className="flex flex-wrap gap-2 pb-4">
           {categories.map((cat) => {
             const selected = pendingCategories.includes(cat.id);
@@ -875,7 +877,7 @@ function FilterSheet({
           onClick={onApply}
           className="w-full h-12 rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)]"
         >
-          Apply Filter
+          {t("filter.applyFilter")}
         </button>
       </div>
     </>

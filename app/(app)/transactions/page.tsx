@@ -42,6 +42,28 @@ async function fetchLedgerTotalRows(
   return rows;
 }
 
+// v1.48.3 — income / expense totals come from the get_ledger_totals()
+// aggregate (migration 0011): one row back instead of every (type, amount)
+// pair in the ledger, which grew with the ledger and was re-fetched on every
+// render and every revalidation after a save. Falls back to summing the rows
+// if the RPC is unavailable or the profile's ledger isn't the active one.
+async function fetchLedgerTotals(
+  supabase: Supabase,
+  householdId: string
+): Promise<{ income: number; expenses: number }> {
+  const { data, error } = await supabase.rpc("get_ledger_totals");
+  const row = data?.[0];
+  if (!error && row) return { income: Number(row.income), expenses: Number(row.expenses) };
+  const rows = await fetchLedgerTotalRows(supabase, householdId);
+  let income = 0;
+  let expenses = 0;
+  for (const t of rows) {
+    if (t.type === "income") income += Number(t.amount);
+    else expenses += Number(t.amount);
+  }
+  return { income, expenses };
+}
+
 // Initial server-render only fetches the most recent INITIAL_TX_LIMIT rows.
 // The client requests older batches via /api/transactions when the user
 // scrolls past the cached set. This caps the first-paint RSC payload at
@@ -81,70 +103,77 @@ export default async function TransactionsPage() {
   const { supabase, profile } = await requireSession();
   if (!profile?.household_id) redirect("/onboarding");
 
-  const { data: household } = await supabase
-    .from("households")
-    .select("id, name, opening_balance, currency, symbol")
-    .eq("id", profile.household_id)
-    .single();
+  const householdId = profile.household_id;
 
-  if (!household) redirect("/onboarding");
-
-  // Auto-materialize any recurring items whose due date has passed.
-  // SECURITY DEFINER RPC inserts transactions and advances next_due_date.
-  // Best-effort: if the migration hasn't been applied to this DB yet, the
-  // RPC won't exist — we swallow the error so the page still renders.
+  // v1.48.3 — two parallel stages instead of household → materialise →
+  // everything. The household row isn't needed to start the other queries
+  // (its id is the profile's household_id), and the materialise RPC only has
+  // to finish before the reads it can change: transactions, totals and the
+  // recurring items' next due dates.
   //
-  // Note: the previous form `await ....rpc(...).then(...)` resolved before
-  // the RPC actually completed (the .then returns a Promise that resolves
-  // to undefined immediately). Pages could render with stale rows.
-  // Awaiting the rpc() directly fixes that — first hit after a due date
-  // now sees the materialised rows.
-  const { error: materializeError } = await supabase.rpc("materialize_due_recurring_items");
-  if (materializeError) console.warn("[recurring] materialize failed:", materializeError.message);
-
-  // v1.41.0: read the voice feature flag in parallel with everything else.
-  // Empty / missing → false. Server-side gate; the FAB never renders for
-  // households on environments where the dev hasn't flipped it on.
-  const voiceFlagPromise = supabase
-    .from("app_settings")
-    .select("value")
-    .eq("key", "voice_input_enabled")
-    .maybeSingle();
-
-  const [{ data: categoriesRaw }, { data: walletsRaw }, { data: membersRaw }, txRaw, { data: membershipsRaw }, { data: recurringRaw }, { data: invitationsRaw }, totals, { data: voiceFlagRow }] = await Promise.all([
+  // materialize_due_recurring_items: SECURITY DEFINER RPC that inserts any
+  // recurring items whose due date has passed and advances next_due_date.
+  // Best-effort — if it fails the page still renders.
+  const [
+    { data: household },
+    { error: materializeError },
+    { data: categoriesRaw },
+    { data: walletsRaw },
+    { data: membersRaw },
+    { data: membershipsRaw },
+    { data: invitationsRaw },
+    { data: voiceFlagRow },
+  ] = await Promise.all([
+    supabase
+      .from("households")
+      .select("id, name, opening_balance, currency, symbol")
+      .eq("id", householdId)
+      .single(),
+    supabase.rpc("materialize_due_recurring_items"),
     supabase
       .from("categories")
       .select("id, name, symbol, color, type")
-      .eq("household_id", household.id)
+      .eq("household_id", householdId)
       .order("created_at", { ascending: true }),
     supabase
       .from("wallets")
       .select("id, name, symbol, color, initial_balance, is_default")
-      .eq("household_id", household.id)
+      .eq("household_id", householdId)
       .order("is_default", { ascending: false })
       .order("created_at", { ascending: true }),
     supabase
       .from("household_members")
       .select("profile:profiles(id, name, initials, avatar_color)")
-      .eq("household_id", household.id),
-    fetchLedgerTransactions(supabase, household.id),
+      .eq("household_id", householdId),
     supabase
       .from("household_members")
       .select("household_id, role, household:households(id, name, currency, symbol)")
       .eq("profile_id", profile.id),
-    supabase
-      .from("recurring_items")
-      .select("id, type, amount, name, category_id, wallet_id, frequency, next_due_date, repeat_until, created_by, created_at, categories(id, name, symbol, color, type), wallets(id, name, symbol, color, initial_balance, is_default)")
-      .eq("household_id", household.id)
-      .order("created_at", { ascending: false }),
     supabase
       .from("household_invitations")
       .select("id, household_id, invited_by, status, created_at, household:households(id, name, symbol, currency), inviter:profiles!household_invitations_invited_by_fkey(id, name, initials, avatar_color)")
       .eq("invited_user_id", profile.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false }),
-    fetchLedgerTotalRows(supabase, household.id),
-    voiceFlagPromise,
+    // v1.41.0: voice feature flag. Empty / missing → false.
+    supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "voice_input_enabled")
+      .maybeSingle(),
+  ]);
+
+  if (!household) redirect("/onboarding");
+  if (materializeError) console.warn("[recurring] materialize failed:", materializeError.message);
+
+  const [txRaw, totals, { data: recurringRaw }] = await Promise.all([
+    fetchLedgerTransactions(supabase, householdId),
+    fetchLedgerTotals(supabase, householdId),
+    supabase
+      .from("recurring_items")
+      .select("id, type, amount, name, category_id, wallet_id, frequency, next_due_date, repeat_until, created_by, created_at, categories(id, name, symbol, color, type), wallets(id, name, symbol, color, initial_balance, is_default)")
+      .eq("household_id", householdId)
+      .order("created_at", { ascending: false }),
   ]);
   // v1.41.1: voice is dev-only for now. The flag still has to be flipped
   // in app_settings AND the viewing profile has to be a developer. This
@@ -206,9 +235,7 @@ export default async function TransactionsPage() {
     }];
   });
 
-  const totalRows = totals;
-  const income = totalRows.filter((t) => t.type === "income").reduce((s, t) => s + t.amount, 0);
-  const expenses = totalRows.filter((t) => t.type === "expense").reduce((s, t) => s + t.amount, 0);
+  const { income, expenses } = totals;
   const balance = Number(household.opening_balance) + income - expenses;
 
   return (

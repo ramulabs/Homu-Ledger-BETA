@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { prepareMove, relocateMovedPhoto, type PrepareMoveResult } from "@/lib/move-server";
 import { LIMITS, validateAmount, validateDate, validateName, validateType } from "@/lib/validation";
 import { getClientOpId, isClientOpDuplicate } from "@/lib/idempotency";
 
@@ -206,16 +208,49 @@ export async function addTransfer(formData: FormData): Promise<ActionResult> {
   return {};
 }
 
-export async function moveTransaction(id: string, targetHouseholdId: string): Promise<ActionResult> {
+/**
+ * v1.48.3 — Step 1 of "Move to another ledger": the target ledger's wallets
+ * and categories plus the suggested mapping (same name → default wallet /
+ * keyword rules). Wallets and categories belong to one ledger, so the user
+ * confirms (or changes) them before the move.
+ */
+export async function prepareMoveTransaction(id: string, targetHouseholdId: string): Promise<PrepareMoveResult> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Not authenticated" };
+  return prepareMove(getAdminClient(), user.id, { transactionId: id, targetHouseholdId });
+}
+
+/**
+ * Step 2: move into the target ledger. With `refs` (the Move panel) the
+ * wallet / category are exactly what the user picked — null means "no
+ * wallet" / "uncategorised". Without it they're remapped server-side by
+ * name (see migration 0036).
+ */
+export async function moveTransaction(
+  id: string,
+  targetHouseholdId: string,
+  refs?: { walletId: string | null; categoryId: string | null }
+): Promise<ActionResult> {
   const { supabase } = await getHouseholdId();
   if (!supabase) return { error: "Not authenticated" };
 
   const { error } = await supabase.rpc("move_transaction", {
     p_transaction_id: id,
     p_target_household_id: targetHouseholdId,
+    ...(refs
+      ? {
+          p_remap: false,
+          ...(refs.walletId ? { p_wallet_id: refs.walletId } : {}),
+          ...(refs.categoryId ? { p_category_id: refs.categoryId } : {}),
+        }
+      : {}),
   });
 
   if (error) return { error: error.message };
+  await relocateMovedPhoto(getAdminClient(), id, targetHouseholdId).catch((e) =>
+    console.warn("[move] photo relocation failed:", e instanceof Error ? e.message : e)
+  );
   revalidatePath("/transactions");
   revalidatePath("/reports");
   return {};

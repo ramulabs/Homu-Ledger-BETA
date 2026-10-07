@@ -150,10 +150,10 @@ export default function DesignSystemShell() {
   return (
     <div className="pb-16">
       {/* ── Sticky header ─────────────────────────────────────────── */}
-      <header className="sticky top-[env(safe-area-inset-top)] z-[var(--z-header)] flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
         <Link
           href="/settings"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
         >
           <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
         </Link>
@@ -161,7 +161,7 @@ export default function DesignSystemShell() {
         <button
           onClick={copyCss}
           aria-label="Copy CSS"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
         >
           {copied ? <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> : <Copy className="h-[18px] w-[18px]" strokeWidth={2} />}
         </button>
