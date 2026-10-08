@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-09-04T19:16:13.904Z
+updated_at: 2026-10-08T19:07:33.381Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ Alternatively, a signed HMAC token generated client-side from the session JWT wo
 
 
 **Note (2026-09-04 health check):** this is a log-flooding/diagnostic-probing vector, not a data-access issue — no RLS applies (the route only writes to the server console).
-Last seen by health check: 2026-09-04T19:16:13.904Z
+Last seen by health check: 2026-10-08T19:07:33.381Z
