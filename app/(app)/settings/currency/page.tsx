@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { updateHouseholdCurrency } from "@/app/actions/households";
 import { CURRENCIES } from "@/lib/currencies";
-import { cn } from "@/lib/cn";
+import StickyHeader from "@/components/ui/sticky-header";
 
 export default function CurrencyPage() {
   const router = useRouter();
@@ -25,22 +25,13 @@ export default function CurrencyPage() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Currency</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Currency" />
 
       <p className="px-6 pb-3 text-[13px] text-[var(--label-secondary)]">
         Choose the default currency for this ledger. Existing transactions are not converted.
       </p>
 
-      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {CURRENCIES.map((c) => {
           const isSelected = selected === c.code;
           return (
@@ -48,7 +39,7 @@ export default function CurrencyPage() {
               <button
                 onClick={() => handleSelect(c.code)}
                 disabled={saving}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-black/[0.02] disabled:opacity-60"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-[var(--fill-quaternary)] disabled:opacity-60"
               >
                 <span className="w-10 shrink-0 text-[18px] font-semibold text-[var(--label-secondary)]">{c.symbol}</span>
                 <div className="min-w-0 flex-1">

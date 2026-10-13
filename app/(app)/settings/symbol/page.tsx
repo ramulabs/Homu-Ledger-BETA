@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 import { updateHouseholdSymbol } from "@/app/actions/households";
 import FilterTabs from "@/components/ui/filter-tabs";
 import Button from "@/components/ui/buttons";
 import { cn } from "@/lib/cn";
+import StickyHeader from "@/components/ui/sticky-header";
 
 const SYMBOL_GRID = [
   "🏠", "🏡", "🏘", "🏰", "🏯",
@@ -41,17 +41,7 @@ export default function SymbolPickerPage() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Ledger Symbol</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Ledger Symbol" />
 
       <p className="mt-2 px-6 text-[13px] text-[var(--label-secondary)]">
         Pick an emoji to represent this ledger.
@@ -77,7 +67,7 @@ export default function SymbolPickerPage() {
               disabled={loading}
               onClick={() => handlePick(emoji)}
               className={cn(
-                "flex aspect-square items-center justify-center rounded-2xl bg-[var(--surface)] text-[28px] ring-1 ring-[var(--ring-default)] transition-all active:scale-95 active:bg-black/[0.04] disabled:opacity-50"
+                "flex aspect-square items-center justify-center rounded-2xl bg-[var(--surface)] text-[28px] ring-1 ring-[var(--ring-default)] transition-all active:scale-95 active:bg-[var(--fill-quaternary)] disabled:opacity-50"
               )}
             >
               {emoji}
@@ -98,7 +88,7 @@ export default function SymbolPickerPage() {
             )}
           </div>
           <div>
-            <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+            <label className="eyebrow mb-1.5 block">
               Emoji
             </label>
             <input

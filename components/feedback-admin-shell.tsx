@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ChevronLeft, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { updateFeedbackStatus, replyToFeedback, deleteFeedback } from "@/app/actions/feedback";
 import { cn } from "@/lib/cn";
 import type { DbFeedback, FeedbackStatus } from "@/lib/types";
+import StickyHeader from "@/components/ui/sticky-header";
 
 const STATUS_OPTIONS: { code: FeedbackStatus; label: string; pill: string }[] = [
   { code: "open",        label: "Open",        pill: "bg-amber-100/80 text-amber-800" },
@@ -34,19 +34,10 @@ export default function FeedbackAdminShell({ tickets, profilesById }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <Link
-          href="/settings"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </Link>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Feedback Tickets</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Feedback Tickets" backHref="/settings" />
 
       <div className="px-5 pt-2">
-        <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+        <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
           <FilterTab active={filter === "all"} onClick={() => setFilter("all")} label="All" count={tickets.length} />
           {STATUS_OPTIONS.map((s) => (
             <FilterTab
@@ -62,7 +53,7 @@ export default function FeedbackAdminShell({ tickets, profilesById }: Props) {
 
       <ul className="mx-5 mt-4 space-y-3">
         {visible.length === 0 ? (
-          <li className="rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-black/[0.04]">
+          <li className="rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-[var(--ring-subtle)]">
             <p className="text-[15px] font-medium text-[var(--foreground)]">No tickets here.</p>
           </li>
         ) : (
@@ -92,7 +83,7 @@ function FilterTab({ active, onClick, label, count }: { active: boolean; onClick
       )}
     >
       {label}
-      <span className="rounded-full bg-black/[0.06] px-1.5 text-[10px] font-semibold">{count}</span>
+      <span className="rounded-full bg-[var(--fill-tertiary)] px-1.5 text-[10px] font-semibold">{count}</span>
     </button>
   );
 }
@@ -147,13 +138,13 @@ function TicketCard({
   const statusInfo = STATUS_OPTIONS.find((s) => s.code === ticket.status) ?? STATUS_OPTIONS[0];
 
   return (
-    <li className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
+    <li className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]">
       <button
         onClick={() => {
           setExpanded((v) => !v);
           if (!expanded) signAttachments();
         }}
-        className="flex w-full items-start gap-3 px-4 py-3.5 text-left active:bg-black/[0.02]"
+        className="flex w-full items-start gap-3 px-4 py-3.5 text-left active:bg-[var(--fill-quaternary)]"
       >
         {author ? (
           <span
@@ -163,7 +154,7 @@ function TicketCard({
             {author.initials}
           </span>
         ) : (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]">
             ?
           </span>
         )}
@@ -193,7 +184,7 @@ function TicketCard({
                   return (
                     <div
                       key={path}
-                      className="aspect-square animate-pulse rounded-xl bg-black/[0.05]"
+                      className="aspect-square animate-pulse rounded-xl bg-[var(--fill-tertiary)]"
                     />
                   );
                 }
@@ -224,7 +215,7 @@ function TicketCard({
                   "rounded-full px-3 py-1.5 text-[12px] font-medium ring-1 transition-all",
                   s.code === ticket.status
                     ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-[var(--foreground)]"
-                    : "bg-[var(--surface)] text-[var(--foreground)] ring-black/[0.08] active:scale-95"
+                    : "bg-[var(--surface)] text-[var(--foreground)] ring-[var(--ring-default)] active:scale-95"
                 )}
               >
                 {s.label}
@@ -239,8 +230,8 @@ function TicketCard({
             </button>
           </div>
 
-          <div className="rounded-xl bg-black/[0.03] p-3">
-            <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <div className="rounded-xl bg-[var(--fill-quaternary)] p-3">
+            <label className="eyebrow mb-1.5 block">
               Developer reply
             </label>
             <textarea
@@ -248,7 +239,7 @@ function TicketCard({
               onChange={(e) => setReplyText(e.target.value)}
               rows={3}
               placeholder="Reply visible to the submitter"
-              className="w-full resize-none rounded-lg bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.06] focus:ring-2 focus:ring-[var(--foreground)]/20"
+              className="w-full resize-none rounded-lg bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20"
             />
             <div className="mt-2 flex items-center justify-between">
               {ticket.replied_at && (

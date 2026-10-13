@@ -14,11 +14,11 @@
 // names and internals that end users shouldn't see. The user route now
 // shows only a friendly one-liner; all the detail is developer-only.
 
-import { useRouter } from "next/navigation";
-import { ChevronLeft, Sparkles, Wrench, ArrowUpCircle } from "lucide-react";
+import { Sparkles, Wrench, ArrowUpCircle } from "lucide-react";
 import { CHANGELOG, type ChangeEntry } from "@/lib/changelog";
 import { CHANGELOG_SUMMARIES } from "@/lib/changelog-summaries";
 import { useT, useLang } from "@/lib/i18n/provider";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type View = "user" | "dev";
 
@@ -31,7 +31,6 @@ type Props = {
 };
 
 export default function UpdatesShell({ view, title }: Props) {
-  const router = useRouter();
   const t = useT();
   const lang = useLang();
   const isDev = view === "dev";
@@ -44,23 +43,11 @@ export default function UpdatesShell({ view, title }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {title}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={title} />
 
       <div className="px-5 space-y-4">
         {versions.length === 0 ? (
-          <p className="rounded-2xl bg-[var(--surface)] px-4 py-10 text-center text-[14px] text-[var(--label-secondary)] ring-1 ring-black/[0.04]">
+          <p className="rounded-2xl bg-[var(--surface)] px-4 py-10 text-center text-[14px] text-[var(--label-secondary)] ring-1 ring-[var(--ring-subtle)]">
             {t("updates.empty")}
           </p>
         ) : (
@@ -69,7 +56,7 @@ export default function UpdatesShell({ view, title }: Props) {
             return (
               <div
                 key={entry.version}
-                className="rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] overflow-hidden"
+                className="rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] overflow-hidden"
               >
                 <div className="flex items-baseline justify-between px-4 pt-4 pb-3 border-b border-[var(--separator)]">
                   <p className="text-[17px] font-bold text-[var(--foreground)] tracking-tight">

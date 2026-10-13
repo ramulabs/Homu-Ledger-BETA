@@ -68,18 +68,18 @@ export default function PendingFab({ currency, onAccept, refreshSignal = 0 }: Pr
           type="button"
           onClick={() => setOpen(true)}
           aria-label={`${t("pending.title")}: ${count}`}
-          className="fixed z-[49] inline-flex h-[52px] w-[52px] items-center justify-center rounded-full text-white shadow-[0_10px_22px_rgba(238,100,82,0.35)] active:scale-95 [touch-action:manipulation]"
+          className="fixed z-[49] inline-flex h-[52px] w-[52px] items-center justify-center rounded-full text-white shadow-[0_10px_22px_var(--brand-shadow)] active:scale-95 [touch-action:manipulation]"
           style={{
             right: 18,
             bottom: "calc(env(safe-area-inset-bottom, 0px) + 78px)",
-            background: "#EE6452",
+            background: "var(--brand)",
             animation: "speak-fab-in 360ms cubic-bezier(.22,1,.36,1) both",
           }}
         >
           <Inbox className="h-[22px] w-[22px]" strokeWidth={2.25} />
           <span
             className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold ring-2"
-            style={{ color: "#EE6452", ["--tw-ring-color" as string]: "#EE6452" }}
+            style={{ color: "var(--brand)", ["--tw-ring-color" as string]: "var(--brand)" }}
           >
             {count > 99 ? "99+" : count}
           </span>

@@ -11,7 +11,6 @@
 
 import { useState } from "react";
 import {
-  ChevronLeft,
   Mail,
   Plus,
   Trash2,
@@ -19,13 +18,13 @@ import {
   Sparkles,
   AlertTriangle,
 } from "lucide-react";
-import { TapLink } from "@/components/tap";
 import { CopyButton } from "@/components/copy-button";
 import {
   ensureInboxAddressAction,
   generateApiKeyAction,
   revokeApiKeyAction,
 } from "@/app/actions/inbox";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type KeyRow = {
   id: string;
@@ -93,32 +92,20 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
 
   return (
     <div className="pb-4" style={{ marginBottom: "calc(-7rem + 1rem)" }}>
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <TapLink
-          href="/settings"
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </TapLink>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          Integrations
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Integrations" backHref="/settings" />
 
       {/* ── Email Inbox ─────────────────────────────────────────── */}
       <section className="mt-5">
-        <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <p className="eyebrow mb-2 px-6">
           Email inbox
         </p>
-        <div className="mx-5 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-black/[0.04]">
-          <p className="text-[13.5px] leading-snug text-[var(--label-secondary)]">
+        <div className="mx-5 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--ring-subtle)]">
+          <p className="text-[13px] leading-snug text-[var(--label-secondary)]">
             Forward your bank-transaction emails to this address and HOMU will
             queue them for one-tap journaling.
           </p>
           {address ? (
-            <div className="mt-3 flex items-center gap-2 rounded-xl bg-[var(--background)] px-3 py-2.5 ring-1 ring-black/[0.06]">
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-[var(--background)] px-3 py-2.5 ring-1 ring-[var(--ring-default)]">
               <Mail
                 className="h-4 w-4 shrink-0 text-[var(--label-secondary)]"
                 strokeWidth={2}
@@ -148,10 +135,10 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
 
       {/* ── API Keys ────────────────────────────────────────────── */}
       <section className="mt-5">
-        <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <p className="eyebrow mb-2 px-6">
           API keys · n8n, scripts
         </p>
-        <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
+        <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]">
           {/* Generate row */}
           <form
             onSubmit={handleGenerateKey}
@@ -183,7 +170,7 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
                   className="h-4 w-4 shrink-0 text-amber-700"
                   strokeWidth={2.25}
                 />
-                <p className="text-[12.5px] font-semibold text-amber-900">
+                <p className="text-[13px] font-semibold text-amber-900">
                   Copy this key now — it won&apos;t be shown again.
                 </p>
               </div>
@@ -222,7 +209,7 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
                     <p className="truncate text-[14px] font-medium text-[var(--foreground)]">
                       {k.name}
                     </p>
-                    <p className="truncate text-[11.5px] text-[var(--label-secondary)]">
+                    <p className="truncate text-[12px] text-[var(--label-secondary)]">
                       <span className="font-mono">{k.key_prefix}…</span>
                       {k.last_used_at && (
                         <> · used {formatRelative(k.last_used_at)}</>
@@ -245,7 +232,7 @@ export default function IntegrationsShell({ initialAddress, keys }: Props) {
       </section>
 
       {error && (
-        <p className="mx-5 mt-3 rounded-xl bg-rose-50 px-3.5 py-2 text-[12.5px] text-rose-700 ring-1 ring-rose-200">
+        <p className="mx-5 mt-3 rounded-xl bg-rose-50 px-3.5 py-2 text-[13px] text-rose-700 ring-1 ring-rose-200">
           {error}
         </p>
       )}

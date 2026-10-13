@@ -38,7 +38,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ChevronLeft,
   Check,
   Trash2,
   LogOut,
@@ -55,6 +54,7 @@ import {
   renameDeviceSession,
 } from "@/app/actions/auth";
 import type { DeviceRow } from "@/app/(app)/settings/devices/page";
+import StickyHeader from "@/components/ui/sticky-header";
 
 // Two-tap auto-cancel window. Matches the rest of the app.
 const ARM_TIMEOUT_MS = 3000;
@@ -238,25 +238,13 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {t("settings.devices")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={t("settings.devices")} />
 
       <p className="px-6 pb-3 text-[13px] text-[var(--label-secondary)]">
         {t("devices.subtitle")}
       </p>
 
-      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {devices.map((d) => {
           const armed = armedId === d.id;
           const armedFor = armed ? armedAction : null;
@@ -289,13 +277,13 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
                         maxLength={50}
                         placeholder={t("devices.nicknamePlaceholder")}
                         aria-label={t("devices.rename")}
-                        className="h-9 flex-1 rounded-xl bg-[var(--background)] px-3 text-[14px] font-medium text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20"
+                        className="h-9 flex-1 rounded-xl bg-[var(--background)] px-3 text-[14px] font-medium text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20"
                       />
                       <button
                         type="submit"
                         disabled={renamingBusy}
                         aria-label={t("common.save")}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EE6452] text-white disabled:opacity-60"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--on-foreground)] disabled:opacity-60"
                       >
                         <Check className="h-4 w-4" strokeWidth={2.5} />
                       </button>
@@ -304,7 +292,7 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
                         onClick={cancelRename}
                         disabled={renamingBusy}
                         aria-label={t("common.cancel")}
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--background)] text-[var(--label-secondary)] ring-1 ring-black/[0.08] disabled:opacity-60"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--background)] text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)] disabled:opacity-60"
                       >
                         <X className="h-4 w-4" strokeWidth={2.5} />
                       </button>
@@ -331,7 +319,7 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
                         <button
                           onClick={() => startRename(d)}
                           aria-label={t("devices.rename")}
-                          className="flex h-6 w-6 items-center justify-center rounded-full text-[var(--label-tertiary)] active:bg-black/[0.05] transition-colors [touch-action:manipulation]"
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-[var(--label-tertiary)] active:bg-[var(--fill-tertiary)] transition-colors [touch-action:manipulation]"
                         >
                           <Pencil className="h-3 w-3" strokeWidth={2.25} />
                         </button>
@@ -381,7 +369,7 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
                         "flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-[12px] font-semibold transition-colors disabled:opacity-60 [touch-action:manipulation]",
                         armedFor === "signout"
                           ? "bg-rose-500 text-white"
-                          : "bg-[var(--background)] text-rose-600 ring-1 ring-black/[0.06]"
+                          : "bg-[var(--background)] text-rose-600 ring-1 ring-[var(--ring-default)]"
                       )}
                     >
                       <LogOut className="h-3.5 w-3.5" strokeWidth={2.25} />
@@ -399,7 +387,7 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
                         "flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-[12px] font-semibold transition-colors disabled:opacity-60 [touch-action:manipulation]",
                         armedFor === "delete"
                           ? "bg-rose-600 text-white"
-                          : "bg-[var(--background)] text-rose-600 ring-1 ring-black/[0.06]"
+                          : "bg-[var(--background)] text-rose-600 ring-1 ring-[var(--ring-default)]"
                       )}
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
@@ -434,7 +422,7 @@ export default function DevicesShell({ devices: initialDevices }: Props) {
               "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[14px] font-semibold transition-colors disabled:opacity-60 [touch-action:manipulation]",
               bulkArmed
                 ? "bg-rose-600 text-white ring-1 ring-rose-600"
-                : "bg-[var(--surface)] text-rose-600 ring-1 ring-black/[0.06]"
+                : "bg-[var(--surface)] text-rose-600 ring-1 ring-[var(--ring-default)]"
             )}
           >
             <LogOut className="h-4 w-4" strokeWidth={2.25} />

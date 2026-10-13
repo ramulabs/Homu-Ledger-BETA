@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/cn";
+import SegmentedControl from "@/components/ui/segmented-control";
 
 type Option<T extends string> = { code: T; label: string; count?: number };
 
@@ -12,33 +12,18 @@ type Props<T extends string> = {
 };
 
 /**
- * Segmented filter inside a pill-shaped container. Used by the feedback-
- * admin All/Open/In progress/Closed switch and is suitable for any small
- * mutually-exclusive choice set.
+ * Segmented filter with optional counts (feedback admin, ledger symbol).
+ * A thin adapter over SegmentedControl; 4+ options use the dense size so
+ * labels like "In progress" don't wrap at phone width.
  */
 export default function FilterTabs<T extends string>({ options, value, onChange, className }: Props<T>) {
   return (
-    <div className={cn("flex gap-1 rounded-[var(--radius-pill)] bg-[var(--ring-subtle)] p-1", className)}>
-      {options.map((opt) => {
-        const active = value === opt.code;
-        return (
-          <button
-            key={opt.code}
-            onClick={() => onChange(opt.code)}
-            className={cn(
-              "flex-1 inline-flex items-center justify-center gap-1 rounded-[var(--radius-pill)] px-2 py-1.5 text-[12px] font-medium transition-all",
-              active
-                ? "bg-[var(--surface)] text-[var(--foreground)] shadow-[var(--shadow-card)]"
-                : "text-[var(--label-secondary)]"
-            )}
-          >
-            {opt.label}
-            {typeof opt.count === "number" && (
-              <span className="rounded-full bg-[var(--ring-subtle)] px-1.5 text-[10px] font-semibold">{opt.count}</span>
-            )}
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedControl
+      options={options.map((o) => ({ value: o.code, label: o.label, badge: o.count }))}
+      value={value}
+      onChange={onChange}
+      size={options.length >= 4 ? "sm" : "md"}
+      className={className}
+    />
   );
 }

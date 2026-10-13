@@ -106,7 +106,7 @@ type Props = {
 // Transfer accent stays coral; expense/income pull from the app's
 // shared finance tokens so the tabs match the home-screen balance
 // colours (v1.43.1 colour audit).
-const ATX_CORAL = "#EE6452";
+const ATX_CORAL = "var(--brand)";
 
 function todayString() {
   const d = new Date();
@@ -1152,7 +1152,7 @@ export default function AddTransactionSheet({
             // The wrapper already tracks the visible viewport, so 92%
             // leaves an 8% backdrop sliver at the top in every state.
             maxHeight: "92%",
-            boxShadow: "0 -10px 30px rgba(0,0,0,0.18)",
+            boxShadow: "var(--shadow-sheet)",
             // Picker open OR sheet closing → slide the whole sheet
             // off-screen (translateY 100%). Because the sheet genuinely
             // sits at the wrapper's bottom edge, translateY(100%) moves
@@ -1169,14 +1169,14 @@ export default function AddTransactionSheet({
         >
           {/* Drag handle — tap backdrop to dismiss; no header chrome. */}
           <div className="flex shrink-0 justify-center pb-1.5 pt-3">
-            <div className="h-1 w-10 rounded-full bg-black/10" />
+            <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
           </div>
 
           {/* Pending mode: "Add to [ledger]" picker (v1.48.0). Native <select>
               under a styled pill — same pattern as the date pill. */}
           {pending && (
             <div className="shrink-0 px-5 pb-2">
-              <p className="mb-1.5 text-center text-[11.5px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+              <p className="eyebrow mb-1.5 text-center">
                 {tr("pending.review")}
               </p>
               <div className="relative h-11">
@@ -1186,7 +1186,7 @@ export default function AddTransactionSheet({
                 >
                   <span className="shrink-0 text-[13px] text-[var(--label-secondary)]">{tr("pending.addTo")}</span>
                   <span
-                    className="flex-1 truncate text-[14.5px] font-semibold"
+                    className="flex-1 truncate text-[15px] font-semibold"
                     style={{ color: pendingLedgerId ? "var(--foreground)" : ATX_CORAL }}
                   >
                     {(() => {
@@ -1218,7 +1218,7 @@ export default function AddTransactionSheet({
                 </select>
               </div>
               {pendingLedgerId && pendingLedgerSource && (
-                <p className="mt-1 text-center text-[11.5px] text-[var(--label-tertiary)]">
+                <p className="mt-1 text-center text-[12px] text-[var(--label-tertiary)]">
                   {pendingLedgerSource === "history" ? tr("pending.fromHistory") : tr("pending.fromAgentSuggestion")}
                 </p>
               )}
@@ -1229,8 +1229,8 @@ export default function AddTransactionSheet({
           {recurringMode && !editing && (
             <div className="flex shrink-0 justify-center px-5 pb-1.5">
               <span
-                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
-                style={{ color: ATX_CORAL, background: "rgba(238,100,82,0.10)" }}
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold"
+                style={{ color: ATX_CORAL, background: "var(--brand-soft)" }}
               >
                 <Repeat className="h-[11px] w-[11px]" strokeWidth={2.5} />
                 {tr("tx.newRecurringItem")}
@@ -1240,7 +1240,7 @@ export default function AddTransactionSheet({
 
           {/* Type tabs — compact, centered, color-coded */}
           <div className="flex shrink-0 justify-center px-5 pb-1.5">
-            <div className="inline-flex gap-1 rounded-full bg-black/[0.05] p-1">
+            <div className="inline-flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
               {(editing || pending
                 ? (["expense", "income"] as const)
                 : (["expense", "income", "transfer"] as const)
@@ -1265,7 +1265,7 @@ export default function AddTransactionSheet({
                     }}
                     className={cn(
                       "min-w-[88px] rounded-full px-4 text-[13px] font-semibold transition-all",
-                      active ? "shadow-[0_1px_2px_rgba(0,0,0,0.06)]" : "text-[var(--label-secondary)]"
+                      active ? "shadow-[var(--shadow-card)]" : "text-[var(--label-secondary)]"
                     )}
                     style={{ height: 34, ...tabStyle(t, active) }}
                   >
@@ -1301,7 +1301,7 @@ export default function AddTransactionSheet({
                 onBlur={() => setDescFocused(false)}
                 placeholder={isTransfer ? tr("tx.note") : tr("tx.descriptionPlaceholder")}
                 aria-label={tr("tx.description")}
-                className="h-12 w-full rounded-full border border-[var(--separator)] bg-[var(--background)] px-[18px] text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
+                className="h-12 w-full rounded-full border border-[var(--separator)] bg-[var(--background)] px-[18px] text-[15px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
               />
 
               {/* Account row */}
@@ -1338,7 +1338,7 @@ export default function AddTransactionSheet({
                 <div className="relative h-12 min-w-0 flex-1">
                   <div className="pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--background)] px-4">
                     <Calendar className="h-[18px] w-[18px] shrink-0 text-[var(--label-secondary)]" strokeWidth={2} />
-                    <span className="flex-1 truncate text-left text-[14.5px] font-medium text-[var(--foreground)]">
+                    <span className="flex-1 truncate text-left text-[15px] font-medium text-[var(--foreground)]">
                       {recurringMode && <span className="text-[var(--label-secondary)]">{tr("recurring.startingPrefix")} </span>}
                       {dateLabel}
                     </span>
@@ -1382,7 +1382,7 @@ export default function AddTransactionSheet({
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors [touch-action:manipulation]"
                     style={
                       recurringMode
-                        ? { background: ATX_CORAL, color: "#fff", border: `1px solid ${ATX_CORAL}`, boxShadow: "0 4px 12px rgba(238,100,82,0.30)" }
+                        ? { background: ATX_CORAL, color: "#fff", border: `1px solid ${ATX_CORAL}`, boxShadow: "0 4px 12px color-mix(in oklab, var(--brand) 30%, transparent)" }
                         : { background: "var(--background)", color: "var(--label-secondary)", border: "1px solid var(--separator)" }
                     }
                   >
@@ -1430,7 +1430,7 @@ export default function AddTransactionSheet({
               {pending?.original && (
                 <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 ring-1 ring-amber-200">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" strokeWidth={2.25} />
-                  <p className="text-[12.5px] text-amber-900">
+                  <p className="text-[13px] text-amber-900">
                     {tr("pending.originalAmount")}:{" "}
                     <span className="font-semibold">
                       {pending.original.currency} {pending.original.amount.toLocaleString("en", { maximumFractionDigits: 2 })}
@@ -1442,7 +1442,7 @@ export default function AddTransactionSheet({
               {pending && !!amount && !pendingLoading && dupes.length > 0 && (
                 <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-2.5 ring-1 ring-amber-200">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-700" strokeWidth={2.25} />
-                  <div className="min-w-0 text-[12.5px] text-amber-900">
+                  <div className="min-w-0 text-[13px] text-amber-900">
                     <p className="font-semibold">{tr("pending.possibleDuplicate")}</p>
                     {dupes.map((d, i) => (
                       <p key={i} className="truncate">
@@ -1468,7 +1468,7 @@ export default function AddTransactionSheet({
                     <p className="text-center text-[13px] font-medium text-rose-700">{tr("tx.deleteConfirm")}</p>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => setConfirmDelete(false)}
-                        className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08]">
+                        className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)]">
                         {tr("common.cancel")}
                       </button>
                       <button type="button" onClick={handleDelete} disabled={loading}
@@ -1479,14 +1479,14 @@ export default function AddTransactionSheet({
                   </div>
                 )}
                 {showRecurringPicker && (
-                  <div className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-black/[0.08]">
-                    <p className="px-4 pb-1 pt-3 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+                  <div className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-[var(--ring-default)]">
+                    <p className="eyebrow px-4 pb-1 pt-3">
                       {tr("tx.repeatThis")}
                     </p>
                     <div className="grid grid-cols-3 gap-2 px-3 pb-3 pt-1">
                       {(["weekly", "monthly", "yearly"] as const).map((f) => (
                         <button key={f} type="button" onClick={() => handleCreateRecurring(f)} disabled={creatingRecurring}
-                          className="flex h-11 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.06] transition-transform active:scale-[0.98] disabled:opacity-60">
+                          className="flex h-11 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-semibold text-[var(--foreground)] ring-1 ring-[var(--ring-default)] transition-transform active:scale-[0.98] disabled:opacity-60">
                           {creatingRecurring ? "…" : tr(`recurring.${f}`)}
                         </button>
                       ))}
@@ -1504,11 +1504,11 @@ export default function AddTransactionSheet({
                   </div>
                 )}
                 {showMovePicker && !moveTarget && (
-                  <div className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-black/[0.08]">
-                    <p className="px-4 pb-2 pt-3 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{tr("tx.moveTo")}</p>
+                  <div className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-[var(--ring-default)]">
+                    <p className="eyebrow px-4 pb-2 pt-3">{tr("tx.moveTo")}</p>
                     {otherLedgers.map(({ household_id, household }) => (
                       <button key={household_id} type="button" onClick={() => chooseMoveLedger(household_id)} disabled={!!moveLoading}
-                        className="flex w-full items-center gap-3 border-t border-[var(--separator)] px-4 py-3 active:bg-black/[0.02] disabled:opacity-60">
+                        className="flex w-full items-center gap-3 border-t border-[var(--separator)] px-4 py-3 active:bg-[var(--fill-quaternary)] disabled:opacity-60">
                         <span className="text-[20px]">{household.symbol ?? "🏠"}</span>
                         <span className="flex-1 text-left text-[14px] font-medium text-[var(--foreground)]">{household.name}</span>
                         {moveLoading === household_id
@@ -1530,8 +1530,8 @@ export default function AddTransactionSheet({
                   const fallbackWallet = moveTarget.walletMatch === "default" && moveTarget.sourceWalletName && wallet && moveWalletId === moveTarget.walletId;
                   const guessedCategory = !!category && moveCategoryId === moveTarget.categoryId && moveTarget.categoryMatch !== null && moveTarget.categoryMatch !== "same-name";
                   return (
-                    <div className="space-y-2 rounded-2xl bg-[var(--background)] px-3 pb-3 pt-2.5 ring-1 ring-black/[0.08]">
-                      <p className="truncate px-1 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+                    <div className="space-y-2 rounded-2xl bg-[var(--background)] px-3 pb-3 pt-2.5 ring-1 ring-[var(--ring-default)]">
+                      <p className="eyebrow truncate px-1">
                         {tr("tx.moveTo")} <span className="normal-case tracking-normal text-[var(--foreground)]">{ledgerLabel}</span>
                       </p>
                       <div className="flex gap-2">
@@ -1587,7 +1587,7 @@ export default function AddTransactionSheet({
                       )}
                       <div className="flex gap-2 pt-0.5">
                         <button type="button" onClick={() => setMoveTarget(null)} disabled={moving}
-                          className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60">
+                          className="flex h-10 flex-1 items-center justify-center rounded-xl bg-[var(--surface)] text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] disabled:opacity-60">
                           {tr("common.back")}
                         </button>
                         <button type="button" onClick={handleMove} disabled={moving}
@@ -1666,7 +1666,7 @@ export default function AddTransactionSheet({
                         { key: "yearly", label: tr("recurring.yearly") },
                       ]}
                     />
-                    <span className="text-[12.5px] font-medium text-[var(--label-secondary)]">{tr("recurring.untilWord")}</span>
+                    <span className="text-[13px] font-medium text-[var(--label-secondary)]">{tr("recurring.untilWord")}</span>
                     <InlineDropdown
                       ariaLabel={tr("recurring.repeatUntil")}
                       value={repeatUntilMode}
@@ -1714,7 +1714,7 @@ export default function AddTransactionSheet({
                   aria-label={tr("voice.fab.aria") || "Speak to add transactions"}
                   title={online ? tr("voice.fab.aria") || "Speak to add transactions" : tr("voice.fab.offline") || "Voice needs internet"}
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-all active:scale-95 disabled:opacity-40 [touch-action:manipulation]"
-                  style={{ background: ATX_CORAL, boxShadow: online ? "0 6px 14px rgba(238,100,82,0.30)" : "none" }}
+                  style={{ background: ATX_CORAL, boxShadow: online ? "0 6px 14px color-mix(in oklab, var(--brand) 30%, transparent)" : "none" }}
                 >
                   <span
                     aria-hidden
@@ -1734,9 +1734,9 @@ export default function AddTransactionSheet({
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white transition-all"
                   style={{
                     background: !canSave || loading || moving
-                      ? "color-mix(in oklab, #EE6452 35%, var(--background))"
+                      ? "color-mix(in oklab, var(--brand) 35%, var(--background))"
                       : ATX_CORAL,
-                    boxShadow: !canSave || loading || moving ? "none" : "0 6px 14px rgba(238,100,82,0.30)",
+                    boxShadow: !canSave || loading || moving ? "none" : "0 6px 14px color-mix(in oklab, var(--brand) 30%, transparent)",
                   }}
                 >
                   {loading ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={2.5} /> : <Check className="h-[22px] w-[22px]" strokeWidth={2.75} />}
@@ -1830,7 +1830,7 @@ export default function AddTransactionSheet({
 // ─── Local pill components ────────────────────────────────────────────
 
 function pillBase() {
-  return "flex h-12 w-full items-center gap-2.5 rounded-full border border-[var(--separator)] bg-[var(--background)] px-4 transition-colors active:bg-black/[0.04]";
+  return "flex h-12 w-full items-center gap-2.5 rounded-full border border-[var(--separator)] bg-[var(--background)] px-4 transition-colors active:bg-[var(--fill-quaternary)]";
 }
 
 function WalletPillButton({
@@ -1851,10 +1851,10 @@ function WalletPillButton({
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${wallet.color}26` }}>
             <CategoryIcon symbol={wallet.symbol} iconStyle={iconStyle} size={15} emojiSize="14px" color={iconStyle === "2d" ? wallet.color : undefined} />
           </span>
-          <span className="min-w-0 flex-1 truncate text-left text-[14.5px] font-medium text-[var(--foreground)]">{wallet.name}</span>
+          <span className="min-w-0 flex-1 truncate text-left text-[15px] font-medium text-[var(--foreground)]">{wallet.name}</span>
         </>
       ) : (
-        <span className="flex-1 text-left text-[14.5px] text-[var(--label-tertiary)]">{placeholder}</span>
+        <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">{placeholder}</span>
       )}
       <ChevronRight className="h-4 w-4 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
     </button>
@@ -1883,11 +1883,11 @@ function CategoryPillButton({
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${category.color}26` }}>
             <CategoryIcon symbol={category.symbol} iconStyle={iconStyle} size={15} emojiSize="14px" color={iconStyle === "2d" ? category.color : undefined} />
           </span>
-          <span className="min-w-0 flex-1 truncate text-left text-[14.5px] font-medium text-[var(--foreground)]">{category.name}</span>
+          <span className="min-w-0 flex-1 truncate text-left text-[15px] font-medium text-[var(--foreground)]">{category.name}</span>
           {aiSource && <Sparkles className="h-3.5 w-3.5 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2.25} />}
         </>
       ) : (
-        <span className="flex-1 text-left text-[14.5px] text-[var(--label-tertiary)]">{placeholder}</span>
+        <span className="flex-1 text-left text-[15px] text-[var(--label-tertiary)]">{placeholder}</span>
       )}
       {loading && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--label-tertiary)]" strokeWidth={2} />}
       <ChevronRight className="h-4 w-4 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
@@ -1936,7 +1936,7 @@ function SelectPill({
 }) {
   return (
     <div className="relative h-11 min-w-0 flex-1">
-      <div className="pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--surface)] pl-2.5 pr-3 text-[13.5px] font-medium text-[var(--foreground)]">
+      <div className="pointer-events-none absolute inset-0 flex items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--surface)] pl-2.5 pr-3 text-[13px] font-medium text-[var(--foreground)]">
         {display}
         <ChevronDown className="h-4 w-4 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
       </div>

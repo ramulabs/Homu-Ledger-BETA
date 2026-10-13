@@ -88,7 +88,7 @@ export default function PullToRefresh({ children }: { children: React.ReactNode 
       >
         {showIndicator && (
           <div
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface)] shadow-md ring-1 ring-black/[0.06] transition-transform"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface)] shadow-md ring-1 ring-[var(--ring-default)] transition-transform"
             style={{ transform: `scale(${0.6 + progress * 0.4})` }}
           >
             {refreshing ? (

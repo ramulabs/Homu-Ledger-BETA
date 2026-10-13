@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Moon, Sun, SunMoon } from "lucide-react";
+import { Check, Moon, Sun, SunMoon } from "lucide-react";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Theme = "auto" | "light" | "dark";
 
@@ -28,7 +28,6 @@ const OPTIONS: { code: Theme; label: string; description: string; icon: React.Re
 ];
 
 export default function ThemePage() {
-  const router = useRouter();
   const [selected, setSelected] = useState<Theme>("auto");
 
   useEffect(() => {
@@ -49,31 +48,22 @@ export default function ThemePage() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Theme</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Theme" />
 
       <p className="px-6 pb-4 text-[13px] text-[var(--label-secondary)]">
         Choose how Homu should match your phone's appearance.
       </p>
 
-      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {OPTIONS.map((opt) => {
           const isSelected = selected === opt.code;
           return (
             <li key={opt.code}>
               <button
                 onClick={() => pickTheme(opt.code)}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
                   {opt.icon}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -81,7 +71,7 @@ export default function ThemePage() {
                   <p className="text-[12px] text-[var(--label-secondary)]">{opt.description}</p>
                 </div>
                 {isSelected && (
-                  <Check className="h-5 w-5 shrink-0 text-[var(--accent)]" strokeWidth={2.5} />
+                  <Check className="h-5 w-5 shrink-0 text-[var(--foreground)]" strokeWidth={2.5} />
                 )}
               </button>
             </li>

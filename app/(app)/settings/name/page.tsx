@@ -2,8 +2,9 @@
 
 import { Suspense, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 import { deleteCurrentHousehold, updateHouseholdName } from "@/app/actions/households";
+import StickyHeader from "@/components/ui/sticky-header";
 
 export default function LedgerNamePage() {
   return (
@@ -63,32 +64,21 @@ function LedgerNamePageInner() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          Ledger name
-        </h1>
-        {isOwner ? (
+      <StickyHeader
+        title="Ledger name"
+        right={isOwner ? (
           <button
             onClick={() => {
               setDeleteError(null);
               setConfirmOpen(true);
             }}
             aria-label="Delete ledger"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-rose-600 ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-rose-600 ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform"
           >
             <Trash2 className="h-[18px] w-[18px]" strokeWidth={2.25} />
           </button>
-        ) : (
-          <div className="h-9 w-9" />
-        )}
-      </header>
+        ) : null}
+      />
 
       <p className="px-6 pb-4 text-[13px] text-[var(--label-secondary)]">
         Rename this ledger. The name appears in the header and ledger switcher.
@@ -102,7 +92,7 @@ function LedgerNamePageInner() {
           placeholder="e.g. Personal, Homu"
           maxLength={60}
           autoFocus
-          className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"
+          className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"
         />
         {error && (
           <p className="mt-2 px-1 text-[12px] text-rose-600">{error}</p>
@@ -131,7 +121,7 @@ function LedgerNamePageInner() {
             aria-labelledby="delete-ledger-title"
             className="fixed bottom-0 left-1/2 z-[90] w-full max-w-md -translate-x-1/2 rounded-t-3xl bg-[var(--surface)] px-5 pb-8 pt-5"
           >
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-black/10" />
+            <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
             <h2
               id="delete-ledger-title"
               className="text-[17px] font-semibold text-[var(--foreground)]"
@@ -152,7 +142,7 @@ function LedgerNamePageInner() {
                 type="button"
                 onClick={() => setConfirmOpen(false)}
                 disabled={deleting}
-                className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[var(--background)] text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] disabled:opacity-50 active:bg-black/[0.04]"
+                className="flex h-12 flex-1 items-center justify-center rounded-2xl bg-[var(--background)] text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)] disabled:opacity-50 active:bg-[var(--fill-quaternary)]"
               >
                 Cancel
               </button>

@@ -15,13 +15,14 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
 import {
   sendPasswordResetOtp,
   verifyPasswordResetOtp,
   updatePassword,
 } from "@/app/actions/auth";
 import { useT } from "@/lib/i18n/provider";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Step = "email" | "otp" | "password";
 
@@ -123,29 +124,22 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="-mx-6 -my-12 flex min-h-dvh w-full max-w-md flex-col bg-[var(--background)]">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-3 pb-3 backdrop-blur">
-        <button
-          onClick={() => {
-            // Step back through the flow before falling out to /login/password.
-            if (step === "password") setStep("otp");
-            else if (step === "otp") setStep("email");
-            else router.push("/login/password");
-          }}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {step === "email"
+    <div className="-mx-6 -my-12 flex min-h-dvh flex-col self-stretch bg-[var(--background)]">
+      <StickyHeader
+        title={
+          step === "email"
             ? t("forgot.titleEmail")
             : step === "otp"
             ? t("forgot.titleOtp")
-            : t("forgot.titleNewPw")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+            : t("forgot.titleNewPw")
+        }
+        onBack={() => {
+          // Step back through the flow before falling out to /login/password.
+          if (step === "password") setStep("otp");
+          else if (step === "otp") setStep("email");
+          else router.push("/login/password");
+        }}
+      />
 
       <div className="flex-1 px-6 pt-3 pb-10">
         {step === "email" && (
@@ -165,7 +159,7 @@ export default function ForgotPasswordPage() {
                 placeholder="you@example.com"
                 required
                 autoComplete="email"
-                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             </div>
             {error && (
@@ -176,7 +170,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading || email.length === 0}
-              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white disabled:opacity-60"
+              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} />}
               {loading ? t("forgot.sending") : t("forgot.sendCode")}
@@ -193,7 +187,7 @@ export default function ForgotPasswordPage() {
         {step === "otp" && (
           <form onSubmit={handleVerifyOtp} className="space-y-3">
             <div className="mb-6 text-center">
-              <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05]">
+              <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)]">
                 <MailCheck className="h-6 w-6" strokeWidth={2} />
               </span>
               <p className="text-[14px] text-[var(--label-secondary)]">
@@ -214,7 +208,7 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
                 placeholder="123456"
                 required
-                className="h-14 w-full rounded-2xl bg-[var(--surface)] px-4 text-center text-[24px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] placeholder:font-medium focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-14 w-full rounded-2xl bg-[var(--surface)] px-4 text-center text-[24px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] placeholder:font-medium focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             </div>
             {error && (
@@ -230,7 +224,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading || code.length < 4}
-              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white disabled:opacity-60"
+              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} />}
               {loading ? t("auth.verifying") : t("auth.verify")}
@@ -277,7 +271,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading || newPw.length === 0 || confirmPw.length === 0}
-              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white disabled:opacity-60"
+              className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} />}
               {loading ? t("common.saving") : t("forgot.savePassword")}
@@ -322,7 +316,7 @@ const PwInput = forwardRef<HTMLInputElement, PwProps>(function PwInput(
           required
           minLength={8}
           autoComplete={autoComplete}
-          className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+          className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
         />
         <button
           type="button"

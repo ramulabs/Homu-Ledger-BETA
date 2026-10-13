@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Plus, Star } from "lucide-react";
+import { ChevronRight, Plus, Star } from "lucide-react";
 import { CategoryIcon } from "@/components/category-icon";
 import AddWalletSheet from "@/components/add-wallet-sheet";
 import EditWalletSheet from "@/components/edit-wallet-sheet";
@@ -11,6 +10,7 @@ import { formatAmountWithSign } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { DbWallet } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type WalletWithBalance = DbWallet & { balance: number };
 
@@ -21,7 +21,6 @@ type Props = {
 };
 
 export default function WalletsShell({ wallets: initial, iconStyle = "2d", currency = "IDR" }: Props) {
-  const router = useRouter();
   const tr = useT();
   const [wallets, setWallets] = useState<WalletWithBalance[]>(initial);
   const [editing, setEditing] = useState<DbWallet | null>(null);
@@ -69,33 +68,26 @@ export default function WalletsShell({ wallets: initial, iconStyle = "2d", curre
   return (
     <>
       <div className="pb-10">
-        <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-          <button
-            onClick={() => router.back()}
-            aria-label={tr("common.back")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-          >
-            <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-          </button>
-          <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-            {tr("wallet.wallets")}
-          </h1>
-          <button
-            onClick={() => setAddOpen(true)}
-            aria-label={tr("wallet.addNew")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--on-foreground)] shadow-sm active:scale-95 transition-transform"
-          >
-            <Plus className="h-[18px] w-[18px]" strokeWidth={2.25} />
-          </button>
-        </header>
+        <StickyHeader
+          title={tr("wallet.wallets")}
+          right={
+            <button
+              onClick={() => setAddOpen(true)}
+              aria-label={tr("wallet.addNew")}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--on-foreground)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
+            >
+              <Plus className="h-[18px] w-[18px]" strokeWidth={2.25} />
+            </button>
+          }
+        />
 
         <section className="mt-5">
           {wallets.length === 0 ? (
-            <p className="mx-5 rounded-2xl bg-[var(--surface)] px-4 py-10 text-center text-[14px] text-[var(--label-secondary)] ring-1 ring-black/[0.04]">
+            <p className="mx-5 rounded-2xl bg-[var(--surface)] px-4 py-10 text-center text-[14px] text-[var(--label-secondary)] ring-1 ring-[var(--ring-subtle)]">
               {tr("wallet.empty")}
             </p>
           ) : (
-            <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+            <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
               {wallets.map((w) => (
                 <WalletRow
                   key={w.id}
@@ -148,7 +140,7 @@ function WalletRow({
     <li>
       <button
         onClick={() => onTap(wallet)}
-        className="flex w-full items-center gap-3 px-4 py-3 min-h-[60px] text-left active:bg-black/[0.02] transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-3 min-h-[60px] text-left active:bg-[var(--fill-quaternary)] transition-colors"
       >
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"

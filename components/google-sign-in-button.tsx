@@ -45,7 +45,7 @@ export default function GoogleSignInButton() {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl bg-[var(--surface)] text-[15px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] shadow-sm transition-opacity active:opacity-90 disabled:opacity-60"
+        className="flex h-12 w-full items-center justify-center gap-3 rounded-2xl bg-[var(--surface)] text-[15px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-sm transition-opacity active:opacity-90 disabled:opacity-60"
       >
         <GoogleGlyph />
         {loading ? t("auth.redirecting") : t("auth.continueWithGoogle")}

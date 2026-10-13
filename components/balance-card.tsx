@@ -13,6 +13,14 @@ type Props = {
   income: number;
   expenses: number;
   currency?: string;
+  /** Label above the headline number. Defaults to "Total Balance";
+   *  Reports passes "Net" (v1.49.0 — Reports reuses this card so both
+   *  tabs share one summary layout). */
+  headline?: string;
+  /** Apply the "Hide amounts on home screen" mask + peek button. On by
+   *  default (Transactions); Reports turns it off so its summary matches
+   *  the unmasked breakdown below it. */
+  private?: boolean;
 };
 
 function useCountUp(target: number, duration = 600) {
@@ -43,12 +51,13 @@ function useCountUp(target: number, duration = 600) {
   return display;
 }
 
-export default function BalanceCard({ balance, income, expenses, currency = "IDR" }: Props) {
+export default function BalanceCard({ balance, income, expenses, currency = "IDR", headline, private: maskable = true }: Props) {
   const t = useT();
   const animatedBalance = useCountUp(balance);
   // Fixed 8-dot mask shared by Total Balance, Income and Expense for a
-  // consistent privacy state across all three bento cards.
-  const mask = maskAmount(currency);
+  // consistent privacy state across all three bento cards. null = render
+  // plain amounts (no mask, no peek button).
+  const mask = maskable ? maskAmount(currency) : null;
   return (
     <section className="px-5 pt-4 pb-2 space-y-3">
       {/* Total Balance — full-width bento, same chrome as Income/Expense
@@ -58,11 +67,11 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
           mask state forces foreground via CSS so the mask itself is always
           neutral. */}
       <SurfaceCard className="relative px-4 py-3.5 text-center">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
-          {t("tx.totalBalance")}
+        <p className="eyebrow">
+          {headline ?? t("tx.totalBalance")}
         </p>
         <p
-          data-privacy-mono
+          data-privacy-mono={mask ? true : undefined}
           className={cn(
             "mt-1.5 truncate text-[28px] font-semibold leading-tight tracking-tight tabular-nums",
             balance < 0 ? "text-[var(--color-expense)]" : "text-[var(--foreground)]"
@@ -73,7 +82,7 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
             hidden={mask}
           />
         </p>
-        <PrivacyEyeButton t={t} />
+        {mask && <PrivacyEyeButton t={t} />}
       </SurfaceCard>
 
       {/* Income + Expense — 2-col bento row, unchanged */}
@@ -97,7 +106,8 @@ export default function BalanceCard({ balance, income, expenses, currency = "IDR
   );
 }
 
-function PrivacyAmount({ real, hidden }: { real: string; hidden: string }) {
+function PrivacyAmount({ real, hidden }: { real: string; hidden: string | null }) {
+  if (hidden === null) return <span>{real}</span>;
   return (
     <span data-privacy-amount>
       <span data-privacy-real>{real}</span>
@@ -119,7 +129,7 @@ function PrivacyEyeButton({ t }: { t: ReturnType<typeof useT> }) {
       data-privacy-eye
       onClick={togglePrivacyReveal}
       aria-label={t("settings.privacy.peek")}
-      className="absolute right-2 top-2 h-8 w-8 items-center justify-center rounded-full text-[var(--label-secondary)] active:bg-black/[0.04] transition-colors [touch-action:manipulation]"
+      className="absolute right-2 top-2 h-8 w-8 items-center justify-center rounded-full text-[var(--label-secondary)] active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
     >
       <EyeOff data-eye-icon="hidden"   className="h-[18px] w-[18px]" strokeWidth={2} />
       <Eye    data-eye-icon="revealed" className="h-[18px] w-[18px]" strokeWidth={2} />
@@ -136,21 +146,21 @@ function SummaryPill({
 }: {
   label: string;
   value: string;
-  mask: string;
+  mask: string | null;
   icon: React.ReactNode;
   tone: "income" | "expense";
 }) {
   const iconTint =
     tone === "income"
       ? "bg-[var(--tint-success-bg)] text-[var(--tint-success-text)]"
-      : "bg-[var(--tint-warning-bg)] text-[var(--tint-warning-text)]";
+      : "bg-[var(--tint-danger-bg)] text-[var(--tint-danger-text)]";
   return (
     <SurfaceCard className="px-3.5 py-3">
       <div className="flex items-center gap-2">
-        <span data-privacy-mono-icon className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${iconTint}`}>
+        <span data-privacy-mono-icon={mask ? true : undefined} className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${iconTint}`}>
           {icon}
         </span>
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+        <p className="eyebrow">
           {label}
         </p>
       </div>

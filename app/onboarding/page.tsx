@@ -94,7 +94,7 @@ function OnboardingInner() {
       >
         ← Back
       </button>
-      <h1 className="mb-1 text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
+      <h1 className="mb-1 text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
         Join a ledger
       </h1>
       <p className="mb-6 text-[14px] text-[var(--label-secondary)]">
@@ -112,7 +112,7 @@ function OnboardingInner() {
             maxLength={6}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            className="h-14 w-full rounded-2xl bg-[var(--surface)] px-4 text-center text-[22px] font-bold tracking-[0.2em] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            className="h-14 w-full rounded-2xl bg-[var(--surface)] px-4 text-center text-[24px] font-bold tracking-[0.2em] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
           />
         </div>
 
@@ -148,7 +148,7 @@ function OptionCard({
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-4 rounded-2xl bg-[var(--surface)] p-4 text-left ring-1 ring-black/[0.05] shadow-sm active:scale-[0.99] transition-transform"
+      className="flex w-full items-center gap-4 rounded-2xl bg-[var(--surface)] p-4 text-left ring-1 ring-[var(--ring-default)] shadow-sm active:scale-[0.99] transition-transform"
     >
       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--background)] text-2xl">
         {emoji}

@@ -15,7 +15,7 @@ export default function TransactionsLoading() {
       </div>
 
       {/* Balance card */}
-      <div className="mx-5 mt-5 rounded-3xl bg-[var(--surface)] p-5 ring-1 ring-black/[0.04]">
+      <div className="mx-5 mt-5 rounded-3xl bg-[var(--surface)] p-5 ring-1 ring-[var(--ring-subtle)]">
         <div className="h-3 w-24 rounded-full bg-[var(--foreground)]/[0.06] mx-auto" />
         <div className="h-10 w-44 rounded-full bg-[var(--foreground)]/[0.08] mx-auto mt-3" />
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -30,7 +30,7 @@ export default function TransactionsLoading() {
       </div>
 
       {/* Transaction rows */}
-      <div className="mx-5 mt-3 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <div className="mx-5 mt-3 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} className="flex items-center gap-3 px-4 py-3.5 min-h-[60px]">
             <div className="h-10 w-10 shrink-0 rounded-full bg-[var(--foreground)]/[0.06]" />

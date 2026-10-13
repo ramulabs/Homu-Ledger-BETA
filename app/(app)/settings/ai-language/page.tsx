@@ -16,10 +16,11 @@
 
 import { Suspense, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronLeft, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { setHouseholdAiLanguage } from "@/app/actions/households";
 import type { HouseholdAiLanguage } from "@/app/actions/households";
 import { useT } from "@/lib/i18n/provider";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Choice = {
   code: HouseholdAiLanguage;
@@ -86,25 +87,13 @@ function AiLanguagePageInner() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {t("settings.aiLanguage")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={t("settings.aiLanguage")} />
 
       <p className="px-6 pb-3 text-[13px] text-[var(--label-secondary)]">
         {t("ai.lang.subtitle")}
       </p>
 
-      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {CHOICES.map((c) => {
           const isSelected = selected === c.code;
           return (
@@ -112,7 +101,7 @@ function AiLanguagePageInner() {
               <button
                 onClick={() => handleSelect(c.code)}
                 disabled={saving}
-                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-black/[0.02] disabled:opacity-60"
+                className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-[var(--fill-quaternary)] disabled:opacity-60"
               >
                 <span className="w-10 shrink-0 text-[22px] leading-none">{c.flag}</span>
                 <div className="min-w-0 flex-1">

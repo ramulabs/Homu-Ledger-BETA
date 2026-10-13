@@ -50,7 +50,7 @@ export default function SetupForm({ initialName, email }: Props) {
             defaultValue={initialName}
             placeholder="Dustin"
             autoComplete="name"
-            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
           />
         </div>
 
@@ -67,7 +67,7 @@ export default function SetupForm({ initialName, email }: Props) {
             inputMode="text"
             spellCheck={false}
             autoCapitalize="none"
-            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
           />
           <p className="mt-1.5 px-1 text-[12px] text-[var(--label-tertiary)]">
             {t("auth.usernameHint")}
@@ -89,7 +89,7 @@ export default function SetupForm({ initialName, email }: Props) {
               autoComplete="off"
               spellCheck={false}
               inputMode="text"
-              className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] font-mono uppercase tracking-[0.12em] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] placeholder:font-mono focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] font-mono uppercase tracking-[0.12em] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] placeholder:font-mono focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               style={{ textTransform: "uppercase" }}
             />
             <p className="mt-1.5 px-1 text-[12px] text-[var(--label-tertiary)]">
@@ -115,7 +115,7 @@ export default function SetupForm({ initialName, email }: Props) {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
+          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
         >
           {loading ? t("auth.saving") : t("auth.continue")}
         </button>

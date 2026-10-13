@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Copy, Check, Sparkles, Trash2 } from "lucide-react";
+import { Plus, Copy, Check, Sparkles, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 import { generatePromoCode, deletePromoCode } from "@/app/actions/promo-codes";
 import { cn } from "@/lib/cn";
 import type { DbPromoCode, SubscriptionTier } from "@/lib/types";
+import StickyHeader from "@/components/ui/sticky-header";
 
 const TIERS: SubscriptionTier[] = ["3_months", "6_months", "1_year", "lifetime", "developer"];
 
@@ -23,7 +23,6 @@ type Props = {
 };
 
 export default function PromoCodesShell({ initialCodes }: Props) {
-  const router = useRouter();
   const t = useT();
   const [codes, setCodes] = useState<DbPromoCode[]>(initialCodes);
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>("3_months");
@@ -128,26 +127,14 @@ export default function PromoCodesShell({ initialCodes }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {t("promo.title")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={t("promo.title")} />
 
       <div className="px-5 mt-2">
         <p className="text-[13px] text-[var(--label-secondary)]">{t("promo.subtitle")}</p>
       </div>
 
       {/* Stats card */}
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4">
         <div className="grid grid-cols-2 gap-3">
           <StatPill
             label={t("promo.statsGenerated")}
@@ -164,7 +151,7 @@ export default function PromoCodesShell({ initialCodes }: Props) {
         <div className="mt-3 grid grid-cols-5 gap-1.5">
           {TIERS.map((tier) => (
             <div key={tier} className="flex flex-col items-center rounded-xl bg-[var(--background)] py-2">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--label-tertiary)] truncate w-full text-center">
+              <p className="eyebrow truncate w-full text-center">
                 {tierShortLabel(tier)}
               </p>
               <p className="mt-0.5 text-[13px] font-semibold tabular-nums text-[var(--foreground)]">
@@ -176,8 +163,8 @@ export default function PromoCodesShell({ initialCodes }: Props) {
       </section>
 
       {/* Generate */}
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4">
-        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4">
+        <p className="eyebrow mb-2">
           {t("promo.tier")}
         </p>
         <div className="flex flex-wrap gap-2 mb-3">
@@ -189,7 +176,7 @@ export default function PromoCodesShell({ initialCodes }: Props) {
                 "rounded-full px-3.5 py-1.5 text-[13px] font-medium ring-1 transition-all",
                 selectedTier === tier
                   ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-[var(--foreground)]"
-                  : "bg-[var(--background)] text-[var(--foreground)] ring-black/[0.08]"
+                  : "bg-[var(--background)] text-[var(--foreground)] ring-[var(--ring-default)]"
               )}
             >
               {t(`promo.tier.${tier}` as any)}
@@ -201,7 +188,7 @@ export default function PromoCodesShell({ initialCodes }: Props) {
             "For Andi"). Not validated, not unique, not enforced — anyone
             with the generated code can still redeem it. We surface this
             so it's obvious it's optional and frictionless. */}
-        <label className="mb-1.5 block text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <label className="eyebrow mb-1.5 block">
           {t("promo.labelHeading")}
         </label>
         <input
@@ -211,13 +198,13 @@ export default function PromoCodesShell({ initialCodes }: Props) {
           placeholder={t("promo.labelPlaceholder")}
           maxLength={80}
           aria-label={t("promo.labelHeading")}
-          className="mb-3 h-11 w-full rounded-2xl bg-[var(--background)] px-4 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+          className="mb-3 h-11 w-full rounded-2xl bg-[var(--background)] px-4 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
         />
 
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-[#EE6452] text-[14px] font-semibold text-white disabled:opacity-60"
+          className="flex w-full h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--foreground)] text-[14px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
         >
           <Plus className="h-4 w-4" strokeWidth={2.5} />
           {generating ? t("promo.generating") : t("promo.generate")}
@@ -232,11 +219,11 @@ export default function PromoCodesShell({ initialCodes }: Props) {
       {/* Codes list */}
       <section className="mx-5 mt-5">
         {codes.length === 0 ? (
-          <p className="rounded-2xl bg-[var(--surface)] px-4 py-10 text-center text-[14px] text-[var(--label-secondary)] ring-1 ring-black/[0.04]">
+          <p className="rounded-2xl bg-[var(--surface)] px-4 py-10 text-center text-[14px] text-[var(--label-secondary)] ring-1 ring-[var(--ring-subtle)]">
             {t("promo.empty")}
           </p>
         ) : (
-          <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+          <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
             {codes.map((c) => {
               const isRedeemed = !!c.redeemed_at;
               const tierColor = TIER_COLORS[c.tier];
@@ -290,7 +277,7 @@ export default function PromoCodesShell({ initialCodes }: Props) {
                           <button
                             onClick={() => handleCopy(c.id, c.code)}
                             disabled={isDeleting}
-                            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--background)] text-[var(--label-secondary)] ring-1 ring-black/[0.06] active:scale-95 transition-transform disabled:opacity-50"
+                            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--background)] text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)] active:scale-95 transition-transform disabled:opacity-50"
                             aria-label={t("promo.copy")}
                           >
                             {copiedId === c.id ? (
@@ -309,7 +296,7 @@ export default function PromoCodesShell({ initialCodes }: Props) {
                               "flex h-9 items-center justify-center rounded-full ring-1 transition-all active:scale-95 disabled:opacity-60",
                               isPendingDelete
                                 ? "w-auto px-3 gap-1.5 bg-rose-500 text-white ring-rose-500"
-                                : "w-9 bg-[var(--background)] text-rose-600 ring-black/[0.06]"
+                                : "w-9 bg-[var(--background)] text-rose-600 ring-[var(--ring-default)]"
                             )}
                             aria-label={isPendingDelete ? t("promo.deleteConfirm") : t("promo.delete")}
                           >
@@ -335,14 +322,14 @@ export default function PromoCodesShell({ initialCodes }: Props) {
 }
 
 function StatPill({ label, value, tone }: { label: string; value: number; tone: "generated" | "redeemed" }) {
-  const bg = tone === "redeemed" ? "bg-emerald-100/70 text-emerald-700" : "bg-[#EE6452]/15 text-[#EE6452]";
+  const bg = tone === "redeemed" ? "bg-emerald-100/70 text-emerald-700" : "bg-[var(--brand-soft)] text-[var(--brand)]";
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[var(--background)] p-3">
       <span className={`flex h-9 w-9 items-center justify-center rounded-full ${bg}`}>
         <Sparkles className="h-4 w-4" strokeWidth={2.5} />
       </span>
       <div className="min-w-0">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">{label}</p>
+        <p className="eyebrow">{label}</p>
         <p className="text-[20px] font-semibold tabular-nums text-[var(--foreground)] leading-tight">{value}</p>
       </div>
     </div>

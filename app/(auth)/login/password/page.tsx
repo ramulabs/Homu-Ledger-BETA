@@ -59,7 +59,7 @@ function PasswordLoginInner() {
       <div className="mb-8 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/homu-login.png" alt="Homu" className="mx-auto mb-5 h-32 w-32 object-contain" />
-        <h1 className="text-[26px] font-semibold tracking-tight text-[var(--foreground)]">
+        <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
           {t("auth.signIn")}
         </h1>
         <p className="mt-1 text-[14px] text-[var(--label-secondary)]">
@@ -81,7 +81,7 @@ function PasswordLoginInner() {
               placeholder="••••••••"
               required
               autoComplete="current-password"
-              className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
             />
             <button
               type="button"
@@ -106,7 +106,7 @@ function PasswordLoginInner() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
+          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
         >
           {loading ? t("auth.signingIn") : t("auth.signIn")}
         </button>
@@ -153,7 +153,7 @@ function Field({
         placeholder={placeholder}
         required
         autoComplete={name === "password" ? "current-password" : "username email"}
-        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
       />
     </div>
   );

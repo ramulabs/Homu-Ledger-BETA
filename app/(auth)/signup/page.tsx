@@ -21,13 +21,14 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+import { Check, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
 import {
   signUpStartEmailOtp,
   verifySignUpOtp,
   resendSignUpOtp,
 } from "@/app/actions/auth";
 import { useT } from "@/lib/i18n/provider";
+import StickyHeader from "@/components/ui/sticky-header";
 import { cn } from "@/lib/cn";
 
 type Step = "form" | "otp";
@@ -83,33 +84,24 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="-mx-6 -my-12 flex min-h-dvh w-full max-w-md flex-col bg-[var(--background)]">
+    <div className="-mx-6 -my-12 flex min-h-dvh flex-col self-stretch bg-[var(--background)]">
       {/* Locked / sticky header. Lives outside the scroll surface so
           the back button stays reachable with a long form and the
           keyboard up. Back button placed top-left to match every
           other Settings sub-page in the app. */}
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-3 pb-3 backdrop-blur">
-        <button
-          onClick={() => {
-            // Back from OTP → return to the form; back from the form
-            // → go to wherever we came from (/login by default).
-            if (step === "otp") {
-              setStep("form");
-              setError(null);
-            } else {
-              router.back();
-            }
-          }}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {step === "form" ? t("auth.createAccount") : t("auth.verifyEmail")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader
+        title={step === "form" ? t("auth.createAccount") : t("auth.verifyEmail")}
+        onBack={() => {
+          // Back from OTP → return to the form; back from the form
+          // → go to wherever we came from (/login by default).
+          if (step === "otp") {
+            setStep("form");
+            setError(null);
+          } else {
+            router.back();
+          }
+        }}
+      />
 
       <div className="flex-1 px-6 pt-3 pb-10">
         {step === "form" ? (
@@ -197,7 +189,7 @@ function SignupForm({
                   "h-11 rounded-2xl text-[13px] font-medium transition-colors [touch-action:manipulation]",
                   gender === opt.value
                     ? "bg-[var(--foreground)] text-[var(--on-foreground)]"
-                    : "bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.08]"
+                    : "bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)]"
                 )}
               >
                 {t(opt.key as Parameters<typeof t>[0])}
@@ -275,7 +267,7 @@ function SignupForm({
             autoComplete="off"
             spellCheck={false}
             inputMode="text"
-            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] font-mono uppercase tracking-[0.12em] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] placeholder:font-mono focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] font-mono uppercase tracking-[0.12em] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] placeholder:font-mono focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
             style={{ textTransform: "uppercase" }}
           />
         </div>
@@ -289,7 +281,7 @@ function SignupForm({
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
+          className="mt-2 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
         >
           {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </button>
@@ -368,7 +360,7 @@ function OtpStep({
   return (
     <>
       <div className="mb-6 text-center">
-        <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05]">
+        <span className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)]">
           <MailCheck className="h-6 w-6" strokeWidth={2} />
         </span>
         <p className="text-[14px] text-[var(--label-secondary)]">
@@ -393,7 +385,7 @@ function OtpStep({
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
             placeholder="123456"
             required
-            className="h-14 w-full rounded-2xl bg-[var(--surface)] px-4 text-center text-[24px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] placeholder:tracking-[0.4em] placeholder:font-medium focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+            className="h-14 w-full rounded-2xl bg-[var(--surface)] px-4 text-center text-[24px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] placeholder:tracking-[0.4em] placeholder:font-medium focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
           />
         </div>
 
@@ -411,7 +403,7 @@ function OtpStep({
         <button
           type="submit"
           disabled={verifying || code.length < 4}
-          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
+          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
         >
           {verifying && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.25} />}
           {verifying ? t("auth.verifying") : t("auth.verify")}
@@ -455,7 +447,7 @@ function Field({
         placeholder={placeholder}
         required
         autoComplete={autoComplete}
-        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
       />
     </div>
   );
@@ -489,7 +481,7 @@ function DateField({
         required
         min={min}
         max={max}
-        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
+        className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
       />
     </div>
   );
@@ -530,7 +522,7 @@ function PasswordField({
           autoComplete={autoComplete}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+          className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
         />
         <button
           type="button"

@@ -74,7 +74,7 @@ export default function MyTicketDetailSheet({
       />
       <div className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 rounded-t-3xl bg-[var(--background)] shadow-2xl max-h-[85vh] flex flex-col animate-sheet-slide-up">
         <div className="px-5 pt-4 pb-3 shrink-0">
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-black/[0.12]" />
+          <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
@@ -92,7 +92,7 @@ export default function MyTicketDetailSheet({
             <button
               onClick={onClose}
               aria-label="Close"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-[var(--foreground)] active:scale-95 transition-transform"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--foreground)] active:scale-95 transition-transform"
             >
               <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
             </button>
@@ -113,7 +113,7 @@ export default function MyTicketDetailSheet({
                   return (
                     <div
                       key={path}
-                      className="aspect-square animate-pulse rounded-xl bg-black/[0.05]"
+                      className="aspect-square animate-pulse rounded-xl bg-[var(--fill-tertiary)]"
                     />
                   );
                 }
@@ -150,7 +150,7 @@ export default function MyTicketDetailSheet({
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl bg-black/[0.03] px-4 py-3.5 text-[13px] text-[var(--label-secondary)]">
+            <div className="rounded-2xl bg-[var(--fill-quaternary)] px-4 py-3.5 text-[13px] text-[var(--label-secondary)]">
               No reply from the dev yet — you&apos;ll see it here when one comes in.
             </div>
           )}

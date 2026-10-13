@@ -101,7 +101,7 @@ export default function MyTicketsList({ userId }: { userId: string }) {
     return (
       <ul className="mx-5 mt-4 space-y-3">
         {[0, 1, 2].map((i) => (
-          <li key={i} className="h-[68px] animate-pulse rounded-2xl bg-black/[0.04]" />
+          <li key={i} className="h-[68px] animate-pulse rounded-2xl bg-[var(--fill-quaternary)]" />
         ))}
       </ul>
     );
@@ -109,7 +109,7 @@ export default function MyTicketsList({ userId }: { userId: string }) {
 
   if (tickets.length === 0) {
     return (
-      <div className="mx-5 mt-12 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-black/[0.04]">
+      <div className="mx-5 mt-12 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-[var(--ring-subtle)]">
         <p className="text-[15px] font-semibold text-[var(--foreground)]">No tickets yet</p>
         <p className="mt-1.5 text-[13px] text-[var(--label-secondary)]">
           Submit one from the other tab — replies from the dev will show up here.
@@ -128,7 +128,7 @@ export default function MyTicketsList({ userId }: { userId: string }) {
             <li key={t.id}>
               <button
                 onClick={() => setOpenId(t.id)}
-                className="flex w-full flex-col items-start gap-1.5 rounded-2xl bg-[var(--surface)] px-4 py-3.5 text-left ring-1 ring-black/[0.04] active:bg-black/[0.02] transition-colors"
+                className="flex w-full flex-col items-start gap-1.5 rounded-2xl bg-[var(--surface)] px-4 py-3.5 text-left ring-1 ring-[var(--ring-subtle)] active:bg-[var(--fill-quaternary)] transition-colors"
               >
                 <div className="flex w-full items-center gap-2">
                   <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[var(--foreground)]">

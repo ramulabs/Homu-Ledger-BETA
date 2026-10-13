@@ -91,13 +91,13 @@ export default function LedgerSwitcherSheet({
       <div className="fixed inset-0 z-[80] bg-black/50" onClick={onClose} />
       <div className="fixed bottom-0 left-1/2 z-[90] flex max-h-[85dvh] w-full max-w-md -translate-x-1/2 flex-col rounded-t-3xl bg-[var(--surface)]">
         <div className="flex shrink-0 justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-black/10" />
+          <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
         </div>
         <div className="flex shrink-0 items-center justify-between px-5 pb-4 pt-1">
           <h3 className="text-[17px] font-semibold text-[var(--foreground)]">My Ledgers</h3>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -107,7 +107,7 @@ export default function LedgerSwitcherSheet({
           {/* Pending invitations */}
           {pendingInvitations.length > 0 && (
             <>
-              <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+              <p className="eyebrow mb-2 px-1">
                 Invitations
               </p>
               <ul className="mb-4 space-y-2">
@@ -119,7 +119,7 @@ export default function LedgerSwitcherSheet({
                       className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-blue-500/20"
                     >
                       <div className="flex items-center gap-3 px-4 py-3.5">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[20px] ring-1 ring-black/[0.06]">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[20px] ring-1 ring-[var(--ring-default)]">
                           {inv.household.symbol ?? "🏠"}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -135,7 +135,7 @@ export default function LedgerSwitcherSheet({
                         <button
                           onClick={() => handleDecline(inv.id)}
                           disabled={working}
-                          className="flex h-10 flex-1 items-center justify-center rounded-xl bg-transparent text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-50 active:bg-black/[0.04]"
+                          className="flex h-10 flex-1 items-center justify-center rounded-xl bg-transparent text-[13px] font-medium text-[var(--label-secondary)] disabled:opacity-50 active:bg-[var(--fill-quaternary)]"
                         >
                           Decline
                         </button>
@@ -156,14 +156,14 @@ export default function LedgerSwitcherSheet({
                   );
                 })}
               </ul>
-              <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+              <p className="eyebrow mb-2 px-1">
                 Your ledgers
               </p>
             </>
           )}
 
           {/* Memberships */}
-          <ul className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-black/[0.06] divide-y divide-[var(--separator)]">
+          <ul className="overflow-hidden rounded-2xl bg-[var(--background)] ring-1 ring-[var(--ring-default)] divide-y divide-[var(--separator)]">
             {memberships.map(({ household_id, role, household }) => {
               const isCurrent = household_id === currentHouseholdId;
               const isLoading = switching === household_id;
@@ -172,9 +172,9 @@ export default function LedgerSwitcherSheet({
                   <button
                     onClick={() => handleSwitch(household_id)}
                     disabled={!!switching}
-                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-black/[0.02] disabled:opacity-60"
+                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors active:bg-[var(--fill-quaternary)] disabled:opacity-60"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[20px] ring-1 ring-black/[0.06]">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[20px] ring-1 ring-[var(--ring-default)]">
                       {(household as any).symbol ?? "🏠"}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -203,7 +203,7 @@ export default function LedgerSwitcherSheet({
             <div className="flex gap-2">
               <button
                 onClick={() => setMode("join")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--background)] py-3.5 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] transition-colors active:bg-black/[0.04]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--background)] py-3.5 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)] transition-colors active:bg-[var(--fill-quaternary)]"
               >
                 <LogIn className="h-4 w-4" strokeWidth={2.25} />
                 Join Ledger
@@ -241,7 +241,7 @@ export default function LedgerSwitcherSheet({
                 required
                 autoFocus
                 maxLength={6}
-                className="h-12 w-full rounded-xl bg-[var(--background)] px-3 font-mono text-[18px] tracking-[0.18em] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:font-sans placeholder:text-[14px] placeholder:tracking-normal placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
+                className="h-12 w-full rounded-xl bg-[var(--background)] px-3 font-mono text-[18px] tracking-[0.18em] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:font-sans placeholder:text-[14px] placeholder:tracking-normal placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
               />
               {joinError && <p className="text-[12px] text-rose-600">{joinError}</p>}
               <p className="text-[11px] text-[var(--label-tertiary)] flex items-start gap-1.5">
@@ -256,7 +256,7 @@ export default function LedgerSwitcherSheet({
                     setJoinError(null);
                     setJoinCode("");
                   }}
-                  className="flex h-12 flex-1 items-center justify-center rounded-xl bg-[var(--background)] text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06]"
+                  className="flex h-12 flex-1 items-center justify-center rounded-xl bg-[var(--background)] text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)]"
                 >
                   Cancel
                 </button>

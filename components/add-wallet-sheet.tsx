@@ -103,13 +103,13 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
         )}
       >
         <div className="flex shrink-0 justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-black/10" />
+          <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
         </div>
 
         <div className="flex shrink-0 items-center justify-between px-5 pb-3">
           <h2 className="text-[17px] font-semibold text-[var(--foreground)]">{tr("wallet.newWallet")}</h2>
           <button onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -118,7 +118,7 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
         <form onSubmit={handleSave} className="flex flex-col overflow-hidden">
           <div className="overflow-y-auto px-5 pb-4 space-y-4" style={{ maxHeight: "70dvh" }}>
             {/* Preview */}
-            <div className="flex items-center gap-3 rounded-2xl bg-[var(--background)] px-4 py-3 ring-1 ring-black/[0.06]">
+            <div className="flex items-center gap-3 rounded-2xl bg-[var(--background)] px-4 py-3 ring-1 ring-[var(--ring-default)]">
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
                 style={{ backgroundColor: `${selectedColor}22` }}
@@ -147,7 +147,7 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
                 onChange={(e) => setName(e.target.value)}
                 required
                 placeholder={tr("wallet.namePlaceholder")}
-                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             </div>
 
@@ -162,7 +162,7 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
                 value={balanceDisplay}
                 onChange={handleAmountChange}
                 placeholder="0"
-                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
               <p className="mt-1.5 text-[12px] text-[var(--label-tertiary)] leading-snug">
                 {tr("wallet.initialBalanceHint")}
@@ -188,7 +188,7 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
                           "flex aspect-square items-center justify-center rounded-xl transition-all",
                           isActive
                             ? "ring-2 ring-[var(--foreground)]/30 scale-95"
-                            : "bg-[var(--background)] ring-1 ring-black/[0.06]"
+                            : "bg-[var(--background)] ring-1 ring-[var(--ring-default)]"
                         )}
                         style={isActive ? { backgroundColor: `${selectedColor}22`, color: selectedColor } : undefined}
                       >
@@ -213,7 +213,7 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
                         "flex aspect-square items-center justify-center rounded-xl text-[20px] transition-all",
                         selectedSymbol === emoji
                           ? "bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/30 scale-95"
-                          : "bg-[var(--background)] ring-1 ring-black/[0.06]"
+                          : "bg-[var(--background)] ring-1 ring-[var(--ring-default)]"
                       )}
                     >
                       {emoji}
@@ -256,7 +256,7 @@ export default function AddWalletSheet({ open, onClose, onAdded, iconStyle = "2d
             <button
               type="submit"
               disabled={loading}
-              className="flex h-13 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white transition-opacity disabled:opacity-60"
+              className="flex h-13 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-60"
             >
               {loading ? tr("common.adding") : tr("wallet.newWallet")}
             </button>

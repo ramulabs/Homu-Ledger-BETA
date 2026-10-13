@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox } from "lucide-react";
+import { ChevronRight, Tag, Bell, HelpCircle, LogOut, Users, Coins, Smile, Languages, Layers, RefreshCw, Wallet, Ticket, Sparkles, SunMoon, Palette, Smartphone, Activity, Mailbox } from "lucide-react";
 import PrivacyToggleRow from "@/components/privacy-toggle-row";
 import { TapLink } from "@/components/tap";
 import { requireSession } from "@/lib/auth/session";
@@ -8,6 +8,7 @@ import { getServerT } from "@/lib/i18n/server";
 import DevFeedbackBadge from "@/components/dev-feedback-badge";
 import { APP_VERSION } from "@/lib/version";
 import TrackView from "@/components/track-view";
+import StickyHeader from "@/components/ui/sticky-header";
 
 export default async function SettingsPage() {
   // requireSession + getServerT share the SAME getSession() call via
@@ -77,22 +78,12 @@ export default async function SettingsPage() {
     // Cancel ~6rem of it via negative margin; keep ~1rem + safe-area for breathing room.
     <div className="pb-4" style={{ marginBottom: "calc(-7rem + 1rem)" }}>
       <TrackView event="settings_opened" />
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <TapLink
-          href="/transactions"
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </TapLink>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">{t("settings.title")}</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={t("settings.title")} backHref="/transactions" />
 
       {/* Profile card — tappable to edit */}
       <TapLink
         href="/settings/edit-profile"
-        className="mx-5 mt-4 flex items-center gap-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-black/[0.04] active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+        className="mx-5 mt-4 flex items-center gap-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--ring-subtle)] active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
       >
         <div
           className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-[20px] font-semibold text-white"
@@ -118,10 +109,10 @@ export default async function SettingsPage() {
       {/* Household section */}
       {household && (
         <section className="mt-5">
-          <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow mb-2 px-6">
             {t("settings.household")}
           </p>
-          <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
+          <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]">
             {/* Ledger name — tappable to rename. We pass an `owner=1` flag
                 only when the current user is the household owner; the
                 /settings/name page reads it to gate the delete-ledger
@@ -129,7 +120,7 @@ export default async function SettingsPage() {
                 flag is just for UI cleanliness. */}
             <TapLink
               href={`/settings/name?current=${encodeURIComponent(household.name)}${household.owner_id === user.id ? "&owner=1" : ""}`}
-              className="flex items-center justify-between px-4 pt-3.5 pb-2 active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+              className="flex items-center justify-between px-4 pt-3.5 pb-2 active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
             >
               <p className="truncate text-[15px] font-semibold text-[var(--foreground)]">{household.name}</p>
               <ChevronRight className="ml-2 h-[18px] w-[18px] shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
@@ -149,9 +140,9 @@ export default async function SettingsPage() {
             {/* Symbol link */}
             <TapLink
               href="/settings/symbol"
-              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
                 <Smile className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{t("settings.symbol")}</p>
@@ -162,9 +153,9 @@ export default async function SettingsPage() {
             {/* Currency link */}
             <TapLink
               href="/settings/currency"
-              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
                 <Coins className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{t("settings.currency")}</p>
@@ -175,9 +166,9 @@ export default async function SettingsPage() {
             {/* Members link */}
             <TapLink
               href="/settings/members"
-              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
                 <Users className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{t("settings.members")}</p>
@@ -190,9 +181,9 @@ export default async function SettingsPage() {
                 ledger. Defaults to "Auto-detect". */}
             <TapLink
               href={`/settings/ai-language?current=${aiLanguageRaw}`}
-              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+              className="flex items-center gap-3 border-t border-[var(--separator)] px-4 py-3.5 active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
                 <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />
               </span>
               <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{t("settings.aiLanguage")}</p>
@@ -255,7 +246,7 @@ export default async function SettingsPage() {
         <form action={signOut}>
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-4 py-3.5 text-[15px] font-semibold text-rose-600 ring-1 ring-black/[0.04] active:scale-[0.99] transition-transform"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-4 py-3.5 text-[15px] font-semibold text-rose-600 ring-1 ring-[var(--ring-subtle)] active:scale-[0.99] transition-transform"
           >
             <LogOut className="h-[18px] w-[18px]" strokeWidth={2.25} />
             {t("settings.logOut")}
@@ -274,10 +265,10 @@ export default async function SettingsPage() {
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-5">
-      <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+      <p className="eyebrow mb-2 px-6">
         {title}
       </p>
-      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {children}
       </ul>
     </section>
@@ -287,8 +278,8 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 function Row({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <li>
-      <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left min-h-[52px] active:bg-black/[0.02] transition-colors">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+      <button className="flex w-full items-center gap-3 px-4 py-3.5 text-left min-h-[52px] active:bg-[var(--fill-quaternary)] transition-colors">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
           {icon}
         </span>
         <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{label}</p>
@@ -313,8 +304,8 @@ function RowLink({
 }) {
   return (
     <li>
-      <TapLink href={href} className="flex w-full items-center gap-3 px-4 py-3.5 min-h-[52px] active:bg-black/[0.02] transition-colors [touch-action:manipulation]">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+      <TapLink href={href} className="flex w-full items-center gap-3 px-4 py-3.5 min-h-[52px] active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
           {icon}
         </span>
         <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">{label}</p>

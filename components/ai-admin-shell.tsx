@@ -7,13 +7,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Sparkles, Check, AlertCircle, Mic } from "lucide-react";
+import { ChevronRight, Sparkles, AlertCircle, Mic } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from "recharts";
 import { TapLink } from "@/components/tap";
 import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/cn";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Stats = {
   calls: number;
@@ -89,19 +90,7 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {t("ai.admin.title")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={t("ai.admin.title")} />
 
       <p className="px-5 mt-2 text-[13px] text-[var(--label-secondary)]">
         {t("ai.admin.subtitle")}
@@ -110,12 +99,12 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
       {/* API key — RowLink to the dedicated key page. We surface the
           configured/not-configured status so the dev knows at a glance
           whether the feature is live. */}
-      <section className="mx-5 mt-4 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
+      <section className="mx-5 mt-4 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]">
         <TapLink
           href="/settings/ai-admin/key"
-          className="flex items-center gap-3 px-4 py-3.5 min-h-[52px] active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+          className="flex items-center gap-3 px-4 py-3.5 min-h-[52px] active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
             <Sparkles className="h-[18px] w-[18px]" strokeWidth={2} />
           </span>
           <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">
@@ -138,12 +127,12 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
       {/* v1.41.0 — Voice transactions admin. Separate page since the Groq
           key + voice_input_enabled flag live in their own namespace and
           shouldn't get tangled with Gemini's stats. */}
-      <section className="mx-5 mt-3 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
+      <section className="mx-5 mt-3 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]">
         <TapLink
           href="/settings/ai-admin/voice"
-          className="flex items-center gap-3 px-4 py-3.5 min-h-[52px] active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+          className="flex items-center gap-3 px-4 py-3.5 min-h-[52px] active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
         >
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
             <Mic className="h-[18px] w-[18px]" strokeWidth={2} />
           </span>
           <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">
@@ -159,8 +148,8 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
           RPC so they update on every page load (no client polling).
           Bar fill turns amber at 75%, red at 90% — visual nudge before
           you hit a hard wall. */}
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4">
-        <p className="mb-3 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4">
+        <p className="eyebrow mb-3">
           {t("ai.admin.freeTierHeading")}
         </p>
         <div className="space-y-2.5">
@@ -193,10 +182,10 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
           window the numbers below refer to. */}
       <section className="mx-5 mt-5">
         <div className="flex items-center justify-between mb-3">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow">
             {t("ai.admin.usageHeading")}
           </p>
-          <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+          <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
             {(["7d", "28d", "90d"] as RangeKey[]).map((r) => (
               <button
                 key={r}
@@ -255,12 +244,12 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
       {/* Daily chart. Metric toggle above the bars so the dev can flip
           between "API calls per day" (default — shows the cache split)
           and "Tokens per day" (raw consumption signal). */}
-      <section className="mx-5 mt-5 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4">
+      <section className="mx-5 mt-5 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow">
             {metric === "calls" ? t("ai.admin.chartCalls") : t("ai.admin.chartTokens")}
           </p>
-          <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+          <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
             {(["calls", "tokens"] as Metric[]).map((m) => (
               <button
                 key={m}
@@ -288,7 +277,7 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
             <ResponsiveContainer width="100%" height="100%">
               {metric === "calls" ? (
                 <BarChart data={daily} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid stroke="rgba(0,0,0,0.04)" vertical={false} />
+                  <CartesianGrid stroke="var(--separator)" vertical={false} />
                   <XAxis
                     dataKey="day"
                     tickFormatter={(d) => shortDate(d)}
@@ -304,10 +293,10 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
                     tickLine={false}
                   />
                   <Tooltip
-                    cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                    cursor={{ fill: "var(--fill-quaternary)" }}
                     contentStyle={{
                       borderRadius: 12,
-                      border: "1px solid rgba(0,0,0,0.06)",
+                      border: "1px solid var(--separator)",
                       fontSize: 12,
                     }}
                     labelFormatter={(d) => longDate(String(d))}
@@ -318,12 +307,14 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
                     iconSize={8}
                   />
                   <Bar dataKey="hits"   stackId="a" fill="#10b981" name={t("ai.admin.usageHits")} />
-                  <Bar dataKey="misses" stackId="a" fill="#EE6452" name={t("ai.admin.usageMisses")} />
+                  {/* Hex, not var(--brand): recharts writes `fill` as an SVG attribute,
+                    where CSS variables don't resolve in every browser. */}
+                <Bar dataKey="misses" stackId="a" fill="#ee6452" name={t("ai.admin.usageMisses")} />
                   <Bar dataKey="errors" stackId="a" fill="#f43f5e" name={t("ai.admin.usageErrors")} />
                 </BarChart>
               ) : (
                 <BarChart data={daily} margin={{ top: 4, right: 0, left: -10, bottom: 0 }}>
-                  <CartesianGrid stroke="rgba(0,0,0,0.04)" vertical={false} />
+                  <CartesianGrid stroke="var(--separator)" vertical={false} />
                   <XAxis
                     dataKey="day"
                     tickFormatter={(d) => shortDate(d)}
@@ -339,10 +330,10 @@ export default function AiAdminShell({ keyConfigured, range, stats, live, limits
                     tickLine={false}
                   />
                   <Tooltip
-                    cursor={{ fill: "rgba(0,0,0,0.04)" }}
+                    cursor={{ fill: "var(--fill-quaternary)" }}
                     contentStyle={{
                       borderRadius: 12,
-                      border: "1px solid rgba(0,0,0,0.06)",
+                      border: "1px solid var(--separator)",
                       fontSize: 12,
                     }}
                     labelFormatter={(d) => longDate(String(d))}
@@ -372,10 +363,10 @@ function Stat({
     <div
       className={cn(
         "rounded-2xl p-3",
-        tone === "primary" ? "bg-[#EE6452]/10" : "bg-[var(--background)]"
+        tone === "primary" ? "bg-[var(--brand-soft)]" : "bg-[var(--background)]"
       )}
     >
-      <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+      <p className="eyebrow">
         {label}
       </p>
       <p className="mt-0.5 text-[22px] font-semibold leading-tight text-[var(--foreground)] tabular-nums">
@@ -405,8 +396,8 @@ function MiniStat({
       ? "text-rose-700"
       : "text-[var(--foreground)]";
   return (
-    <div className="rounded-xl bg-[var(--background)] px-3 py-2 ring-1 ring-black/[0.04]">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+    <div className="rounded-xl bg-[var(--background)] px-3 py-2 ring-1 ring-[var(--ring-subtle)]">
+      <p className="eyebrow">
         {label}
       </p>
       <p className={cn("mt-0.5 text-[15px] font-semibold tabular-nums", toneClass)}>{value}</p>
@@ -446,7 +437,7 @@ function UsageBar({
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-2">
         <p className="text-[12px] font-semibold tabular-nums text-[var(--foreground)]">
-          <span className="mr-1.5 rounded bg-black/[0.06] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--label-secondary)]">
+          <span className="mr-1.5 rounded bg-[var(--fill-tertiary)] px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--label-secondary)]">
             {label}
           </span>
           {formatValue(used)}
@@ -454,7 +445,7 @@ function UsageBar({
         </p>
         <p className="text-[11px] tabular-nums text-[var(--label-tertiary)]">{pct}%</p>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
         <div
           className={cn("h-full rounded-full transition-[width] duration-300", tone)}
           style={{ width: `${pct}%` }}

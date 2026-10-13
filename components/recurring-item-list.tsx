@@ -72,7 +72,7 @@ export default function RecurringItemList({ items, currency = "IDR", iconStyle =
 
   if (items.length === 0) {
     return (
-      <div className="mx-5 mt-2 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-black/[0.04]">
+      <div className="mx-5 mt-2 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-[var(--ring-subtle)]">
         <p className="text-[22px] mb-2">🔁</p>
         <p className="text-[15px] font-medium text-[var(--foreground)]">{t("recurring.empty.title")}</p>
         <p className="mt-1 text-[13px] text-[var(--label-secondary)]">
@@ -91,7 +91,7 @@ export default function RecurringItemList({ items, currency = "IDR", iconStyle =
 
   return (
     <div className="mx-5 mt-2 space-y-3">
-      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {items.map((item) => {
           const cat = item.categories ?? FALLBACK_CAT;
           const until = repeatUntilLabel(item);
@@ -99,7 +99,7 @@ export default function RecurringItemList({ items, currency = "IDR", iconStyle =
             <li
               key={item.id}
               onClick={() => onTap(item)}
-              className="flex items-center gap-3 px-4 py-3.5 min-h-[64px] active:bg-black/[0.02] transition-colors cursor-pointer"
+              className="flex items-center gap-3 px-4 py-3.5 min-h-[64px] active:bg-[var(--fill-quaternary)] transition-colors cursor-pointer"
             >
               <div
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[20px]"
@@ -118,7 +118,7 @@ export default function RecurringItemList({ items, currency = "IDR", iconStyle =
                 <p className="truncate text-[15px] font-medium text-[var(--foreground)]">{item.name}</p>
                 <div className="mt-0.5 space-y-0.5">
                   <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-                    <span className="rounded-full bg-black/[0.06] px-2 py-0.5 text-[11px] font-medium text-[var(--label-secondary)]">
+                    <span className="rounded-full bg-[var(--fill-tertiary)] px-2 py-0.5 text-[11px] font-medium text-[var(--label-secondary)]">
                       {freqBadge(item)}
                     </span>
                     {item.next_due_date && item.frequency === "yearly" && (
@@ -157,7 +157,7 @@ export default function RecurringItemList({ items, currency = "IDR", iconStyle =
 
       <button
         onClick={onAdd}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] py-3.5 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] transition-colors active:bg-black/[0.04]"
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] py-3.5 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)] transition-colors active:bg-[var(--fill-quaternary)]"
       >
         <Plus className="h-4 w-4" strokeWidth={2.25} />
         {t("recurring.addNew")}

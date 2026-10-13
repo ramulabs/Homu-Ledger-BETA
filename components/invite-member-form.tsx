@@ -50,7 +50,7 @@ export default function InviteMemberForm() {
           placeholder="email@example.com or username"
           autoCapitalize="off"
           autoCorrect="off"
-          className="h-12 flex-1 rounded-xl bg-[var(--surface)] px-3 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.06] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
+          className="h-12 flex-1 rounded-xl bg-[var(--surface)] px-3 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
         />
         <button
           type="submit"

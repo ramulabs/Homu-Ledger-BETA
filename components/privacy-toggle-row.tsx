@@ -38,9 +38,9 @@ export default function PrivacyToggleRow() {
         onClick={onToggle}
         role="switch"
         aria-checked={hide}
-        className="flex w-full items-center gap-3 px-4 py-3.5 min-h-[52px] text-left active:bg-black/[0.02] transition-colors [touch-action:manipulation]"
+        className="flex w-full items-center gap-3 px-4 py-3.5 min-h-[52px] text-left active:bg-[var(--fill-quaternary)] transition-colors [touch-action:manipulation]"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.04] text-[var(--foreground)]">
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--foreground)]">
           <EyeOff className="h-[18px] w-[18px]" strokeWidth={2} />
         </span>
         <p className="flex-1 text-[15px] font-medium text-[var(--foreground)]">
@@ -58,7 +58,7 @@ function SwitchThumb({ on }: { on: boolean }) {
       aria-hidden="true"
       className={
         "relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors " +
-        (on ? "bg-[var(--accent,#22c55e)]" : "bg-black/[0.12]")
+        (on ? "bg-[var(--switch-on)]" : "bg-[var(--fill-primary)]")
       }
     >
       <span

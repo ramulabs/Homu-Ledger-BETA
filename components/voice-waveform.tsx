@@ -21,7 +21,7 @@ type Props = {
   color?: string;
 };
 
-export default function VoiceWaveform({ volume, listening, color = "#EE6452" }: Props) {
+export default function VoiceWaveform({ volume, listening, color = "var(--brand)" }: Props) {
   const pathRef = useRef<SVGPathElement | null>(null);
   // Mirror props into a ref so the rAF loop reads the latest values
   // without re-attaching (re-attaching would reset the t=0 baseline
@@ -97,7 +97,7 @@ export default function VoiceWaveform({ volume, listening, color = "#EE6452" }: 
     <div className="flex w-full items-center justify-center">
       <svg viewBox="0 0 320 80" width="100%" height={64} preserveAspectRatio="none"
         style={{ display: "block", maxWidth: 320 }}>
-        <path ref={pathRef} stroke={color} strokeWidth={1.8} fill="none" strokeLinecap="round" />
+        <path ref={pathRef} style={{ stroke: color }} strokeWidth={1.8} fill="none" strokeLinecap="round" />
       </svg>
     </div>
   );

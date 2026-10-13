@@ -8,24 +8,28 @@ import {
 } from "recharts";
 import { cn } from "@/lib/cn";
 import { TapButton } from "@/components/tap";
-import { formatAmount, formatDayWithWeekday } from "@/lib/format";
+import { formatAmount, formatDayWithWeekday, formatDateRange } from "@/lib/format";
 import { CategoryIcon } from "@/components/category-icon";
+import BalanceCard from "@/components/balance-card";
+import SegmentedControl from "@/components/ui/segmented-control";
+import { useLang, useT } from "@/lib/i18n/provider";
+import type { TKey } from "@/lib/i18n/dictionaries";
 import type { DbTransaction, DbCategory, DbMember, DbWallet } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
-
-const SHORT_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 type Period = "7d" | "30d" | "Last month" | "This month" | "custom";
 type TxType = "expenses" | "income";
 type Breakdown = "category" | "member";
 type SelectedSegment = { index: number; key: string };
 
-const PERIODS: { key: Period; label: string }[] = [
-  { key: "7d",         label: "Last 7 days" },
-  { key: "30d",        label: "Last 30 days" },
-  { key: "Last month", label: "Last month" },
-  { key: "This month", label: "This month" },
-  { key: "custom",     label: "Custom" },
+// `short` labels the header pill (fits beside the title in Bahasa
+// Indonesia too); `label` is the full text in the dropdown.
+const PERIODS: { key: Period; label: TKey; short: TKey }[] = [
+  { key: "7d",         label: "reports.last7",     short: "reports.short7" },
+  { key: "30d",        label: "reports.last30",    short: "reports.short30" },
+  { key: "Last month", label: "reports.lastMonth", short: "reports.lastMonth" },
+  { key: "This month", label: "reports.thisMonth", short: "reports.thisMonth" },
+  { key: "custom",     label: "reports.custom",    short: "reports.custom" },
 ];
 
 function toDateInputValue(d: Date): string {
@@ -50,12 +54,6 @@ function getPeriodRange(period: Period, now: Date): { start: Date; end: Date } {
       return { start: s, end };
     }
   }
-}
-
-function formatDateRange(start: Date, end: Date): string {
-  const s = `${SHORT_MONTHS[start.getMonth()]} ${start.getDate()}`;
-  const e = `${SHORT_MONTHS[end.getMonth()]} ${end.getDate()}`;
-  return `${s} – ${e}`;
 }
 
 function txInRange(tx: DbTransaction, start: Date, end: Date): boolean {
@@ -85,6 +83,8 @@ export default function ReportsShell({ transactions, categories, wallets, member
   // enough to the page-load instant that drift across a single session
   // doesn't matter, and freezing it sidesteps the whole hydration issue.
   const now = useMemo(() => new Date(nowISO), [nowISO]);
+  const t = useT();
+  const lang = useLang();
   const [period, setPeriod] = useState<Period>("30d");
   const [showDropdown, setShowDropdown] = useState(false);
   const [txType, setTxType] = useState<TxType>("expenses");
@@ -141,9 +141,9 @@ export default function ReportsShell({ transactions, categories, wallets, member
   const selectedWallets = wallets.filter((w) => walletIds.includes(w.id));
   const hasWalletFilter = walletIds.length > 0 && walletIds.length < wallets.length;
   const selectedWalletLabel = (() => {
-    if (selectedWallets.length === 0) return "All";
+    if (selectedWallets.length === 0) return t("reports.all");
     if (selectedWallets.length === 1) return selectedWallets[0].name;
-    return `${selectedWallets.length} wallets`;
+    return t("reports.nWallets").replace("{n}", String(selectedWallets.length));
   })();
 
   const { start, end } = period === "custom"
@@ -153,7 +153,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
         return { start: new Date(sy, sm - 1, sd), end: new Date(ey, em - 1, ed) };
       })()
     : getPeriodRange(period, now);
-  const rangeLabel = formatDateRange(start, end);
+  const rangeLabel = formatDateRange(start, end, lang);
 
   // Filter by selected wallets first (empty list = no filter, show all),
   // then by the selected period. Doing it in this order means every
@@ -195,7 +195,6 @@ export default function ReportsShell({ transactions, categories, wallets, member
     return days;
   }, [activeTx, start, end]);
 
-  const barColor = txType === "expenses" ? "#f43f5e" : "#10b981";
 
   // --- By category ---
   const byCategory = useMemo(() => (
@@ -227,14 +226,14 @@ export default function ReportsShell({ transactions, categories, wallets, member
   const donutData = useMemo(() => {
     if (breakdown === "category") {
       const slices = byCategory.map((c) => ({ name: c.name, value: c.total, color: c.color }));
-      if (uncategorizedTotal > 0) slices.push({ name: "Uncategorized", value: uncategorizedTotal, color: "#d1d5db" });
+      if (uncategorizedTotal > 0) slices.push({ name: t("reports.uncategorized"), value: uncategorizedTotal, color: "#d1d5db" });
       return slices;
     } else {
       const slices = byMember.map((m) => ({ name: m.name, value: m.total, color: m.avatar_color }));
-      if (unassignedTotal > 0) slices.push({ name: "Unassigned", value: unassignedTotal, color: "#d1d5db" });
+      if (unassignedTotal > 0) slices.push({ name: t("reports.unassigned"), value: unassignedTotal, color: "#d1d5db" });
       return slices;
     }
-  }, [breakdown, byCategory, byMember, uncategorizedTotal, unassignedTotal]);
+  }, [breakdown, byCategory, byMember, uncategorizedTotal, unassignedTotal, t]);
 
   const hasData = grandTotal > 0;
 
@@ -247,14 +246,14 @@ export default function ReportsShell({ transactions, categories, wallets, member
           RIGHT : period dropdown
           The middle column gets `flex-1` and `text-center` so the date
           stays visually centred regardless of the side button widths. */}
-      <header className="sticky top-[env(safe-area-inset-top)] z-10 bg-[var(--background)]/85 px-5 pt-2 pb-3 backdrop-blur-xl">
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
         <div className="flex items-center gap-2">
           {/* LEFT — wallet filter (multi-select) */}
           <div className="relative shrink-0" ref={walletDropdownRef}>
             <TapButton
               onTap={() => setShowWalletDropdown((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full bg-[var(--surface)] px-2.5 py-1.5 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.06] shadow-sm [touch-action:manipulation]"
-              aria-label="Filter by wallet"
+              className="flex h-9 items-center gap-1.5 rounded-full bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] [touch-action:manipulation]"
+              aria-label={t("reports.filterByWallet")}
             >
               {selectedWallets.length === 1 ? (
                 <span
@@ -282,7 +281,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
               />
             </TapButton>
             {showWalletDropdown && (
-              <div className="absolute left-0 top-full mt-2 w-60 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-xl ring-1 ring-black/[0.08] z-20">
+              <div className="absolute left-0 top-full mt-2 w-60 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-[var(--shadow-overlay)] ring-1 ring-[var(--ring-default)] z-20">
                 {/* "All wallets" — clears the multi-select. Tapping this
                     closes the dropdown because the user has expressed
                     a final choice. Per-wallet rows below DON'T close the
@@ -295,14 +294,14 @@ export default function ReportsShell({ transactions, categories, wallets, member
                   className={cn(
                     "flex w-full items-center gap-2.5 px-4 py-3 text-[14px] transition-colors [touch-action:manipulation]",
                     walletIds.length === 0
-                      ? "bg-black/[0.03] font-semibold text-[var(--foreground)]"
-                      : "font-medium text-[var(--label-secondary)] active:bg-black/[0.02]",
+                      ? "bg-[var(--fill-quaternary)] font-semibold text-[var(--foreground)]"
+                      : "font-medium text-[var(--label-secondary)] active:bg-[var(--fill-quaternary)]",
                   )}
                 >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/[0.06]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--fill-tertiary)]">
                     <WalletIcon className="h-[14px] w-[14px] text-[var(--label-secondary)]" strokeWidth={2} />
                   </span>
-                  <span className="flex-1 text-left">All wallets</span>
+                  <span className="flex-1 text-left">{t("reports.allWallets")}</span>
                   {walletIds.length === 0 && (
                     <Check className="h-4 w-4 text-[var(--foreground)]" strokeWidth={2.5} />
                   )}
@@ -319,8 +318,8 @@ export default function ReportsShell({ transactions, categories, wallets, member
                       className={cn(
                         "flex w-full items-center gap-2.5 px-4 py-3 text-[14px] transition-colors [touch-action:manipulation]",
                         isSel
-                          ? "bg-black/[0.03] font-semibold text-[var(--foreground)]"
-                          : "font-medium text-[var(--label-secondary)] active:bg-black/[0.02]",
+                          ? "bg-[var(--fill-quaternary)] font-semibold text-[var(--foreground)]"
+                          : "font-medium text-[var(--label-secondary)] active:bg-[var(--fill-quaternary)]",
                       )}
                     >
                       <span
@@ -344,7 +343,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
                           "flex h-5 w-5 items-center justify-center rounded-md ring-1 transition-colors",
                           isSel
                             ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-[var(--foreground)]"
-                            : "bg-transparent text-transparent ring-black/[0.15]",
+                            : "bg-transparent text-transparent ring-[var(--ring-strong)]",
                         )}
                       >
                         <Check className="h-3 w-3" strokeWidth={3} />
@@ -356,57 +355,59 @@ export default function ReportsShell({ transactions, categories, wallets, member
             )}
           </div>
 
-          {/* MIDDLE — date range label, centred */}
-          <p className="flex-1 truncate text-center text-[15px] font-semibold text-[var(--foreground)]">
-            {rangeLabel}
-          </p>
+          {/* MIDDLE — page title + the date range as its subtitle, the
+              same title/subtitle pattern as the Transactions header. */}
+          <div className="min-w-0 flex-1 text-center leading-tight">
+            <h1 className="truncate text-[15px] font-semibold tracking-tight text-[var(--foreground)]">{t("reports.title")}</h1>
+            <p className="truncate text-[11px] text-[var(--label-secondary)]">{rangeLabel}</p>
+          </div>
 
           {/* RIGHT — period dropdown */}
           <div className="relative shrink-0" ref={dropdownRef}>
             <TapButton
               onTap={() => setShowDropdown((v) => !v)}
-              className="flex items-center gap-1.5 rounded-full bg-[var(--surface)] px-3 py-1.5 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.06] shadow-sm [touch-action:manipulation]"
+              className="flex h-9 items-center gap-1.5 rounded-full bg-[var(--surface)] px-3 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] [touch-action:manipulation]"
             >
-              {PERIODS.find((p) => p.key === period)?.label ?? period}
+              {t(PERIODS.find((p) => p.key === period)?.short ?? "reports.custom")}
               <ChevronDown className={cn("h-3.5 w-3.5 text-[var(--label-secondary)] transition-transform", showDropdown && "rotate-180")} strokeWidth={2.5} />
             </TapButton>
             {showDropdown && (
-              <div className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-xl ring-1 ring-black/[0.08] z-20">
+              <div className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-2xl bg-[var(--surface)] shadow-[var(--shadow-overlay)] ring-1 ring-[var(--ring-default)] z-20">
                 {PERIODS.map(({ key, label }) => (
                   <TapButton key={key} onTap={() => { setPeriod(key); if (key !== "custom") setShowDropdown(false); }}
                     className={cn("flex w-full items-center px-4 py-3 text-[14px] transition-colors [touch-action:manipulation]",
-                      key === period ? "font-semibold text-[var(--foreground)] bg-black/[0.03]" : "font-medium text-[var(--label-secondary)] active:bg-black/[0.02]"
+                      key === period ? "font-semibold text-[var(--foreground)] bg-[var(--fill-quaternary)]" : "font-medium text-[var(--label-secondary)] active:bg-[var(--fill-quaternary)]"
                     )}
-                  >{label}</TapButton>
+                  >{t(label)}</TapButton>
                 ))}
                 {period === "custom" && (
                   <div className="border-t border-[var(--separator)] px-4 py-3 space-y-2">
                     <div>
-                      <p className="text-[11px] font-medium text-[var(--label-tertiary)] mb-1">From</p>
+                      <p className="text-[11px] font-medium text-[var(--label-tertiary)] mb-1">{t("filter.from")}</p>
                       <input
                         type="date"
                         value={customStart}
                         max={customEnd}
                         onChange={(e) => setCustomStart(e.target.value)}
-                        className="w-full rounded-xl bg-black/[0.04] px-3 py-1.5 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.06] focus:ring-[var(--foreground)]/20"
+                        className="w-full rounded-xl bg-[var(--fill-quaternary)] px-3 py-1.5 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-[var(--foreground)]/20"
                       />
                     </div>
                     <div>
-                      <p className="text-[11px] font-medium text-[var(--label-tertiary)] mb-1">To</p>
+                      <p className="text-[11px] font-medium text-[var(--label-tertiary)] mb-1">{t("filter.to")}</p>
                       <input
                         type="date"
                         value={customEnd}
                         min={customStart}
                         max={todayStr}
                         onChange={(e) => setCustomEnd(e.target.value)}
-                        className="w-full rounded-xl bg-black/[0.04] px-3 py-1.5 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.06] focus:ring-[var(--foreground)]/20"
+                        className="w-full rounded-xl bg-[var(--fill-quaternary)] px-3 py-1.5 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-[var(--foreground)]/20"
                       />
                     </div>
                     <button
                       onClick={() => setShowDropdown(false)}
                       className="w-full rounded-xl bg-[var(--foreground)] py-2 text-[13px] font-semibold text-[var(--on-foreground)]"
                     >
-                      Apply
+                      {t("filter.apply")}
                     </button>
                   </div>
                 )}
@@ -416,19 +417,28 @@ export default function ReportsShell({ transactions, categories, wallets, member
         </div>
       </header>
 
-      {/* Summary cards */}
-      <section className="grid grid-cols-3 gap-2 px-5 pt-3">
-        <SummaryCell label="Income"   value={formatAmount(income,   currency)} tone="good" />
-        <SummaryCell label="Expenses" value={formatAmount(expenses, currency)} tone="bad" />
-        <SummaryCell label="Net"      value={formatAmount(net,      currency)} tone={net >= 0 ? "good" : "bad"} />
-      </section>
+      {/* Summary — the same card as the Transactions tab (v1.49.0). The
+          old three-column cells wrapped 8-digit amounts at phone width. */}
+      <BalanceCard
+        balance={net}
+        income={income}
+        expenses={expenses}
+        currency={currency}
+        headline={t("reports.net")}
+        private={false}
+      />
 
       {/* Expense / Income toggle */}
-      <div className="px-5 pt-4">
-        <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
-          <TabBtn active={txType === "expenses"} onClick={() => setTxType("expenses")}>Expenses</TabBtn>
-          <TabBtn active={txType === "income"}   onClick={() => setTxType("income")}>Income</TabBtn>
-        </div>
+      <div className="px-5 pt-3">
+        <SegmentedControl
+          ariaLabel={t("reports.title")}
+          value={txType}
+          onChange={setTxType}
+          options={[
+            { value: "expenses", label: t("reports.expenses") },
+            { value: "income", label: t("reports.income") },
+          ]}
+        />
       </div>
 
       {/* Daily bar chart.
@@ -436,11 +446,14 @@ export default function ReportsShell({ transactions, categories, wallets, member
           Safari draws around tapped SVG elements, and `select-none` blocks
           the long-press text-selection box on the axis tick labels. */}
       <div
-        className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] px-2 pt-4 pb-2 select-none [-webkit-tap-highlight-color:transparent] [&_*]:outline-none"
+        className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] px-2 pt-4 pb-2 select-none [-webkit-tap-highlight-color:transparent] [&_*]:outline-none"
       >
-        <p className="px-2 mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
-          Daily trend
+        <p className="eyebrow px-2 mb-2">
+          {t("reports.dailyTrend")}
         </p>
+        {/* Bars use currentColor so they follow the income/expense tokens
+            in both themes (recharts writes `fill` as an SVG attribute). */}
+        <div className={txType === "expenses" ? "text-[var(--color-expense)]" : "text-[var(--color-income)]"}>
         <ResponsiveContainer width="100%" height={130}>
           <BarChart data={trendData} barSize={trendData.length > 20 ? 6 : 10} margin={{ top: 0, right: 4, left: 4, bottom: 0 }}>
             <XAxis
@@ -451,31 +464,37 @@ export default function ReportsShell({ transactions, categories, wallets, member
               interval={trendData.length > 20 ? 4 : trendData.length > 10 ? 2 : 0}
             />
             <Tooltip
-              cursor={{ fill: "rgba(0,0,0,0.04)", radius: 4 }}
-              contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.12)", fontSize: 13 }}
+              cursor={{ fill: "var(--fill-quaternary)", radius: 4 }}
+              contentStyle={{ borderRadius: 12, border: "none", boxShadow: "var(--shadow-float)", fontSize: 13 }}
               labelFormatter={(_label, payload) => {
                 const p = Array.isArray(payload) ? payload[0]?.payload : null;
-                return p?.dateKey ? formatDayWithWeekday(p.dateKey) : "";
+                return p?.dateKey ? formatDayWithWeekday(p.dateKey, lang) : "";
               }}
-              formatter={(v) => [formatAmount((v as number) ?? 0, currency), txType === "expenses" ? "Expenses" : "Income"]}
+              formatter={(v) => [formatAmount((v as number) ?? 0, currency), txType === "expenses" ? t("reports.expenses") : t("reports.income")]}
             />
-            <Bar dataKey="amount" fill={barColor} radius={[4, 4, 0, 0]} />
+            <Bar dataKey="amount" fill="currentColor" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+        </div>
       </div>
 
       {/* By Category / By Member sub-tabs */}
       <div className="px-5 pt-4">
-        <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
-          <TabBtn active={breakdown === "category"} onClick={() => setBreakdown("category")}>By Category</TabBtn>
-          <TabBtn active={breakdown === "member"}   onClick={() => setBreakdown("member")}>By Member</TabBtn>
-        </div>
+        <SegmentedControl
+          ariaLabel={t("reports.byCategory")}
+          value={breakdown}
+          onChange={setBreakdown}
+          options={[
+            { value: "category", label: t("reports.byCategory") },
+            { value: "member", label: t("reports.byMember") },
+          ]}
+        />
       </div>
 
       {!hasData ? (
-        <div className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-black/[0.04]">
-          <p className="text-[15px] font-medium text-[var(--foreground)]">No {txType} in this period</p>
-          <p className="mt-1 text-[13px] text-[var(--label-secondary)]">Try selecting a different date range</p>
+        <div className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-[var(--ring-subtle)]">
+          <p className="text-[15px] font-semibold text-[var(--foreground)]">{txType === "expenses" ? t("reports.noExpenses") : t("reports.noIncome")}</p>
+          <p className="mt-1 text-[13px] text-[var(--label-secondary)]">{t("reports.tryOtherRange")}</p>
         </div>
       ) : (
         <>
@@ -489,8 +508,8 @@ export default function ReportsShell({ transactions, categories, wallets, member
               and amount. Tapping outside or on the same segment closes it. */}
           <div className="px-5 pt-5 pb-3">
             <div className="flex items-baseline justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
-                {txType === "expenses" ? "Spent" : "Earned"}
+              <p className="eyebrow">
+                {txType === "expenses" ? t("reports.spent") : t("reports.earned")}
               </p>
               <p className="text-[15px] font-bold text-[var(--foreground)] tabular-nums">
                 {formatAmount(grandTotal, currency)}
@@ -499,7 +518,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
             {/* Wrapper is `relative` so the popup can absolute-position
                 itself against the bar's left edge using a percentage. */}
             <div ref={stackedBarRef} className="relative mt-3">
-              <div className="flex h-5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+              <div className="flex h-5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
                 {donutData.map((entry, i) => {
                   const pct = grandTotal > 0 ? (entry.value / grandTotal) * 100 : 0;
                   const isSel = selectedSegmentIndex === i;
@@ -542,7 +561,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
                     className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full"
                     style={{ left: `${clamped}%` }}
                   >
-                    <div className="rounded-xl bg-[var(--foreground)] px-3 py-2 text-[var(--on-foreground)] shadow-lg">
+                    <div className="rounded-xl bg-[var(--foreground)] px-3 py-2 text-[var(--on-foreground)] shadow-[var(--shadow-float)]">
                       <div className="flex items-center gap-2">
                         <span
                           className="block h-2.5 w-2.5 shrink-0 rounded-full"
@@ -550,7 +569,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
                         />
                         <p className="text-[12px] font-semibold whitespace-nowrap">{entry.name}</p>
                       </div>
-                      <p className="mt-0.5 text-[12px] tabular-nums whitespace-nowrap text-white/90">
+                      <p className="mt-0.5 text-[12px] tabular-nums whitespace-nowrap opacity-90">
                         {formatAmount(entry.value, currency)} · {pct.toFixed(1)}%
                       </p>
                     </div>
@@ -587,7 +606,7 @@ export default function ReportsShell({ transactions, categories, wallets, member
     </div>
     {drilldownCategoryId !== null && (() => {
       const cat = drilldownCategoryId === "__uncategorized__"
-        ? { id: "__uncategorized__", name: "Uncategorized", symbol: "📋", color: "#6b7280" }
+        ? { id: "__uncategorized__", name: t("reports.uncategorized"), symbol: "📋", color: "#6b7280" }
         : categories.find((c) => c.id === drilldownCategoryId);
       if (!cat) return null;
       const drilldownTx = activeTx.filter((t) =>
@@ -622,16 +641,17 @@ const CategoryBreakdown = memo(function CategoryBreakdown({
   currency: string; iconStyle: IconStyle;
   onCategoryTap: (id: string) => void;
 }) {
+  const t = useT();
   return (
     <div className="px-5 pt-3 pb-6">
-      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {items.map((c) => {
           const pct = grandTotal > 0 ? (c.total / grandTotal) * 100 : 0;
           return (
             <li
               key={c.id}
               onClick={() => onCategoryTap(c.id)}
-              className="px-4 py-3 active:bg-black/[0.02] transition-colors cursor-pointer [touch-action:manipulation]"
+              className="px-4 py-3 active:bg-[var(--fill-quaternary)] transition-colors cursor-pointer [touch-action:manipulation]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -645,7 +665,7 @@ const CategoryBreakdown = memo(function CategoryBreakdown({
                 </div>
                 <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(c.total, currency)}</p>
               </div>
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: c.color }} />
               </div>
             </li>
@@ -654,19 +674,19 @@ const CategoryBreakdown = memo(function CategoryBreakdown({
         {uncategorizedTotal > 0 && (
           <li
             onClick={() => onCategoryTap("__uncategorized__")}
-            className="px-4 py-3 active:bg-black/[0.02] transition-colors cursor-pointer [touch-action:manipulation]"
+            className="px-4 py-3 active:bg-[var(--fill-quaternary)] transition-colors cursor-pointer [touch-action:manipulation]"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-black/[0.05]">📋</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-[var(--fill-tertiary)]">📋</span>
                 <div>
-                  <p className="text-[14px] font-medium text-[var(--foreground)]">Uncategorized</p>
+                  <p className="text-[14px] font-medium text-[var(--foreground)]">{t("reports.uncategorized")}</p>
                   <p className="text-[11px] text-[var(--label-secondary)]">{((uncategorizedTotal / grandTotal) * 100).toFixed(1)}%</p>
                 </div>
               </div>
               <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(uncategorizedTotal, currency)}</p>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
               <div className="h-full rounded-full bg-[var(--label-tertiary)]" style={{ width: `${(uncategorizedTotal / grandTotal) * 100}%` }} />
             </div>
           </li>
@@ -690,6 +710,8 @@ function CategoryDrilldownSheet({
   iconStyle: IconStyle;
   onClose: () => void;
 }) {
+  const t = useT();
+  const lang = useLang();
   // Lock background scroll while the sheet is mounted. We toggle overflow on
   // <body> instead of <html> because Safari's address-bar resize on scroll
   // can interfere with a position:fixed sheet otherwise.
@@ -706,7 +728,7 @@ function CategoryDrilldownSheet({
       />
       <div className="fixed bottom-0 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 rounded-t-3xl bg-[var(--background)] shadow-2xl max-h-[80vh] flex flex-col animate-sheet-slide-up">
         <div className="px-5 pt-4 pb-3 shrink-0">
-          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-black/[0.12]" />
+          <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
           <div className="flex items-center gap-3">
             <span
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
@@ -731,8 +753,8 @@ function CategoryDrilldownSheet({
             </p>
             <button
               onClick={onClose}
-              aria-label="Close"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-[var(--foreground)] active:scale-95 transition-transform"
+              aria-label={t("common.close")}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--foreground)] active:scale-95 transition-transform"
             >
               <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
             </button>
@@ -742,29 +764,29 @@ function CategoryDrilldownSheet({
         <div className="flex-1 overflow-y-auto px-5 pb-8">
           {transactions.length === 0 ? (
             <p className="py-8 text-center text-[13px] text-[var(--label-secondary)]">
-              No transactions in this period.
+              {t("reports.noData")}
             </p>
           ) : (
-            <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
-              {transactions.map((t) => (
-                <li key={t.id} className="flex items-center gap-3 px-4 py-3.5">
+            <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
+              {transactions.map((tx) => (
+                <li key={tx.id} className="flex items-center gap-3 px-4 py-3.5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[15px] font-medium text-[var(--foreground)]">
-                      {t.name}
+                      {tx.name}
                     </p>
                     <p className="text-[12px] text-[var(--label-secondary)]">
-                      {formatDayWithWeekday(t.date)}
-                      {t.wallets ? ` · ${t.wallets.name}` : ""}
+                      {formatDayWithWeekday(tx.date, lang)}
+                      {tx.wallets ? ` · ${tx.wallets.name}` : ""}
                     </p>
                   </div>
                   {/* v1.43.1 — income colour aligned with transaction-list. */}
                   <p
                     className={`shrink-0 text-[15px] font-semibold tabular-nums ${
-                      t.type === "income" ? "text-[var(--color-income)]" : "text-[var(--foreground)]"
+                      tx.type === "income" ? "text-[var(--color-income)]" : "text-[var(--foreground)]"
                     }`}
                   >
-                    {t.type === "income" ? "+" : "-"}
-                    {formatAmount(t.amount, currency)}
+                    {tx.type === "income" ? "+" : "-"}
+                    {formatAmount(tx.amount, currency)}
                   </p>
                 </li>
               ))}
@@ -781,9 +803,10 @@ const MemberBreakdown = memo(function MemberBreakdown({
 }: {
   items: MemberRow[]; unassignedTotal: number; grandTotal: number; currency: string;
 }) {
+  const t = useT();
   return (
     <div className="px-5 pt-3 pb-6">
-      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {items.map((m) => {
           const pct = grandTotal > 0 ? (m.total / grandTotal) * 100 : 0;
           return (
@@ -798,7 +821,7 @@ const MemberBreakdown = memo(function MemberBreakdown({
                 </div>
                 <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(m.total, currency)}</p>
               </div>
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: m.avatar_color }} />
               </div>
             </li>
@@ -808,15 +831,15 @@ const MemberBreakdown = memo(function MemberBreakdown({
           <li className="px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-black/[0.05]">?</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full text-base bg-[var(--fill-tertiary)]">?</span>
                 <div>
-                  <p className="text-[14px] font-medium text-[var(--foreground)]">Unassigned</p>
+                  <p className="text-[14px] font-medium text-[var(--foreground)]">{t("reports.unassigned")}</p>
                   <p className="text-[11px] text-[var(--label-secondary)]">{((unassignedTotal / grandTotal) * 100).toFixed(1)}%</p>
                 </div>
               </div>
               <p className="text-[14px] font-semibold tabular-nums text-[var(--foreground)]">{formatAmount(unassignedTotal, currency)}</p>
             </div>
-            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
               <div className="h-full rounded-full bg-[var(--label-tertiary)]" style={{ width: `${(unassignedTotal / grandTotal) * 100}%` }} />
             </div>
           </li>
@@ -826,24 +849,3 @@ const MemberBreakdown = memo(function MemberBreakdown({
   );
 });
 
-function SummaryCell({ label, value, tone }: { label: string; value: string; tone: "good" | "bad" | "neutral" }) {
-  const color = tone === "good" ? "text-emerald-700" : tone === "bad" ? "text-rose-700" : "text-[var(--foreground)]";
-  return (
-    <div className="rounded-2xl bg-[var(--surface)] p-3 ring-1 ring-black/[0.04]">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">{label}</p>
-      <p className={cn("mt-1 text-[12px] font-semibold tabular-nums tracking-tight", color)}>{value}</p>
-    </div>
-  );
-}
-
-function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <TapButton onTap={onClick}
-      className={cn("flex-1 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all min-h-[32px] [touch-action:manipulation]",
-        active ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm" : "text-[var(--label-secondary)]"
-      )}
-    >
-      {children}
-    </TapButton>
-  );
-}

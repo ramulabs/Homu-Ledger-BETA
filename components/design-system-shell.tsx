@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { Check, ChevronLeft, Copy, RotateCcw, Sun, Moon, SunMoon, Plus } from "lucide-react";
+import { Check, Copy, RotateCcw, Sun, Moon, SunMoon, Plus } from "lucide-react";
 import {
   TOKENS,
   OVERRIDE_STORAGE_KEY,
@@ -25,6 +24,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import EmptyState from "@/components/ui/empty-state";
 import Avatar from "@/components/ui/avatar";
 import FilterTabs from "@/components/ui/filter-tabs";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type ViewMode = "auto" | "light" | "dark";
 
@@ -150,22 +150,18 @@ export default function DesignSystemShell() {
   return (
     <div className="pb-16">
       {/* ── Sticky header ─────────────────────────────────────────── */}
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <Link
-          href="/settings"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </Link>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">DesignSystem</h1>
-        <button
-          onClick={copyCss}
-          aria-label="Copy CSS"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          {copied ? <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> : <Copy className="h-[18px] w-[18px]" strokeWidth={2} />}
-        </button>
-      </header>
+      <StickyHeader
+        title="DesignSystem" backHref="/settings"
+        right={
+          <button
+            onClick={copyCss}
+            aria-label="Copy CSS"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
+          >
+            {copied ? <Check className="h-[18px] w-[18px]" strokeWidth={2.5} /> : <Copy className="h-[18px] w-[18px]" strokeWidth={2} />}
+          </button>
+        }
+      />
 
       {/* ── Mode + override status bar ─────────────────────────────── */}
       <div className="mx-5 mt-3 flex items-center justify-between gap-2 rounded-[var(--radius-xl)] bg-[var(--surface)] px-3 py-2.5 ring-1 ring-[var(--ring-subtle)]">
@@ -306,7 +302,7 @@ export default function DesignSystemShell() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-6">
-      <p className="mb-2 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+      <p className="eyebrow mb-2 px-6">
         {title}
       </p>
       <div className="mx-5">{children}</div>
@@ -351,12 +347,12 @@ function TokenRow({
           <div className="flex items-center gap-2">
             <p className="text-[14px] font-medium text-[var(--foreground)]">{token.label}</p>
             {!themeAware && (
-              <span className="rounded-full bg-[var(--ring-subtle)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+              <span className="rounded-full bg-[var(--ring-subtle)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
                 shared
               </span>
             )}
             {isOverridden && (
-              <span className="rounded-full bg-[var(--tint-warning-bg)] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--tint-warning-text)]">
+              <span className="rounded-full bg-[var(--tint-warning-bg)] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--tint-warning-text)]">
                 overridden
               </span>
             )}

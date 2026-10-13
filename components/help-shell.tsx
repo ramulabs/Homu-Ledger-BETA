@@ -36,7 +36,7 @@ export default function HelpShell({ userId }: { userId: string }) {
   return (
     <>
       <div className="px-5 pt-2">
-        <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+        <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
           <TabButton active={tab === "submit"} onClick={() => setTab("submit")} label="Submit" />
           <TabButton active={tab === "mine"}   onClick={() => setTab("mine")}   label="My tickets" />
         </div>

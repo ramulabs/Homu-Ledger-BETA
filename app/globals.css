@@ -45,7 +45,30 @@
   --separator:         rgba(66, 52, 40, 0.08);
   --label-secondary:   rgba(66, 52, 40, 0.55);
   --label-tertiary:    rgba(66, 52, 40, 0.38);
-  --accent:            #b5663a;
+
+  /* ── Brand · light ────────────────────────────────────────────────── */
+  /* The HOMU coral. Brand moments only: the logo, the Add Transaction
+     save / voice button, the Pending button, the Transfer tab and the
+     keypad caret. Primary BUTTONS use ink (--foreground): white text on
+     coral is ~3.2:1, below WCAG AA for button text (ink is ~15:1). */
+  --brand:             #ee6452;
+  --brand-soft:        rgba(238, 100, 82, 0.12);
+  --brand-shadow:      rgba(238, 100, 82, 0.35);
+  --on-brand:          #ffffff;
+
+  /* ── Fills · light ────────────────────────────────────────────────── */
+  /* Translucent, theme-aware fills (the iOS systemFill family) for
+     segmented-control tracks, icon wells, chips, keypad keys, drag handles
+     and pressed states. They replace bg-black/[0.0x], which disappeared
+     on the dark background. Quaternary is the faintest. */
+  --fill-quaternary:   rgba(66, 52, 40, 0.04);
+  --fill-tertiary:     rgba(66, 52, 40, 0.06);
+  --fill-secondary:    rgba(66, 52, 40, 0.10);
+  --fill-primary:      rgba(66, 52, 40, 0.16);
+  /* Selected segment of a segmented control (sits on a --fill-tertiary
+     track). Lighter than --surface in dark mode so the selection reads
+     as raised, like iOS. */
+  --segmented-thumb:   #fefcf8;
 
   /* ── Rings · light ────────────────────────────────────────────────── */
   /* Subtle / default / strong outline rings. Each is theme-aware so dark
@@ -73,6 +96,10 @@
   --shadow-float:      0 6px 18px rgba(42, 37, 32, 0.12),
                        0 1px 4px rgba(42, 37, 32, 0.08);
   --shadow-sheet:      0 -8px 24px rgba(0, 0, 0, 0.12);
+  /* Floating overlay cards: bento pickers, quick-create sheets, Pending. */
+  --shadow-overlay:    0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* Switch "on" track (iOS system green). */
+  --switch-on:         #34c759;
 
   /* ── Radii ────────────────────────────────────────────────────────── */
   --radius-sm:         0.5rem;
@@ -123,7 +150,15 @@
   --separator:         rgba(245, 240, 232, 0.10);
   --label-secondary:   rgba(245, 240, 232, 0.60);
   --label-tertiary:    rgba(245, 240, 232, 0.40);
-  --accent:            #c4794d;
+  --brand:             #ee6452;
+  --brand-soft:        rgba(238, 100, 82, 0.18);
+  --brand-shadow:      rgba(0, 0, 0, 0.45);
+  --on-brand:          #ffffff;
+  --fill-quaternary:   rgba(245, 240, 232, 0.05);
+  --fill-tertiary:     rgba(245, 240, 232, 0.08);
+  --fill-secondary:    rgba(245, 240, 232, 0.12);
+  --fill-primary:      rgba(245, 240, 232, 0.18);
+  --segmented-thumb:   #3d3934;
 
   /* Rings · dark */
   --ring-subtle:       rgba(255, 255, 255, 0.06);
@@ -150,6 +185,8 @@
   --shadow-float:      0 6px 24px rgba(0, 0, 0, 0.55),
                        0 1px 4px rgba(0, 0, 0, 0.40);
   --shadow-sheet:      0 -8px 28px rgba(0, 0, 0, 0.55);
+  --shadow-overlay:    0 12px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --switch-on:         #30d158;
 
   /* ── Status palette remap · dark (v1.48.3) ────────────────────────────
      Banners, warnings and confirm panels across the app use Tailwind's
@@ -196,7 +233,15 @@
     --separator:         rgba(245, 240, 232, 0.10);
     --label-secondary:   rgba(245, 240, 232, 0.60);
     --label-tertiary:    rgba(245, 240, 232, 0.40);
-    --accent:            #c4794d;
+    --brand:             #ee6452;
+    --brand-soft:        rgba(238, 100, 82, 0.18);
+    --brand-shadow:      rgba(0, 0, 0, 0.45);
+    --on-brand:          #ffffff;
+    --fill-quaternary:   rgba(245, 240, 232, 0.05);
+    --fill-tertiary:     rgba(245, 240, 232, 0.08);
+    --fill-secondary:    rgba(245, 240, 232, 0.12);
+    --fill-primary:      rgba(245, 240, 232, 0.18);
+    --segmented-thumb:   #3d3934;
 
     --ring-subtle:       rgba(255, 255, 255, 0.06);
     --ring-default:      rgba(255, 255, 255, 0.10);
@@ -218,6 +263,8 @@
     --shadow-float:      0 6px 24px rgba(0, 0, 0, 0.55),
                          0 1px 4px rgba(0, 0, 0, 0.40);
     --shadow-sheet:      0 -8px 28px rgba(0, 0, 0, 0.55);
+    --shadow-overlay:    0 12px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --switch-on:         #30d158;
 
     /* Status palette remap (v1.48.3) — see [data-theme="dark"] above. */
     --color-rose-50:     rgba(244, 63, 94, 0.14);
@@ -255,6 +302,30 @@ html, body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Section label ("eyebrow") above a group of rows or a form section —
+   one style everywhere (there were five: 10/11/11.5/12px, medium/semibold). */
+@layer components {
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+    color: var(--label-tertiary);
+  }
+}
+
+/* Respect the OS "Reduce motion" setting: sheets, pickers, row fade-ins
+   and the splash still change state, just without the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }

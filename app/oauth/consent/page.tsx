@@ -52,7 +52,7 @@ export default async function ConsentPage({
         </p>
       </div>
 
-      <div className="space-y-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-black/[0.08]">
+      <div className="space-y-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--ring-default)]">
         <dl className="space-y-1 text-[13px]">
           {household?.name && (
             <div className="flex justify-between gap-4">
@@ -66,7 +66,7 @@ export default async function ConsentPage({
           </div>
         </dl>
 
-        <div className="border-t border-black/[0.06] pt-3">
+        <div className="border-t border-[var(--separator)] pt-3">
           <p className="mb-2 text-[13px] font-medium text-[var(--label-secondary)]">{t("oauth.canDo")}</p>
           <ul className="space-y-2 text-[14px] text-[var(--foreground)]">
             <li className="flex gap-2">
@@ -97,7 +97,7 @@ export default async function ConsentPage({
           type="submit"
           name="decision"
           value="approve"
-          className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm active:opacity-90"
+          className="flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] active:opacity-90"
         >
           {t("oauth.allow")}
         </button>

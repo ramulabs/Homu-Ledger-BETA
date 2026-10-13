@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ImagePlus, Video, X, Check } from "lucide-react";
+import { ImagePlus, Video, X, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { createFeedback } from "@/app/actions/feedback";
 import type { FeedbackCategory } from "@/lib/types";
@@ -152,7 +152,7 @@ export default function FeedbackForm({ userId }: Props) {
 
   if (submitted) {
     return (
-      <div className="mx-5 mt-12 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-black/[0.04]">
+      <div className="mx-5 mt-12 rounded-2xl bg-[var(--surface)] px-6 py-12 text-center ring-1 ring-[var(--ring-subtle)]">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100/70 text-emerald-700">
           <Check className="h-7 w-7" strokeWidth={2.5} />
         </div>
@@ -167,7 +167,7 @@ export default function FeedbackForm({ userId }: Props) {
   return (
     <form onSubmit={handleSubmit} className="mx-5 mt-2 space-y-4">
       <div>
-        <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <label className="eyebrow mb-1.5 block">
           Subject
         </label>
         <input
@@ -177,12 +177,12 @@ export default function FeedbackForm({ userId }: Props) {
           required
           maxLength={120}
           placeholder="Short summary"
-          className="w-full rounded-2xl bg-[var(--surface)] px-4 py-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.06] focus:ring-2 focus:ring-[var(--foreground)]/20 placeholder:text-[var(--label-tertiary)]"
+          className="w-full rounded-2xl bg-[var(--surface)] px-4 py-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 placeholder:text-[var(--label-tertiary)]"
         />
       </div>
 
       <div>
-        <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <label className="eyebrow mb-1.5 block">
           Category
         </label>
         <div className="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ export default function FeedbackForm({ userId }: Props) {
                 "rounded-full px-3.5 py-1.5 text-[13px] font-medium ring-1 transition-all active:scale-95",
                 category === c.code
                   ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-[var(--foreground)]"
-                  : "bg-[var(--surface)] text-[var(--foreground)] ring-black/[0.08]"
+                  : "bg-[var(--surface)] text-[var(--foreground)] ring-[var(--ring-default)]"
               )}
             >
               {c.label}
@@ -205,7 +205,7 @@ export default function FeedbackForm({ userId }: Props) {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <label className="eyebrow mb-1.5 block">
           Message
         </label>
         <textarea
@@ -214,19 +214,19 @@ export default function FeedbackForm({ userId }: Props) {
           required
           rows={6}
           placeholder="What happened, or what would you like to see?"
-          className="w-full rounded-2xl bg-[var(--surface)] px-4 py-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.06] focus:ring-2 focus:ring-[var(--foreground)]/20 placeholder:text-[var(--label-tertiary)] resize-none"
+          className="w-full rounded-2xl bg-[var(--surface)] px-4 py-3 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 placeholder:text-[var(--label-tertiary)] resize-none"
         />
       </div>
 
       <div>
-        <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <label className="eyebrow mb-1.5 block">
           Attachments
         </label>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={() => imageInputRef.current?.click()}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-3 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.06] active:scale-[0.98]"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-3 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] active:scale-[0.98]"
           >
             <ImagePlus className="h-[18px] w-[18px]" strokeWidth={2} />
             Add screenshot
@@ -235,7 +235,7 @@ export default function FeedbackForm({ userId }: Props) {
             type="button"
             onClick={() => videoInputRef.current?.click()}
             disabled={hasVideo}
-            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-3 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.06] active:scale-[0.98] disabled:opacity-40"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--surface)] px-3 py-3 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] active:scale-[0.98] disabled:opacity-40"
           >
             <Video className="h-[18px] w-[18px]" strokeWidth={2} />
             {hasVideo ? "Video attached" : "Add video (≤ 50 MB)"}
@@ -262,7 +262,7 @@ export default function FeedbackForm({ userId }: Props) {
             {attachments.map((att, i) => (
               <li
                 key={att.localUrl}
-                className="relative aspect-square overflow-hidden rounded-xl bg-black/[0.05] ring-1 ring-black/[0.06]"
+                className="relative aspect-square overflow-hidden rounded-xl bg-[var(--fill-tertiary)] ring-1 ring-[var(--ring-default)]"
               >
                 {att.kind === "image" ? (
                   // eslint-disable-next-line @next/next/no-img-element

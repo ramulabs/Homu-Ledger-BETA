@@ -844,10 +844,10 @@ export default function VoiceShell({
             onClick={onClose}
             aria-label={confirmingClose ? "Tap again to discard drafts" : t("common.close") || "Close"}
             className={cn(
-              "flex h-9 items-center justify-center rounded-full text-[var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 transition-all active:scale-95",
+              "flex h-9 items-center justify-center rounded-full text-[var(--foreground)] shadow-[var(--shadow-card)] ring-1 transition-all active:scale-95",
               confirmingClose
                 ? "w-auto gap-1.5 bg-rose-500 px-3 text-[12px] font-semibold text-white ring-rose-500"
-                : "w-9 bg-[var(--surface)] ring-black/[0.05]"
+                : "w-9 bg-[var(--surface)] ring-[var(--ring-default)]"
             )}
           >
             <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
@@ -924,7 +924,7 @@ export default function VoiceShell({
             meant. Outside-tap cancels the whole action. */}
         {pendingAmbiguous && (
           <div
-            className="absolute inset-x-3 z-[80] flex flex-col gap-2 rounded-2xl border border-[var(--ring-default)] bg-[var(--surface)] p-3 shadow-[0_14px_36px_rgba(0,0,0,0.22)]"
+            className="absolute inset-x-3 z-[80] flex flex-col gap-2 rounded-2xl border border-[var(--ring-default)] bg-[var(--surface)] p-3 shadow-[var(--shadow-overlay)]"
             style={{ bottom: 130 }}
             role="dialog"
             aria-label="Which one did you mean?"
@@ -973,7 +973,7 @@ export default function VoiceShell({
               row landing IS the feedback. Only the fallback hint
               ("Try: \"Bensin tiga ratus ribu\"" / "Paused…") stays. */}
           <div className="min-h-[22px] text-center" aria-live="polite">
-            <span className="text-[11.5px] text-[var(--label-tertiary)]">{captionFallback}</span>
+            <span className="text-[12px] text-[var(--label-tertiary)]">{captionFallback}</span>
           </div>
 
           {saveError && (
@@ -998,11 +998,13 @@ export default function VoiceShell({
             <button
               onClick={onSave}
               disabled={liveRows.length === 0 || saving}
-              className="inline-flex h-[50px] min-w-[110px] shrink-0 items-center justify-center gap-1.5 rounded-full px-[18px] text-[14.5px] font-semibold transition-all"
+              className="inline-flex h-[50px] min-w-[110px] shrink-0 items-center justify-center gap-1.5 rounded-full px-[18px] text-[15px] font-semibold transition-all"
               style={{
-                background: liveRows.length === 0 || saving ? "rgba(0,0,0,0.06)" : "#EE6452",
-                color: liveRows.length === 0 || saving ? "var(--label-tertiary)" : "#fff",
-                boxShadow: liveRows.length === 0 || saving ? "none" : "0 8px 24px rgba(238,100,82,0.35)",
+                // v1.49.0 — primary text buttons are ink across the app
+                // (white on coral fails WCAG AA for text).
+                background: liveRows.length === 0 || saving ? "var(--fill-tertiary)" : "var(--foreground)",
+                color: liveRows.length === 0 || saving ? "var(--label-tertiary)" : "var(--on-foreground)",
+                boxShadow: liveRows.length === 0 || saving ? "none" : "var(--shadow-float)",
               }}
             >
               <CheckIcon />

@@ -25,7 +25,7 @@ export default function CancelInviteButton({ invitationId }: { invitationId: str
       onClick={handleCancel}
       disabled={working}
       aria-label="Cancel invitation"
-      className="ml-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.04] text-[var(--label-secondary)] transition-colors active:bg-black/[0.08] disabled:opacity-50"
+      className="ml-1 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[var(--label-secondary)] transition-colors active:bg-[var(--fill-secondary)] disabled:opacity-50"
     >
       {working ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.5} />

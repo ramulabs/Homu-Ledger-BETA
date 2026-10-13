@@ -258,7 +258,7 @@ export default function AddRecurringSheet({
         }}
       >
         <div className="flex shrink-0 justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-black/10" />
+          <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
         </div>
 
         <div className="flex shrink-0 items-center justify-between px-5 pb-3">
@@ -267,7 +267,7 @@ export default function AddRecurringSheet({
           </h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -277,7 +277,7 @@ export default function AddRecurringSheet({
           {/* Locked type toggle — sits outside the scroll area so it stays
               pinned to the top of the form while the fields below scroll. */}
           <div className="shrink-0 px-5 pb-3">
-            <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+            <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
               {(["expense", "income"] as const).map((opt) => (
                 <button
                   key={opt}
@@ -323,7 +323,7 @@ export default function AddRecurringSheet({
               placeholder={`${t("tx.amount")} (${currency})`}
               aria-label={`${t("tx.amount")} (${currency})`}
               required
-              className="h-14 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[24px] font-semibold text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[15px] placeholder:font-medium placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              className="h-14 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[24px] font-semibold text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[15px] placeholder:font-medium placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
             />
 
             {/* Description */}
@@ -334,7 +334,7 @@ export default function AddRecurringSheet({
               placeholder={t("recurring.namePlaceholder")}
               aria-label={t("tx.description")}
               required
-              className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
             />
 
             {/* Category */}
@@ -342,7 +342,7 @@ export default function AddRecurringSheet({
               type="button"
               onClick={() => setShowCategoryPicker(true)}
               aria-label={t("tx.category")}
-              className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[var(--background)] px-4 ring-1 ring-black/[0.08] transition-colors active:bg-black/[0.04]"
+              className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[var(--background)] px-4 ring-1 ring-[var(--ring-default)] transition-colors active:bg-[var(--fill-quaternary)]"
             >
               {selectedCategory ? (
                 <>
@@ -375,7 +375,7 @@ export default function AddRecurringSheet({
               <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
                 {t("recurring.frequency")}
               </label>
-              <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+              <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
                 {FREQUENCIES.map(({ key, label }) => (
                   <button
                     key={key}
@@ -412,7 +412,7 @@ export default function AddRecurringSheet({
                   type="date"
                   value={nextDueDate}
                   onChange={(e) => handleNextDueDateChange(e.target.value)}
-                  className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-transparent outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
+                  className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-transparent outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
                 />
               </div>
               {monthlyDayLabel && (
@@ -427,7 +427,7 @@ export default function AddRecurringSheet({
               <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">
                 {t("recurring.repeatUntil")}
               </label>
-              <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
+              <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
                 <button
                   type="button"
                   onClick={() => setRepeatUntilMode("forever")}
@@ -469,7 +469,7 @@ export default function AddRecurringSheet({
                     value={repeatUntilDate}
                     onChange={(e) => setRepeatUntilDate(e.target.value)}
                     min={nextDueDate || undefined}
-                    className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-transparent outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
+                    className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-transparent outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
                   />
                 </div>
               )}

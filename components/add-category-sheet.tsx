@@ -196,14 +196,14 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
           style={{
             maxHeight: "92%",
             borderRadius: 28,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--shadow-overlay)",
             transform: visible ? "translateY(0)" : "translateY(110%)",
             transition: "transform 560ms cubic-bezier(0.32, 0.72, 0, 1)",
           }}
         >
           {/* Drag handle */}
           <div className="flex shrink-0 justify-center pb-2 pt-1.5">
-            <div className="h-1 w-9 rounded-full bg-black/[0.16]" />
+            <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
           </div>
 
           {/* Header */}
@@ -214,7 +214,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
             <button
               type="button"
               onClick={handleClose}
-              className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
               aria-label={tr("common.close")}
             >
               <X className="h-4 w-4" strokeWidth={2.25} />
@@ -224,7 +224,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
           <form onSubmit={handleSave} className="flex min-h-0 flex-auto flex-col overflow-hidden">
             {/* Fixed top — live preview + name */}
             <div className="shrink-0 px-[18px]">
-              <div className="mb-2.5 flex items-center gap-2.5 rounded-[20px] bg-[var(--background)] px-3 py-2.5 ring-1 ring-black/[0.06]">
+              <div className="mb-2.5 flex items-center gap-2.5 rounded-[20px] bg-[var(--background)] px-3 py-2.5 ring-1 ring-[var(--ring-default)]">
                 <span
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                   style={{ backgroundColor: `${selectedColor}26` }}
@@ -258,7 +258,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                 required
                 placeholder={tr("category.namePlaceholder")}
                 aria-label={tr("category.namePlaceholder")}
-                className="h-11 w-full rounded-[16px] border border-[var(--separator)] bg-[var(--background)] px-4 text-[14.5px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
+                className="h-11 w-full rounded-[16px] border border-[var(--separator)] bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none placeholder:text-[var(--label-tertiary)] focus:border-[var(--foreground)]/30"
               />
             </div>
 
@@ -267,14 +267,14 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
                 Name field shrinks the viewport. */}
             <div className="mt-2.5 flex min-h-0 flex-auto flex-col overflow-y-auto px-[18px]">
               {/* Icon mode toggle */}
-              <div className="mb-2 flex shrink-0 gap-1 rounded-full bg-black/[0.05] p-1">
+              <div className="mb-2 flex shrink-0 gap-1 rounded-full bg-[var(--fill-tertiary)] p-1">
                 {(["symbol", "emoji"] as const).map((m) => (
                   <button
                     key={m}
                     type="button"
                     onClick={() => setIconMode(m)}
                     className={cn(
-                      "min-h-[32px] flex-1 rounded-full py-1.5 text-[12.5px] font-semibold transition-all",
+                      "min-h-[32px] flex-1 rounded-full py-1.5 text-[13px] font-semibold transition-all",
                       iconMode === m
                         ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
                         : "text-[var(--label-secondary)]"
@@ -364,7 +364,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
               </div>
 
               {error && (
-                <p className="mt-2.5 shrink-0 rounded-[12px] bg-rose-50 px-3.5 py-2 text-[12.5px] text-rose-700 ring-1 ring-rose-200">
+                <p className="mt-2.5 shrink-0 rounded-[12px] bg-rose-50 px-3.5 py-2 text-[13px] text-rose-700 ring-1 ring-rose-200">
                   {error}
                 </p>
               )}
@@ -375,7 +375,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
               <button
                 type="submit"
                 disabled={!canSave}
-                className="flex h-12 w-full items-center justify-center rounded-[18px] bg-[var(--foreground)] text-[14.5px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-50"
+                className="flex h-12 w-full items-center justify-center rounded-[18px] bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] transition-opacity disabled:opacity-50"
               >
                 {loading ? tr("common.adding") : tr("category.addCategory")}
               </button>

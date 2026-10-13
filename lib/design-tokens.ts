@@ -36,6 +36,7 @@ export type TokenDef = {
 
 export type TokenCategory =
   | "Theme"
+  | "Fills"
   | "Rings"
   | "Status tints"
   | "Finance"
@@ -55,12 +56,20 @@ export const TOKENS: TokenDef[] = [
   { name: "--separator",        label: "Separator",          type: "color",  category: "Theme", light: "rgba(66, 52, 40, 0.08)", dark: "rgba(245, 240, 232, 0.10)", hint: "Hairline dividers" },
   { name: "--label-secondary",  label: "Label · secondary",  type: "color",  category: "Theme", light: "rgba(66, 52, 40, 0.55)", dark: "rgba(245, 240, 232, 0.60)" },
   { name: "--label-tertiary",   label: "Label · tertiary",   type: "color",  category: "Theme", light: "rgba(66, 52, 40, 0.38)", dark: "rgba(245, 240, 232, 0.40)" },
-  { name: "--accent",           label: "Accent",             type: "color",  category: "Theme", light: "#b5663a", dark: "#c4794d", hint: "Highlight color (check marks, links)" },
+  { name: "--brand",            label: "Brand",              type: "color",  category: "Theme", light: "#ee6452", dark: "#ee6452", hint: "HOMU coral — logo, Add Transaction save, Pending, Transfer. Not for text buttons." },
+  { name: "--brand-soft",       label: "Brand · soft",       type: "color",  category: "Theme", light: "rgba(238, 100, 82, 0.12)", dark: "rgba(238, 100, 82, 0.18)", hint: "Tinted brand background" },
 
   // ── Rings ────────────────────────────────────────────────────────────
   { name: "--ring-subtle",      label: "Ring · subtle",      type: "color",  category: "Rings", light: "rgba(0, 0, 0, 0.04)", dark: "rgba(255, 255, 255, 0.06)" },
   { name: "--ring-default",     label: "Ring · default",     type: "color",  category: "Rings", light: "rgba(0, 0, 0, 0.06)", dark: "rgba(255, 255, 255, 0.10)" },
   { name: "--ring-strong",      label: "Ring · strong",      type: "color",  category: "Rings", light: "rgba(0, 0, 0, 0.15)", dark: "rgba(255, 255, 255, 0.18)" },
+
+  // ── Fills ────────────────────────────────────────────────────────────
+  { name: "--fill-quaternary",  label: "Fill · quaternary",  type: "color",  category: "Fills", light: "rgba(66, 52, 40, 0.04)", dark: "rgba(245, 240, 232, 0.05)", hint: "Pressed rows, faint wells" },
+  { name: "--fill-tertiary",    label: "Fill · tertiary",    type: "color",  category: "Fills", light: "rgba(66, 52, 40, 0.06)", dark: "rgba(245, 240, 232, 0.08)", hint: "Segmented tracks, icon wells, chips" },
+  { name: "--fill-secondary",   label: "Fill · secondary",   type: "color",  category: "Fills", light: "rgba(66, 52, 40, 0.10)", dark: "rgba(245, 240, 232, 0.12)", hint: "Pressed fills, off switches" },
+  { name: "--fill-primary",     label: "Fill · primary",     type: "color",  category: "Fills", light: "rgba(66, 52, 40, 0.16)", dark: "rgba(245, 240, 232, 0.18)", hint: "Drag handles" },
+  { name: "--switch-on",        label: "Switch · on",        type: "color",  category: "Fills", light: "#34c759", dark: "#30d158" },
 
   // ── Status tints ─────────────────────────────────────────────────────
   { name: "--tint-success-bg",  label: "Success · bg",       type: "color",  category: "Status tints", light: "rgba(167, 243, 208, 0.85)", dark: "rgba(16, 185, 129, 0.18)" },
@@ -80,6 +89,7 @@ export const TOKENS: TokenDef[] = [
   { name: "--shadow-card",      label: "Card",               type: "shadow", category: "Shadows", light: "0 1px 2px rgba(0, 0, 0, 0.03)", dark: "0 1px 2px rgba(0, 0, 0, 0.40)" },
   { name: "--shadow-float",     label: "Floating",           type: "shadow", category: "Shadows", light: "0 6px 18px rgba(42, 37, 32, 0.12), 0 1px 4px rgba(42, 37, 32, 0.08)", dark: "0 6px 24px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.40)" },
   { name: "--shadow-sheet",     label: "Sheet",              type: "shadow", category: "Shadows", light: "0 -8px 24px rgba(0, 0, 0, 0.12)", dark: "0 -8px 28px rgba(0, 0, 0, 0.55)" },
+  { name: "--shadow-overlay",   label: "Overlay",            type: "shadow", category: "Shadows", light: "0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08)", dark: "0 12px 36px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4)", hint: "Bento pickers, quick-create sheets" },
 
   // ── Radii ────────────────────────────────────────────────────────────
   { name: "--radius-sm",        label: "Small",              type: "size",   category: "Radii", light: "0.5rem", dark: null },

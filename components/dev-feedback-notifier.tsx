@@ -76,13 +76,13 @@ export default function DevFeedbackNotifier() {
             dismiss(t.id);
             router.push(`/settings/feedback-admin?ticket=${t.ticketId}`);
           }}
-          className="pointer-events-auto flex w-full items-center gap-3 rounded-2xl bg-[var(--surface)] px-4 py-3 text-left shadow-lg ring-1 ring-black/[0.06] animate-toast-slide-down"
+          className="pointer-events-auto flex w-full items-center gap-3 rounded-2xl bg-[var(--surface)] px-4 py-3 text-left shadow-lg ring-1 ring-[var(--ring-default)] animate-toast-slide-down"
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-100/80 text-rose-700">
             <MessageSquare className="h-[18px] w-[18px]" strokeWidth={2.25} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+            <p className="eyebrow">
               New feedback
             </p>
             <p className="truncate text-[14px] font-semibold text-[var(--foreground)]">
@@ -96,7 +96,7 @@ export default function DevFeedbackNotifier() {
               e.stopPropagation();
               dismiss(t.id);
             }}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)] active:scale-95 transition-transform"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)] active:scale-95 transition-transform"
             aria-label="Dismiss"
           >
             <X className="h-[14px] w-[14px]" strokeWidth={2.5} />

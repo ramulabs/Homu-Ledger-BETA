@@ -50,11 +50,11 @@ export default function TransactionList({ transactions, members, currency = "IDR
 
   if (transactions.length === 0) {
     return (
-      <div className="mx-5 mt-2 rounded-2xl bg-[var(--surface)] px-6 py-14 text-center ring-1 ring-black/[0.04]">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-black/[0.04] text-[28px]">
+      <div className="mx-5 mt-2 rounded-2xl bg-[var(--surface)] px-6 py-14 text-center ring-1 ring-[var(--ring-subtle)]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--fill-quaternary)] text-[28px]">
           📋
         </div>
-        <p className="text-[16px] font-semibold text-[var(--foreground)]">No transactions yet</p>
+        <p className="text-[15px] font-semibold text-[var(--foreground)]">No transactions yet</p>
         <p className="mt-1.5 text-[13px] text-[var(--label-secondary)] leading-relaxed">
           Tap the <span className="font-semibold text-[var(--foreground)]">+</span> button to record your first income or expense.
         </p>
@@ -66,10 +66,10 @@ export default function TransactionList({ transactions, members, currency = "IDR
     <div className="mx-5 mt-2 space-y-4">
       {groups.map((group) => (
         <section key={group.date}>
-          <h3 className="px-1 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <h3 className="eyebrow px-1 pb-1.5">
             {formatDayGroup(group.date, todayKey)}
           </h3>
-          <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+          <ul className="overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
             {group.rows.map(({ tx: t, globalIndex: index }) => {
         const isTransfer = !!t.transfer_pair_id;
         const cat = t.categories ?? FALLBACK_CAT;
@@ -109,7 +109,7 @@ export default function TransactionList({ transactions, members, currency = "IDR
           <li
             key={t.id}
             onClick={() => onTap?.(t)}
-            className={`flex items-center gap-3 px-4 py-3.5 min-h-[60px] transition-colors animate-row-in cursor-pointer active:bg-black/[0.02] ${
+            className={`flex items-center gap-3 px-4 py-3.5 min-h-[60px] transition-colors animate-row-in cursor-pointer active:bg-[var(--fill-quaternary)] ${
               isPending ? "opacity-60" : ""
             }`}
             style={rowStyle}
@@ -119,9 +119,9 @@ export default function TransactionList({ transactions, members, currency = "IDR
               // ── TRANSFER ROW ──────────────────────────────────────────────
               <div
                 className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: "#EE645220" }}
+                style={{ backgroundColor: "var(--brand-soft)" }}
               >
-                <ArrowRightLeft className="h-[18px] w-[18px] text-[#EE6452]" strokeWidth={2.25} />
+                <ArrowRightLeft className="h-[18px] w-[18px] text-[var(--brand)]" strokeWidth={2.25} />
                 {creator && (
                   <span
                     className="absolute -bottom-0.5 -right-0.5 block h-4 w-4 overflow-hidden rounded-full ring-2 ring-[var(--surface)]"
@@ -200,7 +200,7 @@ export default function TransactionList({ transactions, members, currency = "IDR
               <p
                 className={`text-[15px] font-semibold tabular-nums tracking-tight ${
                   isTransfer
-                    ? "text-[#EE6452]"
+                    ? "text-[var(--brand)]"
                     : t.type === "income"
                     ? "text-[var(--color-income)]"
                     : "text-[var(--foreground)]"
@@ -214,7 +214,7 @@ export default function TransactionList({ transactions, members, currency = "IDR
                   Sized to match the inline "Recurring" pill on the
                   first row so the right column reads visually balanced. */}
               {isPending && (
-                <span className="rounded-full bg-[var(--label-tertiary)]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--label-secondary)]">
+                <span className="rounded-full bg-[var(--label-tertiary)]/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--label-secondary)]">
                   {tr("common.pending")}
                 </span>
               )}

@@ -16,7 +16,7 @@ export function CopyButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       aria-label="Copy invite code"
-      className="flex h-7 w-7 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)] transition-colors active:bg-black/[0.1]"
+      className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)] transition-colors active:bg-[var(--fill-secondary)]"
     >
       {copied
         ? <Check className="h-3.5 w-3.5 text-green-600" strokeWidth={2.5} />

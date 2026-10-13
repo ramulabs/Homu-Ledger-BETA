@@ -67,13 +67,13 @@ export default function PendingList({ items, currency, onClose, onChange, onAcce
           maxHeight: "88%",
           borderRadius: 28,
           padding: "10px 0 16px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+          boxShadow: "var(--shadow-overlay)",
           transform: visible ? "translateY(0)" : "translateY(110%)",
           transition: "transform 560ms cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
         <div className="flex shrink-0 justify-center pb-2 pt-1">
-          <div className="h-1 w-9 rounded-full bg-black/[0.16]" />
+          <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
         </div>
 
         <div className="flex shrink-0 items-center justify-between px-[18px] pb-2.5 pt-1">
@@ -85,7 +85,7 @@ export default function PendingList({ items, currency, onClose, onChange, onAcce
             type="button"
             onClick={() => startClose()}
             aria-label={t("common.close")}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+            className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
           >
             <X className="h-4 w-4" strokeWidth={2.25} />
           </button>
@@ -95,7 +95,7 @@ export default function PendingList({ items, currency, onClose, onChange, onAcce
           {items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-center">
               <Inbox className="h-7 w-7 text-[var(--label-tertiary)]" strokeWidth={1.6} />
-              <p className="text-[13.5px] text-[var(--label-secondary)]">{t("pending.empty")}</p>
+              <p className="text-[13px] text-[var(--label-secondary)]">{t("pending.empty")}</p>
             </div>
           ) : (
             items.map((it) => (
@@ -156,18 +156,18 @@ function PendingRowCard({
       : formatAmountSigned(amount, type, currency);
 
   return (
-    <div className="rounded-[20px] bg-[var(--background)] px-3 py-2.5 ring-1 ring-black/[0.06]">
+    <div className="rounded-[20px] bg-[var(--background)] px-3 py-2.5 ring-1 ring-[var(--ring-default)]">
       <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--label-secondary)] ring-1 ring-black/[0.05]">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)]">
           {isAgent ? <Sparkles className="h-3.5 w-3.5" strokeWidth={2} /> : <Inbox className="h-3.5 w-3.5" strokeWidth={2} />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow truncate">
             {isAgent ? t("pending.fromAgent") : item.source_domain}
             {p.merchant && p.merchant !== title ? ` · ${p.merchant}` : ""}
           </p>
           <p className="truncate text-[14px] font-semibold text-[var(--foreground)]">{title}</p>
-          <p className="truncate text-[12.5px] text-[var(--label-secondary)]">
+          <p className="truncate text-[13px] text-[var(--label-secondary)]">
             {amountText && (
               <>
                 <span
@@ -189,25 +189,25 @@ function PendingRowCard({
       {foreign && (
         <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1 ring-1 ring-amber-200">
           <AlertTriangle className="h-3 w-3 shrink-0 text-amber-700" strokeWidth={2.25} />
-          <p className="text-[11.5px] font-medium text-amber-900">
+          <p className="text-[12px] font-medium text-amber-900">
             {t("pending.enterAmountIn")} {currency}
           </p>
         </div>
       )}
 
       {error && (
-        <p className="mt-1.5 truncate rounded-md bg-rose-50 px-2 py-1 text-[11.5px] text-rose-700 ring-1 ring-rose-200">{error}</p>
+        <p className="mt-1.5 truncate rounded-md bg-rose-50 px-2 py-1 text-[12px] text-rose-700 ring-1 ring-rose-200">{error}</p>
       )}
 
       {confirming ? (
         <div className="mt-2 rounded-xl bg-rose-50 px-3 py-2 ring-1 ring-rose-200">
-          <p className="text-[12.5px] font-medium text-rose-700">{t("pending.deleteConfirm")}</p>
+          <p className="text-[13px] font-medium text-rose-700">{t("pending.deleteConfirm")}</p>
           <div className="mt-1.5 flex gap-1.5">
             <button
               type="button"
               onClick={() => setConfirming(false)}
               disabled={busy}
-              className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[var(--surface)] text-[12px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.08]"
+              className="inline-flex h-8 flex-1 items-center justify-center rounded-full bg-[var(--surface)] text-[12px] font-semibold text-[var(--foreground)] ring-1 ring-[var(--ring-default)]"
             >
               {t("common.cancel")}
             </button>

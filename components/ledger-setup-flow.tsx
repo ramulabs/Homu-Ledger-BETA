@@ -133,7 +133,7 @@ export default function LedgerSetupFlow({
 
       {step === "name" && (
         <>
-          <h1 className="mb-1 text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="mb-1 text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             Name your ledger
           </h1>
           <p className="mb-6 text-[14px] text-[var(--label-secondary)]">
@@ -147,7 +147,7 @@ export default function LedgerSetupFlow({
                 onChange={(e) => setLedgerName(e.target.value)}
                 placeholder="e.g. Marc's Family"
                 required
-                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             </div>
             <div>
@@ -155,7 +155,7 @@ export default function LedgerSetupFlow({
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -171,7 +171,7 @@ export default function LedgerSetupFlow({
                 onChange={(e) => setOpeningBalance(e.target.value)}
                 placeholder="0"
                 inputMode="numeric"
-                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--surface)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
               <p className="mt-1 px-1 text-[12px] text-[var(--label-tertiary)]">Optional — your current starting balance</p>
             </div>
@@ -190,7 +190,7 @@ export default function LedgerSetupFlow({
 
       {step === "use_case" && (
         <>
-          <h1 className="mb-1 text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="mb-1 text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             What&apos;s this ledger for?
           </h1>
           <p className="mb-6 text-[14px] text-[var(--label-secondary)]">
@@ -201,7 +201,7 @@ export default function LedgerSetupFlow({
               <button
                 key={uc.id}
                 onClick={() => handleUseCasePick(uc.id)}
-                className="flex w-full items-center gap-4 rounded-2xl bg-[var(--surface)] p-4 text-left ring-1 ring-black/[0.05] shadow-sm active:scale-[0.99] transition-transform [touch-action:manipulation]"
+                className="flex w-full items-center gap-4 rounded-2xl bg-[var(--surface)] p-4 text-left ring-1 ring-[var(--ring-default)] shadow-sm active:scale-[0.99] transition-transform [touch-action:manipulation]"
               >
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--background)] text-2xl">
                   {uc.emoji}
@@ -219,13 +219,13 @@ export default function LedgerSetupFlow({
 
       {step === "categories" && (
         <>
-          <h1 className="mb-1 text-[22px] font-semibold tracking-tight text-[var(--foreground)]">
+          <h1 className="mb-1 text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             Pick your categories
           </h1>
           <p className="mb-4 text-[14px] text-[var(--label-secondary)]">
             We&apos;ve preselected ones that fit. Toggle any in or out.
           </p>
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow mb-3">
             {selectedCategoryIds.size} selected
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -250,7 +250,7 @@ export default function LedgerSetupFlow({
                     "flex items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left transition-all [touch-action:manipulation]",
                     isSelected
                       ? "bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/30"
-                      : "bg-[var(--surface)] ring-1 ring-black/[0.06]"
+                      : "bg-[var(--surface)] ring-1 ring-[var(--ring-default)]"
                   )}
                 >
                   <span

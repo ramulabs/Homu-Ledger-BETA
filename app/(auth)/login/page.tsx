@@ -128,7 +128,7 @@ function LoginPageInner() {
             ghost button so Google still reads as the primary action. */}
         <Link
           href="/signup"
-          className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--surface)] text-[15px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.08] transition-opacity active:opacity-90 [touch-action:manipulation]"
+          className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--surface)] text-[15px] font-semibold text-[var(--foreground)] ring-1 ring-[var(--ring-default)] transition-opacity active:opacity-90 [touch-action:manipulation]"
         >
           {t("auth.createAccount")}
         </Link>

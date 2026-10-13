@@ -176,9 +176,9 @@ export default function VoiceRow({
       {isTransfer ? (
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: "#EE645220" }}
+          style={{ backgroundColor: "var(--brand-soft)" }}
         >
-          <ArrowRightLeft className="h-[18px] w-[18px] text-[#EE6452]" strokeWidth={2.25} />
+          <ArrowRightLeft className="h-[18px] w-[18px] text-[var(--brand)]" strokeWidth={2.25} />
         </div>
       ) : (
         <button
@@ -215,7 +215,7 @@ export default function VoiceRow({
           {!categoryPending && categoryAi && (
             <span
               aria-hidden
-              className="pointer-events-none absolute -right-0.5 -top-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--surface)] text-[#EE6452] ring-1 ring-[var(--ring-subtle)]"
+              className="pointer-events-none absolute -right-0.5 -top-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--brand)] ring-1 ring-[var(--ring-subtle)]"
               style={{ animation: "ai-sparkle-blink 2.8s ease-in-out infinite" }}
             >
               <Sparkles className="h-2.5 w-2.5" strokeWidth={2.5} />
@@ -269,7 +269,7 @@ export default function VoiceRow({
               ref={walletRef}
               type="button"
               onClick={toggleWallet}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[11px] font-medium text-[var(--foreground)] transition-transform active:scale-95 dark:bg-white/[0.08]"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--fill-tertiary)] px-1.5 py-0.5 text-[11px] font-medium text-[var(--foreground)] transition-transform active:scale-95 dark:bg-white/[0.08]"
             >
               <span className="text-[12px]">{wallet?.symbol ?? "💳"}</span>
               <span>{wallet?.name ?? "Wallet"}</span>
@@ -281,7 +281,7 @@ export default function VoiceRow({
         {/* Wallet picker — anchored to the wallet button row. */}
         {walletOpen && !isTransfer && (
           <div
-            className="absolute z-[60] mt-1 grid grid-cols-2 gap-1.5 rounded-2xl border border-[var(--ring-default)] p-2 shadow-[0_14px_36px_rgba(0,0,0,0.22)]"
+            className="absolute z-[60] mt-1 grid grid-cols-2 gap-1.5 rounded-2xl border border-[var(--ring-default)] p-2 shadow-[var(--shadow-overlay)]"
             style={{ left: 56, right: 8, top: "100%", background: "var(--surface)" }}
           >
             {wallets.map((w) => (
@@ -319,7 +319,7 @@ export default function VoiceRow({
             FULL household category list filtered by this row's type. */}
         {categoryOpen && !isTransfer && (
           <div
-            className="absolute z-[60] mt-1 grid max-h-[240px] grid-cols-3 gap-1.5 overflow-y-auto rounded-2xl border border-[var(--ring-default)] p-2 shadow-[0_14px_36px_rgba(0,0,0,0.22)]"
+            className="absolute z-[60] mt-1 grid max-h-[240px] grid-cols-3 gap-1.5 overflow-y-auto rounded-2xl border border-[var(--ring-default)] p-2 shadow-[var(--shadow-overlay)]"
             style={{ left: 56, right: 8, top: "100%", background: "var(--surface)" }}
           >
             {categories
@@ -349,7 +349,7 @@ export default function VoiceRow({
                       color={iconStyle === "2d" ? c.color : undefined}
                     />
                   </span>
-                  <span className="text-[10.5px] font-medium leading-tight">{c.name}</span>
+                  <span className="text-[11px] font-medium leading-tight">{c.name}</span>
                 </button>
               ))}
           </div>

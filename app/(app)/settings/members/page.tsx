@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { ChevronLeft, Crown } from "lucide-react";
-import Link from "next/link";
+import { Crown } from "lucide-react";
 import { requireSession } from "@/lib/auth/session";
 import InviteMemberForm from "@/components/invite-member-form";
 import CancelInviteButton from "@/components/cancel-invite-button";
+import StickyHeader from "@/components/ui/sticky-header";
 
 export default async function MembersPage() {
   const { supabase, user, profile } = await requireSession();
@@ -53,17 +53,7 @@ export default async function MembersPage() {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <Link
-          href="/settings"
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </Link>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Members</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Members" backHref="/settings" />
 
       {/* Invite form */}
       <section className="mt-4 px-5">
@@ -71,11 +61,11 @@ export default async function MembersPage() {
       </section>
 
       {/* Members + pending invitations (single list) */}
-      <p className="mb-2 mt-6 px-6 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+      <p className="eyebrow mb-2 mt-6 px-6">
         Members of {household.name}
       </p>
 
-      <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]">
+      <div className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]">
         {(members ?? []).map((m: any) => {
           const isOwner = m.id === household.owner_id;
           const isMe = m.id === user.id;

@@ -61,7 +61,7 @@ function KeypadKey({
       // amount field — the caret + focused state stay intact.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onPress}
-      className="flex h-[52px] items-center justify-center rounded-2xl bg-[var(--background)] text-[23px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.05] transition-colors active:bg-black/[0.07] [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
+      className="flex h-[52px] items-center justify-center rounded-2xl bg-[var(--background)] text-[24px] font-semibold text-[var(--foreground)] ring-1 ring-[var(--ring-default)] transition-colors active:bg-[var(--fill-tertiary)] [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
     >
       {children}
     </button>

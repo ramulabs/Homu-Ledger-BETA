@@ -27,29 +27,55 @@ export function formatIDRSigned(amount: number, type: "income" | "expense"): str
   return formatAmountSigned(amount, type, "IDR");
 }
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+export type DateLang = "en" | "id";
 
-const MONTHS_SHORT = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-];
+const MONTHS: Record<DateLang, string[]> = {
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  id: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"],
+};
 
-const DAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTHS_SHORT: Record<DateLang, string[]> = {
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  id: ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
+};
 
-/**
- * Format "YYYY-MM-DD" as "Mon, 11 May 2026". Used by the daily-trend
- * chart tooltip. Computes the weekday in local time using the parsed
- * components (Date.parse on a bare YYYY-MM-DD interprets it as UTC,
- * which can yield the wrong weekday in negative-UTC-offset timezones).
- */
-export function formatDayWithWeekday(date: string): string {
+const DAYS_SHORT: Record<DateLang, string[]> = {
+  en: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+  id: ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"],
+};
+
+const DAYS_LONG: Record<DateLang, string[]> = {
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+  id: ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"],
+};
+
+const TODAY: Record<DateLang, string> = { en: "Today", id: "Hari ini" };
+
+// All app dates are day-first ("13 Oct", "Mon, 13 Oct 2026") in both
+// languages (v1.49.0 — Reports used US month-first ranges, and every label
+// was English even in Bahasa Indonesia).
+
+/** "Mon, 11 May 2026" / "Sen, 11 Mei 2026". Computes the weekday from the
+ *  parsed parts (Date.parse on a bare YYYY-MM-DD is UTC). */
+export function formatDayWithWeekday(date: string, lang: DateLang = "en"): string {
   const [y, m, d] = date.split("-").map(Number);
   if (!y || !m || !d) return date;
   const local = new Date(y, m - 1, d);
-  return `${DAYS_SHORT[local.getDay()]}, ${d} ${MONTHS_SHORT[m - 1]} ${y}`;
+  return `${DAYS_SHORT[lang][local.getDay()]}, ${d} ${MONTHS_SHORT[lang][m - 1]} ${y}`;
+}
+
+/** "Sunday 5 October" / "Minggu 5 Oktober" — weekday + day + full month. */
+export function formatWeekdayLong(date: string, lang: DateLang = "en"): string {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!y || !m || !d) return date;
+  return `${DAYS_LONG[lang][new Date(y, m - 1, d).getDay()]} ${d} ${MONTHS[lang][m - 1]}`;
+}
+
+/** "Sat 30 Aug" / "Sab 30 Agu" — compact chip date. */
+export function formatChipDate(date: string, lang: DateLang = "en"): string {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!y || !m || !d) return date;
+  return `${DAYS_SHORT[lang][new Date(y, m - 1, d).getDay()]} ${d} ${MONTHS_SHORT[lang][m - 1]}`;
 }
 
 /**
@@ -57,13 +83,13 @@ export function formatDayWithWeekday(date: string): string {
  * Today → "Today". Same calendar year → "Mon, 11 May". Older → "Mon, 11 May 2025".
  * Pass `todayKey` for the SSR-safe "Today" decision (see formatShortDate).
  */
-export function formatDayGroup(date: string, todayKey?: string | null): string {
-  if (todayKey && todayKey === date) return "Today";
+export function formatDayGroup(date: string, todayKey?: string | null, lang: DateLang = "en"): string {
+  if (todayKey && todayKey === date) return TODAY[lang];
   const [y, m, d] = date.split("-").map(Number);
   if (!y || !m || !d) return date;
   const local = new Date(y, m - 1, d);
-  const weekday = DAYS_SHORT[local.getDay()];
-  const month = MONTHS_SHORT[m - 1];
+  const weekday = DAYS_SHORT[lang][local.getDay()];
+  const month = MONTHS_SHORT[lang][m - 1];
   const currentYear = new Date().getFullYear();
   return y === currentYear
     ? `${weekday}, ${d} ${month}`
@@ -71,16 +97,33 @@ export function formatDayGroup(date: string, todayKey?: string | null): string {
 }
 
 /**
- * Format a YYYY-MM-DD date as a short label.
+ * Format a YYYY-MM-DD date as "5 October 2026" / "5 Oktober 2026".
  * Pass `todayKey` (also "YYYY-MM-DD") so the "Today" decision is deterministic
  * across SSR and client (otherwise `new Date()` mismatches between UTC server
  * and the user's local timezone, causing hydration errors).
  * If `todayKey` is null/undefined the function never returns "Today".
  */
-export function formatShortDate(date: string, todayKey?: string | null): string {
+export function formatShortDate(date: string, todayKey?: string | null, lang: DateLang = "en"): string {
   const [y, m, d] = date.split("-").map(Number);
-  if (todayKey && todayKey === date) return "Today";
-  return `${d} ${MONTHS[m - 1]} ${y}`;
+  if (todayKey && todayKey === date) return TODAY[lang];
+  if (!y || !m || !d) return date;
+  return `${d} ${MONTHS[lang][m - 1]} ${y}`;
+}
+
+/** A Date (or ISO timestamp) as "5 Oct 2026" / "5 Okt 2026" in local time.
+ *  For created_at-style timestamps — never toLocaleDateString(), whose
+ *  device-locale output ("10/12/2026") reads as a different day in ID. */
+export function formatTimestampDate(value: string | Date, lang: DateLang = "en"): string {
+  const dt = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(dt.getTime())) return "";
+  return `${dt.getDate()} ${MONTHS_SHORT[lang][dt.getMonth()]} ${dt.getFullYear()}`;
+}
+
+/** "15 Sep – 14 Oct" / "15 Sep – 14 Okt". */
+export function formatDateRange(start: Date, end: Date, lang: DateLang = "en"): string {
+  const s = `${start.getDate()} ${MONTHS_SHORT[lang][start.getMonth()]}`;
+  const e = `${end.getDate()} ${MONTHS_SHORT[lang][end.getMonth()]}`;
+  return `${s} – ${e}`;
 }
 
 /**

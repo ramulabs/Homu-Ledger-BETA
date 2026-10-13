@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import StickyHeader from "@/components/ui/sticky-header";
 
 export const metadata = {
   title: "Privacy Policy · Homu",
@@ -9,21 +8,10 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col bg-[var(--background)]">
-      <header className="flex items-center gap-3 px-5 pt-4 pb-2">
-        <Link
-          href="/settings"
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-transform"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </Link>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          Privacy Policy
-        </h1>
-      </header>
+      <StickyHeader title="Privacy Policy" backHref="/settings" />
 
       <main className="px-6 pt-4 pb-12 text-[14px] leading-relaxed text-[var(--foreground)]">
-        <p className="text-[12px] uppercase tracking-wide text-[var(--label-tertiary)]">
+        <p className="eyebrow">
           Last updated: May 8, 2026
         </p>
 

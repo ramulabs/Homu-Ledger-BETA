@@ -79,21 +79,21 @@ export default function WelcomeProModal() {
       />
       <div
         className={cn(
-          "fixed inset-x-5 top-1/2 z-[210] mx-auto max-w-sm -translate-y-1/2 rounded-3xl bg-[var(--surface)] p-6 shadow-2xl ring-1 ring-black/[0.05] transition-all duration-300",
+          "fixed inset-x-5 top-1/2 z-[210] mx-auto max-w-sm -translate-y-1/2 rounded-3xl bg-[var(--surface)] p-6 shadow-2xl ring-1 ring-[var(--ring-default)] transition-all duration-300",
           visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
         )}
       >
         <button
           onClick={handleClose}
           aria-label={t("common.close")}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
         >
           <X className="h-4 w-4" strokeWidth={2.25} />
         </button>
 
         <div className="flex flex-col items-center text-center pt-2">
           <div className="relative mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-100 to-rose-100">
-            <Sparkles className="h-10 w-10 text-[#EE6452]" strokeWidth={2} />
+            <Sparkles className="h-10 w-10 text-[var(--brand)]" strokeWidth={2} />
             {/* Tiny celebratory dots */}
             <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-amber-400" />
             <span className="absolute -bottom-1 -left-1 h-2 w-2 rounded-full bg-emerald-400" />
@@ -107,14 +107,14 @@ export default function WelcomeProModal() {
             {body}
           </p>
 
-          <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#EE6452]/10 px-3 py-1 text-[12px] font-semibold text-[#EE6452]">
+          <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-[var(--brand-soft)] px-3 py-1 text-[12px] font-semibold text-[var(--brand)]">
             <Sparkles className="h-3 w-3" strokeWidth={2.5} />
             {tierLabel.toUpperCase()}
           </div>
 
           <button
             onClick={handleClose}
-            className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[15px] font-semibold text-white shadow-sm active:scale-[0.99] transition-transform"
+            className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[15px] font-semibold text-[var(--on-foreground)] active:scale-[0.99] transition-transform"
           >
             {t("promo.welcomeContinue")}
           </button>

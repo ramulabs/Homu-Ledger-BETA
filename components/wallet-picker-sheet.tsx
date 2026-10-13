@@ -99,13 +99,13 @@ export default function WalletPickerSheet({
             maxHeight: "88%",
             borderRadius: 28,
             padding: "10px 0 16px",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+            boxShadow: "var(--shadow-overlay)",
             transform: visible ? "translateY(0)" : "translateY(110%)",
             transition: "transform 560ms cubic-bezier(0.32, 0.72, 0, 1)",
           }}
         >
           <div className="flex justify-center pb-2 pt-1">
-            <div className="h-1 w-9 rounded-full bg-black/[0.16]" />
+            <div className="h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
           </div>
 
           <div className="flex items-center justify-between px-[18px] pb-2.5 pt-1">
@@ -114,7 +114,7 @@ export default function WalletPickerSheet({
             </span>
             <button
               onClick={startClose}
-              className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/[0.05] text-[var(--label-secondary)]"
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--label-secondary)]"
               aria-label={tr("common.close")}
             >
               <X className="h-4 w-4" strokeWidth={2.25} />
@@ -173,7 +173,7 @@ export default function WalletPickerSheet({
             <button
               type="button"
               onClick={() => setShowAdd(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--background)] py-3 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-black/[0.06] transition-colors active:bg-black/[0.04]"
+              className="flex w-full items-center justify-center gap-2 rounded-[20px] bg-[var(--background)] py-3 text-[14px] font-medium text-[var(--label-secondary)] ring-1 ring-[var(--ring-default)] transition-colors active:bg-[var(--fill-quaternary)]"
             >
               <Plus className="h-4 w-4" strokeWidth={2.25} />
               {tr("wallet.addNew")}

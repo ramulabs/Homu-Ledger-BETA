@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useMemo, Suspense, useCallback } from "rea
 import { useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, X, Check } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
-import Link from "next/link";
 import { TapLink } from "@/components/tap";
 import BalanceCard from "@/components/balance-card";
 import TransactionList from "@/components/transaction-list";
@@ -15,11 +14,11 @@ import LedgerSwitcherSheet from "@/components/ledger-switcher-sheet";
 import PullToRefresh from "@/components/pull-to-refresh";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
-import { formatAmount } from "@/lib/format";
 import type { DbTransaction, DbCategory, DbWallet, DbMember, DbHouseholdMembership, DbRecurringItem, DbPendingInvitation } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
 import { usePendingAddTransactionOps } from "@/lib/use-pending-transactions";
 import PendingFab from "@/components/pending-fab";
+import SegmentedControl from "@/components/ui/segmented-control";
 import { foreignCurrency, pendingDate, type PendingRow } from "@/lib/pending";
 import type { PendingAcceptInput } from "@/components/add-transaction-sheet";
 
@@ -480,7 +479,7 @@ export default function TransactionsShell({
             <TapLink
               href="/settings"
               aria-label="Profile and settings"
-              className="flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold text-white ring-1 ring-black/[0.05] shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:scale-95 transition-transform [touch-action:manipulation]"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold text-white ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
               style={{ backgroundColor: currentUser.avatar_color }}
             >
               {currentUser.initials}
@@ -520,7 +519,7 @@ export default function TransactionsShell({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("filter.searchPlaceholder")}
-                  className="h-10 w-full rounded-2xl bg-[var(--surface)] pl-9 pr-9 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"
+                  className="h-10 w-full rounded-2xl bg-[var(--surface)] pl-9 pr-9 text-[14px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[var(--label-tertiary)]"
                 />
                 {searchQuery.length > 0 && (
                   <button
@@ -559,21 +558,15 @@ export default function TransactionsShell({
           )}
 
           <div className="px-5 pt-4">
-            <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
-              <TabButton active={tab === "history"} onClick={() => setTab("history")}>
-                {t("tx.history")}
-              </TabButton>
-              <TabButton active={tab === "recurring"} onClick={() => setTab("recurring")}>
-                <span className="inline-flex items-center gap-1.5">
-                  {t("tx.recurring")}
-                  {recurringItems.length > 0 && (
-                    <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--foreground)]/10 px-1 text-[10px] font-semibold text-[var(--foreground)]">
-                      {recurringItems.length}
-                    </span>
-                  )}
-                </span>
-              </TabButton>
-            </div>
+            <SegmentedControl
+              ariaLabel={t("tx.history")}
+              value={tab}
+              onChange={setTab}
+              options={[
+                { value: "history", label: t("tx.history") },
+                { value: "recurring", label: t("tx.recurring"), badge: recurringItems.length > 0 ? recurringItems.length : undefined },
+              ]}
+            />
           </div>
 
           <div className="pt-3 pb-24">
@@ -746,7 +739,7 @@ function FilterSheet({
     <>
       {/* Fixed header */}
       <div className="px-5 pt-4 pb-3 shrink-0">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-black/[0.12]" />
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[var(--fill-primary)]" />
         <div className="flex items-center justify-between">
           <h2 className="text-[17px] font-semibold text-[var(--foreground)]">{t("filter.title")}</h2>
           {hasActive && (
@@ -760,7 +753,7 @@ function FilterSheet({
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5">
         {/* Date filter */}
-        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{t("filter.date")}</p>
+        <p className="eyebrow mb-2">{t("filter.date")}</p>
         <div className="flex flex-wrap gap-2 mb-4">
           {DATE_OPTIONS.map(({ key, label }) => (
             <button
@@ -770,7 +763,7 @@ function FilterSheet({
                 "rounded-full px-3.5 py-1.5 text-[13px] font-medium ring-1 transition-all duration-150 active:scale-90 [touch-action:manipulation]",
                 pendingDateFilter === key
                   ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-[var(--foreground)]"
-                  : "bg-[var(--surface)] text-[var(--foreground)] ring-black/[0.08]"
+                  : "bg-[var(--surface)] text-[var(--foreground)] ring-[var(--ring-default)]"
               )}
             >
               {label}
@@ -787,7 +780,7 @@ function FilterSheet({
                 value={pendingCustomStart}
                 max={pendingCustomEnd}
                 onChange={(e) => setPendingCustomStart(e.target.value)}
-                className="w-full rounded-xl bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08]"
+                className="w-full rounded-xl bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)]"
               />
             </div>
             <div className="flex-1">
@@ -798,7 +791,7 @@ function FilterSheet({
                 min={pendingCustomStart}
                 max={todayStr}
                 onChange={(e) => setPendingCustomEnd(e.target.value)}
-                className="w-full rounded-xl bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08]"
+                className="w-full rounded-xl bg-[var(--surface)] px-3 py-2 text-[13px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)]"
               />
             </div>
           </div>
@@ -807,7 +800,7 @@ function FilterSheet({
         {/* Wallet filter */}
         {wallets.length > 0 && (
           <>
-            <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{t("tx.wallet")}</p>
+            <p className="eyebrow mb-2">{t("tx.wallet")}</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {wallets.map((w) => {
                 const selected = pendingWallets.includes(w.id);
@@ -819,7 +812,7 @@ function FilterSheet({
                       "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium ring-1 transition-all duration-150 active:scale-90 [touch-action:manipulation]",
                       selected
                         ? "text-white ring-transparent"
-                        : "bg-[var(--surface)] text-[var(--foreground)] ring-black/[0.08]"
+                        : "bg-[var(--surface)] text-[var(--foreground)] ring-[var(--ring-default)]"
                     )}
                     style={selected ? { backgroundColor: w.color } : undefined}
                   >
@@ -840,7 +833,7 @@ function FilterSheet({
         )}
 
         {/* Category filter */}
-        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">{t("tx.category")}</p>
+        <p className="eyebrow mb-2">{t("tx.category")}</p>
         <div className="flex flex-wrap gap-2 pb-4">
           {categories.map((cat) => {
             const selected = pendingCategories.includes(cat.id);
@@ -852,7 +845,7 @@ function FilterSheet({
                   "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium ring-1 transition-all duration-150 active:scale-90 [touch-action:manipulation]",
                   selected
                     ? "text-white ring-transparent"
-                    : "bg-[var(--surface)] text-[var(--foreground)] ring-black/[0.08]"
+                    : "bg-[var(--surface)] text-[var(--foreground)] ring-[var(--ring-default)]"
                 )}
                 style={selected ? { backgroundColor: cat.color } : undefined}
               >
@@ -925,34 +918,10 @@ function IconButton({
       aria-label={ariaLabel}
       onClick={onClick}
       className={cn(
-        "relative flex h-9 w-9 items-center justify-center rounded-full ring-1 shadow-[0_1px_2px_rgba(0,0,0,0.03)] active:scale-95 transition-all",
+        "relative flex h-9 w-9 items-center justify-center rounded-full ring-1 shadow-[var(--shadow-card)] active:scale-95 transition-all",
         active
           ? "bg-[var(--foreground)] text-[var(--on-foreground)] ring-[var(--foreground)]/20"
-          : "bg-[var(--surface)] text-[var(--foreground)] ring-black/[0.05]"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex-1 flex items-center justify-center rounded-full px-3 py-1.5 text-[13px] font-medium transition-all min-h-[32px]",
-        active
-          ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
-          : "text-[var(--label-secondary)]"
+          : "bg-[var(--surface)] text-[var(--foreground)] ring-[var(--ring-default)]"
       )}
     >
       {children}

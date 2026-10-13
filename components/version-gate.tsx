@@ -78,7 +78,7 @@ export default function VersionGate() {
       aria-labelledby="version-gate-title"
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-6"
     >
-      <div className="w-full max-w-sm rounded-2xl bg-[var(--background)] p-6 shadow-[0_24px_48px_rgba(0,0,0,0.24)]">
+      <div className="w-full max-w-sm rounded-2xl bg-[var(--background)] p-6 shadow-[var(--shadow-overlay)]">
         <h2
           id="version-gate-title"
           className="text-base font-semibold text-[var(--foreground)]"

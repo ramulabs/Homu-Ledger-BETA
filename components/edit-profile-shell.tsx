@@ -16,10 +16,10 @@
 // vice versa). They write through different server actions anyway.
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, Eye, EyeOff, Lock, MailCheck, Loader2 } from "lucide-react";
+import { Check, Eye, EyeOff, Lock, MailCheck, Loader2 } from "lucide-react";
 import { updateProfile, updatePassword, requestEmailChange, verifyEmailChangeOtp } from "@/app/actions/auth";
 import { cn } from "@/lib/cn";
+import StickyHeader from "@/components/ui/sticky-header";
 
 // Trimmed from 14 → 9 in v1.36.0. Kept the most chromatically distinct
 // hues across the wheel so users can still tell them apart on a small
@@ -80,7 +80,6 @@ type Props = {
 };
 
 export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
-  const router = useRouter();
   // ── Section 1 + 2 identity state ────────────────────────────────────
   const [name, setName] = useState(profile.name);
   const [username, setUsername] = useState(profile.username ?? "");
@@ -234,23 +233,13 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Edit Profile</h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Edit Profile" />
 
       <form onSubmit={handleIdentitySave} className="px-5 mt-4 space-y-4">
 
         {/* ── Section 1 — Avatar Style & Background Colour ───────── */}
-        <section className="rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4 space-y-4">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <section className="rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4 space-y-4">
+          <p className="eyebrow">
             Avatar
           </p>
 
@@ -267,7 +256,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
           {/* Style toggle */}
           <div>
             <label className="mb-1.5 block text-[13px] font-medium text-[var(--label-secondary)]">Avatar style</label>
-            <div className="flex gap-1 rounded-full bg-black/[0.05] p-1 mb-3">
+            <div className="flex gap-1 rounded-full bg-[var(--fill-tertiary)] p-1 mb-3">
               {(["initial", "emoji"] as const).map((m) => (
                 <button key={m} type="button" onClick={() => setAvatarMode(m)}
                   className={cn("flex-1 rounded-full py-1.5 text-[13px] font-medium transition-all min-h-[32px]",
@@ -286,7 +275,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 onChange={(e) => setInitials(e.target.value.toUpperCase().slice(0, 2))}
                 placeholder="e.g. MJ"
                 maxLength={2}
-                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[18px] font-semibold tracking-wider outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[18px] font-semibold tracking-wider outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             ) : (
               <>
@@ -297,7 +286,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                         "flex aspect-square items-center justify-center rounded-xl text-[22px] transition-all",
                         selectedEmoji === em
                           ? "bg-[var(--foreground)]/10 ring-2 ring-[var(--foreground)]/30 scale-95"
-                          : "bg-[var(--background)] ring-1 ring-black/[0.06]"
+                          : "bg-[var(--background)] ring-1 ring-[var(--ring-default)]"
                       )}
                     >
                       {em}
@@ -305,9 +294,9 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                   ))}
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <div className="h-px flex-1 bg-black/[0.07]" />
+                  <div className="h-px flex-1 bg-[var(--fill-tertiary)]" />
                   <span className="text-[11px] text-[var(--label-tertiary)]">or type your own</span>
-                  <div className="h-px flex-1 bg-black/[0.07]" />
+                  <div className="h-px flex-1 bg-[var(--fill-tertiary)]" />
                 </div>
                 <input
                   type="text"
@@ -317,7 +306,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                     if (val) setSelectedEmoji(val);
                   }}
                   placeholder="Paste any emoji ✨"
-                  className="mt-2 h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[22px] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[18px] placeholder:text-[var(--label-tertiary)]"
+                  className="mt-2 h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[22px] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow placeholder:text-[18px] placeholder:text-[var(--label-tertiary)]"
                 />
               </>
             )}
@@ -342,8 +331,8 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
         </section>
 
         {/* ── Section 2 — Details ────────────────────────────────── */}
-        <section className="rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4 space-y-4">
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+        <section className="rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4 space-y-4">
+          <p className="eyebrow">
             Details
           </p>
 
@@ -355,7 +344,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+              className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
             />
           </div>
 
@@ -370,7 +359,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                 placeholder="yourname"
                 maxLength={20}
-                className="h-12 w-full rounded-2xl bg-[var(--background)] pl-8 pr-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--background)] pl-8 pr-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             </div>
           </div>
@@ -388,7 +377,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                     "h-11 rounded-2xl text-[13px] font-medium transition-colors [touch-action:manipulation]",
                     gender === opt.value
                       ? "bg-[var(--foreground)] text-[var(--on-foreground)]"
-                      : "bg-[var(--background)] text-[var(--foreground)] ring-1 ring-black/[0.08]"
+                      : "bg-[var(--background)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)]"
                   )}
                 >
                   {opt.label}
@@ -406,7 +395,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
               onChange={(e) => setBirthDate(e.target.value)}
               min={dobMin}
               max={dobMax}
-              className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
+              className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow [color-scheme:light]"
             />
           </div>
 
@@ -442,8 +431,8 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
       {/* Lives outside the identity <form> so submitting one doesn't
           submit the other. Password row only renders for users who
           actually have an email/password identity. */}
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4 space-y-4">
-        <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4 space-y-4">
+        <p className="eyebrow">
           Email &amp; Password
         </p>
 
@@ -460,7 +449,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 type="email"
                 value={emailDisplay}
                 readOnly
-                className="h-12 flex-1 rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--label-secondary)] outline-none ring-1 ring-black/[0.05] cursor-default"
+                className="h-12 flex-1 rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--label-secondary)] outline-none ring-1 ring-[var(--ring-default)] cursor-default"
               />
               <button
                 type="button"
@@ -480,7 +469,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 required
                 autoComplete="email"
                 autoFocus
-                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
               <p className="px-1 text-[11px] text-[var(--label-tertiary)]">
                 We&apos;ll send a 6-digit code to the new address to confirm you own it.
@@ -489,7 +478,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 <button
                   type="submit"
                   disabled={emailLoading || !newEmail.trim()}
-                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#EE6452] text-[13px] font-semibold text-white disabled:opacity-60"
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--foreground)] text-[13px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
                 >
                   {emailLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />}
                   {emailLoading ? "Sending…" : "Send code"}
@@ -498,7 +487,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                   type="button"
                   onClick={cancelEmailChange}
                   disabled={emailLoading}
-                  className="h-11 rounded-2xl bg-[var(--background)] px-4 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60"
+                  className="h-11 rounded-2xl bg-[var(--background)] px-4 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -507,7 +496,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
           ) : (
             // OTP step
             <form onSubmit={handleEmailVerify} className="space-y-2">
-              <div className="flex items-center gap-2 rounded-xl bg-[var(--background)] px-3 py-2 ring-1 ring-black/[0.05]">
+              <div className="flex items-center gap-2 rounded-xl bg-[var(--background)] px-3 py-2 ring-1 ring-[var(--ring-default)]">
                 <MailCheck className="h-4 w-4 shrink-0 text-[var(--label-tertiary)]" strokeWidth={2} />
                 <p className="text-[12px] text-[var(--label-secondary)]">
                   Code sent to <span className="font-semibold text-[var(--foreground)]">{newEmail}</span>
@@ -523,13 +512,13 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ""))}
                 placeholder="123456"
                 required
-                className="h-14 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[22px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-14 w-full rounded-2xl bg-[var(--background)] px-4 text-center text-[24px] font-semibold tracking-[0.4em] tabular-nums text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
               <div className="flex gap-2">
                 <button
                   type="submit"
                   disabled={emailLoading || emailOtp.length < 4}
-                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#EE6452] text-[13px] font-semibold text-white disabled:opacity-60"
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--foreground)] text-[13px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
                 >
                   {emailLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" strokeWidth={2.25} />}
                   {emailLoading ? "Verifying…" : "Verify"}
@@ -538,7 +527,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                   type="button"
                   onClick={cancelEmailChange}
                   disabled={emailLoading}
-                  className="h-11 rounded-2xl bg-[var(--background)] px-4 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60"
+                  className="h-11 rounded-2xl bg-[var(--background)] px-4 text-[13px] font-medium text-[var(--foreground)] ring-1 ring-[var(--ring-default)] disabled:opacity-60"
                 >
                   Cancel
                 </button>
@@ -568,7 +557,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                   placeholder="••••••••"
                   minLength={8}
                   autoComplete="new-password"
-                  className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                  className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 pr-12 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
                 />
                 <button
                   type="button"
@@ -591,7 +580,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
                 placeholder="••••••••"
                 minLength={8}
                 autoComplete="new-password"
-                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+                className="h-12 w-full rounded-2xl bg-[var(--background)] px-4 text-[15px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
               />
             </div>
 
@@ -607,7 +596,7 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
             <button
               type="submit"
               disabled={pwLoading || newPw.length === 0 || confirmPw.length === 0}
-              className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[14px] font-semibold text-white disabled:opacity-60"
+              className="flex h-12 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[14px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
             >
               {pwLoading ? "Saving…" : "Update password"}
             </button>
@@ -615,8 +604,8 @@ export default function EditProfileShell({ profile, hasEmailPassword }: Props) {
         ) : (
           // Google-only user — no password to change locally. Same
           // copy/icon as the old /settings/security empty state.
-          <div className="flex items-start gap-3 rounded-xl bg-[var(--background)] px-3 py-3 ring-1 ring-black/[0.04]">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-[var(--foreground)]">
+          <div className="flex items-start gap-3 rounded-xl bg-[var(--background)] px-3 py-3 ring-1 ring-[var(--ring-subtle)]">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--fill-tertiary)] text-[var(--foreground)]">
               <Lock className="h-4 w-4" strokeWidth={2} />
             </span>
             <div className="min-w-0">

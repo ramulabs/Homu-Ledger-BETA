@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronRight, Plus } from "lucide-react";
 import EditCategorySheet from "@/components/edit-category-sheet";
 import AddCategorySheet from "@/components/add-category-sheet";
 import { CategoryIcon } from "@/components/category-icon";
-import { cn } from "@/lib/cn";
 import type { DbCategory, TransactionType } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
+import StickyHeader from "@/components/ui/sticky-header";
+import SegmentedControl from "@/components/ui/segmented-control";
 
 type Props = {
   categories: DbCategory[];
@@ -16,7 +16,6 @@ type Props = {
 };
 
 export default function CategoriesShell({ categories: initial, iconStyle = "2d" }: Props) {
-  const router = useRouter();
   const [categories, setCategories] = useState(initial);
   const [editing, setEditing] = useState<DbCategory | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -51,42 +50,37 @@ export default function CategoriesShell({ categories: initial, iconStyle = "2d" 
         {/* Sticky band: title row + Expense/Income tab pill, both pinned
             together so the tabs stay reachable while scrolling the list. */}
         <div className="sticky top-[env(safe-area-inset-top)] z-20 bg-[var(--background)]/95 backdrop-blur">
-          <header className="flex items-center justify-between px-5 pt-2 pb-2">
-            <button
-              onClick={() => router.back()}
-              aria-label="Back"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-            >
-              <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-            </button>
-            <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">Categories</h1>
-            <button
-              onClick={() => setAddOpen(true)}
-              aria-label="Add category"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--on-foreground)] shadow-sm active:scale-95 transition-transform"
-            >
-              <Plus className="h-[18px] w-[18px]" strokeWidth={2.25} />
-            </button>
-          </header>
+          <StickyHeader
+            title="Categories" sticky={false}
+            right={
+              <button
+                onClick={() => setAddOpen(true)}
+                aria-label="Add category"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--on-foreground)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
+              >
+                <Plus className="h-[18px] w-[18px]" strokeWidth={2.25} />
+              </button>
+            }
+          />
           <div className="px-5 pb-3">
-            <div className="flex gap-1 rounded-full bg-black/[0.05] p-1">
-              <TabBtn active={activeTab === "expense"} onClick={() => setActiveTab("expense")}>
-                Expense
-              </TabBtn>
-              <TabBtn active={activeTab === "income"} onClick={() => setActiveTab("income")}>
-                Income
-              </TabBtn>
-            </div>
+            <SegmentedControl
+              value={activeTab}
+              onChange={setActiveTab}
+              options={[
+                { value: "expense", label: "Expense" },
+                { value: "income", label: "Income" },
+              ]}
+            />
           </div>
         </div>
 
         <section className="mt-4">
           {visible.length === 0 ? (
-            <p className="mx-5 rounded-2xl bg-[var(--surface)] p-6 text-center text-[13px] text-[var(--label-secondary)] ring-1 ring-black/[0.04]">
+            <p className="mx-5 rounded-2xl bg-[var(--surface)] p-6 text-center text-[13px] text-[var(--label-secondary)] ring-1 ring-[var(--ring-subtle)]">
               No {activeTab} categories yet. Tap + to add one.
             </p>
           ) : (
-            <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+            <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
               {visible.map((cat) => (
                 <CategoryRow key={cat.id} cat={cat} iconStyle={iconStyle} onTap={openEdit} />
               ))}
@@ -115,31 +109,6 @@ export default function CategoriesShell({ categories: initial, iconStyle = "2d" 
   );
 }
 
-function TabBtn({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "flex-1 rounded-full py-1.5 text-[13px] font-medium transition-all min-h-[32px]",
-        active
-          ? "bg-[var(--surface)] text-[var(--foreground)] shadow-sm"
-          : "text-[var(--label-secondary)]"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
 function CategoryRow({
   cat,
   iconStyle = "2d",
@@ -153,7 +122,7 @@ function CategoryRow({
     <li>
       <button
         onClick={() => onTap(cat)}
-        className="flex w-full items-center gap-3 px-4 py-3 min-h-[56px] text-left active:bg-black/[0.02] transition-colors"
+        className="flex w-full items-center gap-3 px-4 py-3 min-h-[56px] text-left active:bg-[var(--fill-quaternary)] transition-colors"
       >
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[20px]"

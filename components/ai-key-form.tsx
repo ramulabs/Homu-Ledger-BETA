@@ -7,10 +7,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Sparkles, Check, AlertTriangle, Loader2, Trash2 } from "lucide-react";
+import { Sparkles, Check, AlertTriangle, Loader2, Trash2 } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/cn";
 import { saveGeminiKey, clearGeminiKey, testGeminiConnection } from "@/app/actions/ai";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Props = {
   keyConfigured: boolean;
@@ -105,21 +106,9 @@ export default function AiKeyForm({ keyConfigured, keyUpdatedAt }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back")}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          {t("ai.admin.keyHeading")}
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title={t("ai.admin.keyHeading")} />
 
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4">
         <p className="mb-2 text-[12px] text-[var(--label-secondary)]">
           {keyConfigured ? (
             <span className="inline-flex items-center gap-1.5">
@@ -143,21 +132,21 @@ export default function AiKeyForm({ keyConfigured, keyUpdatedAt }: Props) {
           placeholder={t("ai.admin.keyPlaceholder")}
           spellCheck={false}
           autoComplete="off"
-          className="h-11 w-full rounded-2xl bg-[var(--background)] px-4 text-[14px] font-mono text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
+          className="h-11 w-full rounded-2xl bg-[var(--background)] px-4 text-[14px] font-mono text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20 transition-shadow"
         />
 
         <div className="mt-3 flex gap-2">
           <button
             onClick={handleSave}
             disabled={saving || keyInput.trim().length === 0}
-            className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-[#EE6452] text-[14px] font-semibold text-white disabled:opacity-60"
+            className="flex h-11 flex-1 items-center justify-center rounded-2xl bg-[var(--foreground)] text-[14px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
           >
             {saving ? t("common.saving") : t("ai.admin.keySave")}
           </button>
           <button
             onClick={handleTest}
             disabled={test.status === "running"}
-            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--background)] text-[14px] font-semibold text-[var(--foreground)] ring-1 ring-black/[0.08] disabled:opacity-60"
+            className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[var(--background)] text-[14px] font-semibold text-[var(--foreground)] ring-1 ring-[var(--ring-default)] disabled:opacity-60"
           >
             {test.status === "running" ? (
               <>
@@ -207,7 +196,7 @@ export default function AiKeyForm({ keyConfigured, keyUpdatedAt }: Props) {
           changes), tap again to actually clear. Auto-cancels in 3 s. */}
       {keyConfigured && (
         <section className="mx-5 mt-5">
-          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow mb-2 px-1">
             {t("ai.admin.dangerZone")}
           </p>
           <button
@@ -217,7 +206,7 @@ export default function AiKeyForm({ keyConfigured, keyUpdatedAt }: Props) {
               "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[14px] font-semibold transition-colors disabled:opacity-60 [touch-action:manipulation]",
               confirmClear
                 ? "bg-rose-600 text-white ring-1 ring-rose-600"
-                : "bg-[var(--surface)] text-rose-600 ring-1 ring-black/[0.06]"
+                : "bg-[var(--surface)] text-rose-600 ring-1 ring-[var(--ring-default)]"
             )}
           >
             <Trash2 className="h-4 w-4" strokeWidth={2.25} />

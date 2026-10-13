@@ -5,10 +5,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check, AlertTriangle, Trash2, Mic } from "lucide-react";
+import { Check, AlertTriangle, Trash2, Mic } from "lucide-react";
 import { useT } from "@/lib/i18n/provider";
 import { cn } from "@/lib/cn";
 import { saveGroqKey, clearGroqKey, setVoiceInputEnabled } from "@/app/actions/ai";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Props = {
   keyConfigured: boolean;
@@ -94,24 +95,12 @@ export default function VoiceAdminForm({ keyConfigured, keyUpdatedAt, flagEnable
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label={t("common.back") || "Back"}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          Voice transactions
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Voice transactions" />
 
       {/* Feature flag toggle */}
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-black/[0.04]">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--ring-subtle)]">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/[0.04]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--fill-quaternary)]">
             <Mic className="h-[18px] w-[18px]" strokeWidth={2} />
           </span>
           <div className="flex-1">
@@ -126,7 +115,7 @@ export default function VoiceAdminForm({ keyConfigured, keyUpdatedAt, flagEnable
             aria-pressed={flagEnabled}
             className={cn(
               "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
-              flagEnabled ? "bg-emerald-500" : "bg-black/[0.10]",
+              flagEnabled ? "bg-[var(--switch-on)]" : "bg-[var(--fill-secondary)]",
               flagSaving && "opacity-60"
             )}
           >
@@ -146,7 +135,7 @@ export default function VoiceAdminForm({ keyConfigured, keyUpdatedAt, flagEnable
       </section>
 
       {/* Groq key */}
-      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-black/[0.04]">
+      <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--ring-subtle)]">
         <p className="mb-1 text-[14px] font-medium text-[var(--foreground)]">Groq API key</p>
         <p className="mb-3 text-[12px] text-[var(--label-secondary)]">
           {keyConfigured ? (
@@ -167,14 +156,14 @@ export default function VoiceAdminForm({ keyConfigured, keyUpdatedAt, flagEnable
           placeholder="gsk_…"
           spellCheck={false}
           autoComplete="off"
-          className="h-11 w-full rounded-2xl bg-[var(--background)] px-4 font-mono text-[14px] text-[var(--foreground)] outline-none ring-1 ring-black/[0.08] transition-shadow placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
+          className="h-11 w-full rounded-2xl bg-[var(--background)] px-4 font-mono text-[14px] text-[var(--foreground)] outline-none ring-1 ring-[var(--ring-default)] transition-shadow placeholder:text-[var(--label-tertiary)] focus:ring-2 focus:ring-[var(--foreground)]/20"
         />
 
         <div className="mt-3">
           <button
             onClick={handleSave}
             disabled={saving || keyInput.trim().length === 0}
-            className="flex h-11 w-full items-center justify-center rounded-2xl bg-[#EE6452] text-[14px] font-semibold text-white disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center rounded-2xl bg-[var(--foreground)] text-[14px] font-semibold text-[var(--on-foreground)] disabled:opacity-60"
           >
             {saving ? t("common.saving") || "Saving…" : "Save key"}
           </button>
@@ -196,7 +185,7 @@ export default function VoiceAdminForm({ keyConfigured, keyUpdatedAt, flagEnable
 
       {keyConfigured && (
         <section className="mx-5 mt-5">
-          <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+          <p className="eyebrow mb-2 px-1">
             Danger zone
           </p>
           <button
@@ -204,7 +193,7 @@ export default function VoiceAdminForm({ keyConfigured, keyUpdatedAt, flagEnable
             disabled={clearing}
             className={cn(
               "flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[14px] font-semibold transition-colors disabled:opacity-60",
-              confirmClear ? "bg-rose-600 text-white ring-1 ring-rose-600" : "bg-[var(--surface)] text-rose-600 ring-1 ring-black/[0.06]"
+              confirmClear ? "bg-rose-600 text-white ring-1 ring-rose-600" : "bg-[var(--surface)] text-rose-600 ring-1 ring-[var(--ring-default)]"
             )}
           >
             <Trash2 className="h-4 w-4" strokeWidth={2.25} />

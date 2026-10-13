@@ -7,10 +7,10 @@
 // pseudonymized CSV export. No mutations, no destructive actions.
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ChevronLeft, Download, AlertCircle } from "lucide-react";
+import { Download, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { buildAnalyticsCsv, type AnalyticsData } from "@/lib/analytics";
+import StickyHeader from "@/components/ui/sticky-header";
 
 type Props = {
   analytics: AnalyticsData | null;
@@ -22,7 +22,6 @@ function pct(v: number | null): string {
 }
 
 export default function DevAnalyticsShell({ analytics, failed }: Props) {
-  const router = useRouter();
 
   function handleExport() {
     if (!analytics) return;
@@ -40,22 +39,10 @@ export default function DevAnalyticsShell({ analytics, failed }: Props) {
 
   return (
     <div className="pb-10">
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 flex items-center justify-between bg-[var(--background)]/95 px-5 pt-2 pb-3 backdrop-blur">
-        <button
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--surface)] text-[var(--foreground)] ring-1 ring-[var(--ring-default)] shadow-[var(--shadow-card)] active:scale-95 transition-transform [touch-action:manipulation]"
-        >
-          <ChevronLeft className="h-[20px] w-[20px]" strokeWidth={2.25} />
-        </button>
-        <h1 className="text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
-          Analytics
-        </h1>
-        <div className="h-9 w-9" />
-      </header>
+      <StickyHeader title="Analytics" />
 
       {failed || !analytics ? (
-        <div className="mx-5 mt-6 flex flex-col items-center gap-2 rounded-2xl bg-[var(--surface)] p-8 text-center ring-1 ring-black/[0.04]">
+        <div className="mx-5 mt-6 flex flex-col items-center gap-2 rounded-2xl bg-[var(--surface)] p-8 text-center ring-1 ring-[var(--ring-subtle)]">
           <AlertCircle className="h-6 w-6 text-[var(--label-tertiary)]" strokeWidth={2} />
           <p className="text-[14px] font-semibold text-[var(--foreground)]">
             Analytics unavailable
@@ -145,7 +132,7 @@ export default function DevAnalyticsShell({ analytics, failed }: Props) {
 
           {/* ── Financial behavior ────────────────────────────────── */}
           <Section title="Financial behavior">
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+            <p className="eyebrow mb-1.5">
               Avg transaction by currency
             </p>
             {analytics.financial.byCurrency.length === 0 ? (
@@ -166,7 +153,7 @@ export default function DevAnalyticsShell({ analytics, failed }: Props) {
               </div>
             )}
 
-            <p className="mb-1.5 mt-4 text-[11px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+            <p className="eyebrow mb-1.5 mt-4">
               Top categories
             </p>
             {analytics.financial.topCategories.length === 0 ? (
@@ -215,9 +202,9 @@ export default function DevAnalyticsShell({ analytics, failed }: Props) {
                           {f.completionRate === null ? "—" : `${rate}%`}
                         </p>
                       </div>
-                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
                         <div
-                          className="h-full rounded-full bg-[#EE6452] transition-[width] duration-300"
+                          className="h-full rounded-full bg-[var(--brand)] transition-[width] duration-300"
                           style={{ width: `${rate}%` }}
                         />
                       </div>
@@ -262,8 +249,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] p-4">
-      <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--label-tertiary)]">
+    <section className="mx-5 mt-4 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] p-4">
+      <p className="eyebrow">
         {title}
       </p>
       {hint && (
@@ -288,14 +275,14 @@ function Tile({
   return (
     <div
       className={cn(
-        "rounded-xl px-3 py-2.5 ring-1 ring-black/[0.04]",
-        tone === "primary" ? "bg-[#EE6452]/10" : "bg-[var(--background)]"
+        "rounded-xl px-3 py-2.5 ring-1 ring-[var(--ring-subtle)]",
+        tone === "primary" ? "bg-[var(--brand-soft)]" : "bg-[var(--background)]"
       )}
     >
-      <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--label-tertiary)]">
+      <p className="eyebrow">
         {label}
       </p>
-      <p className="mt-0.5 text-[18px] font-semibold leading-tight tabular-nums text-[var(--foreground)]">
+      <p className="mt-0.5 text-[17px] font-semibold leading-tight tabular-nums text-[var(--foreground)]">
         {value}
       </p>
       {footer && (
@@ -315,9 +302,9 @@ function Bar({ label, value }: { label: string; value: number }) {
           {pctVal}%
         </p>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-black/[0.05]">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--fill-tertiary)]">
         <div
-          className="h-full rounded-full bg-[#EE6452] transition-[width] duration-300"
+          className="h-full rounded-full bg-[var(--brand)] transition-[width] duration-300"
           style={{ width: `${pctVal}%` }}
         />
       </div>
@@ -376,7 +363,7 @@ function RankingsSection({
           {rankings.length > 10 && (
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="mt-2 w-full rounded-lg py-1.5 text-[12px] font-semibold text-[#EE6452] active:opacity-70"
+              className="mt-2 w-full rounded-lg py-1.5 text-[12px] font-semibold text-[var(--brand)] active:opacity-70"
             >
               {expanded ? "Show top 10" : `Show all ${Math.min(20, rankings.length)}`}
             </button>

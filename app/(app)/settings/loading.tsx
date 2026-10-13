@@ -23,7 +23,7 @@ export default function SettingsLoading() {
       </div>
 
       {/* Profile card */}
-      <div className="mx-5 mt-4 flex items-center gap-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-black/[0.04]">
+      <div className="mx-5 mt-4 flex items-center gap-3 rounded-2xl bg-[var(--surface)] p-4 ring-1 ring-[var(--ring-subtle)]">
         <div className="h-14 w-14 shrink-0 rounded-full bg-[var(--foreground)]/[0.08]" />
         <div className="flex-1 space-y-2">
           <div className="h-4 w-32 rounded-full bg-[var(--foreground)]/[0.07]" />
@@ -42,7 +42,7 @@ export default function SettingsLoading() {
       <SectionSkeleton rows={3} />
 
       {/* Sign out button placeholder */}
-      <div className="mx-5 mt-6 h-12 rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04]" />
+      <div className="mx-5 mt-6 h-12 rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)]" />
     </div>
   );
 }
@@ -56,7 +56,7 @@ function SectionSkeleton({ rows }: { rows: number }) {
       </div>
       {/* Row stack — mirrors the real Group's overflow-hidden rounded
           container so the skeleton ↔ content swap doesn't flicker. */}
-      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-black/[0.04] divide-y divide-[var(--separator)]">
+      <ul className="mx-5 overflow-hidden rounded-2xl bg-[var(--surface)] ring-1 ring-[var(--ring-subtle)] divide-y divide-[var(--separator)]">
         {Array.from({ length: rows }).map((_, i) => (
           <li key={i} className="flex items-center gap-3 px-4 py-3.5 min-h-[52px]">
             <div className="h-8 w-8 shrink-0 rounded-full bg-[var(--foreground)]/[0.05]" />
