@@ -1,6 +1,6 @@
 ---
 id: health-security-78445af314
-title: Cursor query params interpolated raw into PostgREST filter string
+title: Cursor query params interpolated raw into PostgREST .or() filter
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-05-20T17:55:00Z
-updated_at: 2026-09-04T19:16:13.018Z
+updated_at: 2026-09-05T19:13:59.174Z
 ---
 
 ## Finding
@@ -58,4 +58,4 @@ Or switch to `.lt()` / `.gte()` chained column filters using typed parameters, w
 
 
 **RLS verified (2026-09-04 health check):** `transactions` SELECT is scoped to `current_household_id()`, so this filter injection cannot cross household boundaries — it can only be used to bypass the pagination cursor within the caller's own data.
-Last seen by health check: 2026-09-04T19:16:13.018Z
+Last seen by health check: 2026-09-05T19:13:59.174Z

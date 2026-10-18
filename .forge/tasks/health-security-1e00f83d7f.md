@@ -1,6 +1,6 @@
 ---
 id: health-security-1e00f83d7f
-title: replyToFeedback lacks developer-role authorization check
+title: replyToFeedback missing developer-role check, can impersonate support
 status: backlog
 priority: P0
 assignee: unassigned
@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:14:59.626Z
-updated_at: 2026-09-04T19:16:13.249Z
+updated_at: 2026-09-05T19:13:59.168Z
 ---
 
 ## Finding
@@ -53,4 +53,4 @@ Insert this immediately after the existing `if (!user)` check, before the update
 
 
 **RLS verified (2026-09-04 health check):** the `feedback` UPDATE policy restricts writes to developers, so this is not currently exploitable by a non-developer — but it means the friendly rejection message never fires; the DB just silently no-ops the write instead.
-Last seen by health check: 2026-09-04T19:16:13.249Z
+Last seen by health check: 2026-09-05T19:13:59.168Z
