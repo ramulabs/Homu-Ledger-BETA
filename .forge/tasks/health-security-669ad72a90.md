@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:04.532Z
-updated_at: 2026-09-04T19:16:13.471Z
+updated_at: 2026-09-21T19:12:56.033Z
 ---
 
 ## Finding
@@ -56,4 +56,4 @@ Confirm the RLS UPDATE policy on `categories` also enforces household membership
 
 
 **RLS verified (2026-09-04 health check):** the `categories` UPDATE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
-Last seen by health check: 2026-09-04T19:16:13.471Z
+Last seen by health check: 2026-09-21T19:12:56.033Z
