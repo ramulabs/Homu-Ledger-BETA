@@ -1,5 +1,5 @@
 {
-  "_note": "Lighthouse baseline not yet populated — first run was in a headless-browser-free environment. Run again with Lighthouse available to establish scores.",
+  "_note": "Lighthouse baseline not yet populated — this run had a headless browser but the sandbox's outbound network policy rejects CONNECT to homu.ramu.app (403 policy denial), so benchmark_urls are unreachable from this environment. Performance check skipped again on 2026-09-09.",
   "created_at": "2026-05-20T17:55:00Z",
   "scores": {}
 }
