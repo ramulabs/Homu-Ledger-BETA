@@ -10,7 +10,7 @@ labels:
   - Critical
   - Security
 created_at: 2026-07-21T19:15:10.250Z
-updated_at: 2026-09-04T19:16:13.798Z
+updated_at: 2026-09-17T19:12:27.863Z
 ---
 
 ## Finding
@@ -55,4 +55,4 @@ Also verify the RLS DELETE policy on `wallets` scopes by household membership.
 
 
 **RLS verified (2026-09-04 health check):** the `wallets` DELETE policy correctly scopes by `current_household_id()`, so this is not currently cross-household exploitable — it remains a defense-in-depth gap, not a live breach.
-Last seen by health check: 2026-09-04T19:16:13.798Z
+Last seen by health check: 2026-09-17T19:12:27.863Z
