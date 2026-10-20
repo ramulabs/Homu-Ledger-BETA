@@ -4,6 +4,16 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.49.0 - October 20, 2026
+
+**Transaction calculator with percentages and retained calculation history.**
+
+- A calculator button beside the amount replaces all fields and the numeric keypad below it with arithmetic, decimals, percentages, and a history panel. `200 + 10%` produces `220`; Apply returns the result to the transaction form. Reopening preserves input and history during the current page session.
+- Results use two decimal places and the form's decimal separator. Decimal amounts are preserved when editing transactions and creating recurring items. Invalid expressions, division by zero, non-positive amounts, and excessively large amounts cannot be applied.
+- Physical keyboard support includes operators, Enter for equals, Escape to return, and native keyboard activation for Apply and other buttons.
+- Release markers synchronized to `1.49.0`; service-worker cache bumped to `v101` for installed-app updates. Minimum supported client stays `1.34.0`. No database migration is needed.
+- Validation: eight calculator tests, TypeScript checks, and browser checks for Apply, reopening, history restoration, and division-by-zero handling. Three existing transaction-sheet lint issues are unchanged.
+
 ## v1.48.3 - October 8, 2026
 
 **Fixes: move to another ledger, form wiped when adding a category · performance · dark mode & consistency.**

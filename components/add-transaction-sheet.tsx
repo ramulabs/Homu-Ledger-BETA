@@ -30,7 +30,7 @@
 
 import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, AlertTriangle } from "lucide-react";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, AlertTriangle, Calculator } from "lucide-react";
 import { updateTransaction, deleteTransaction, moveTransaction, prepareMoveTransaction, addTransfer } from "@/app/actions/transactions";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
@@ -41,6 +41,8 @@ import { addRecurringItem } from "@/app/actions/recurring";
 import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
 import CategoryPicker from "@/components/category-picker";
 import NumericKeypad from "@/components/numeric-keypad";
+import TransactionCalculator from "@/components/transaction-calculator";
+import { calculate, calculationText, rememberCalculation, EMPTY_CALCULATOR } from "@/lib/calculator";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
@@ -157,6 +159,7 @@ function HeroAmountInput({
   onActivate,
   onDigit,
   onBackspace,
+  readOnly = false,
 }: {
   value: string;
   focused: boolean;
@@ -164,6 +167,7 @@ function HeroAmountInput({
   onActivate: () => void;
   onDigit?: (d: string) => void;
   onBackspace?: () => void;
+  readOnly?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
@@ -179,7 +183,8 @@ function HeroAmountInput({
   }, [value, focused]);
 
   const empty = !value;
-  const display = empty ? "0" : value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const [integer, decimals] = value.split(",");
+  const display = empty ? "0" : integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (decimals !== undefined ? `,${decimals}` : "");
 
   // Physical-keyboard input. The amount field has no native HTMLInputElement
   // (see comment above on the iOS form-accessory bar) — wiring keydown on
@@ -206,12 +211,12 @@ function HeroAmountInput({
 
   return (
     <div
-      role="button"
+      role={readOnly ? undefined : "button"}
       tabIndex={-1}
       onClick={onActivate}
       ref={containerRef}
       className="relative flex w-full cursor-pointer items-start justify-center"
-      style={{ padding: "18px 24px 14px", gap: 4, boxSizing: "border-box" }}
+      style={{ padding: "18px 64px 14px", gap: 4, boxSizing: "border-box" }}
     >
       <div
         ref={measureRef}
@@ -255,9 +260,10 @@ function HeroAmountInput({
           point: iOS's form-accessory bar can't be removed from inputs. */}
       <div
         ref={fieldRef}
-        tabIndex={0}
+        tabIndex={readOnly ? -1 : 0}
         role="textbox"
         aria-label="Amount"
+        aria-readonly={readOnly}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         className="absolute inset-0 h-full w-full"
@@ -325,6 +331,10 @@ export default function AddTransactionSheet({
   const tr = useT();
   const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
   const [amount, setAmount] = useState("");
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  // Kept outside the form reset: returning to the calculator restores its
+  // expression and history, even after applying or closing the sheet.
+  const [calculator, setCalculator] = useState(EMPTY_CALCULATOR);
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [extraCategories, setExtraCategories] = useState<DbCategory[]>([]);
@@ -568,6 +578,28 @@ export default function AddTransactionSheet({
     setAmount((prev) => prev.slice(0, -1));
   }
 
+  function openCalculator() {
+    setCalculator((previous) => previous.initialized ? previous : {
+      ...previous, expression: amount.replace(",", "."), initialized: true,
+    });
+    setAmountActive(false);
+    setDescFocused(false);
+    setCalculatorOpen(true);
+  }
+
+  function closeCalculator() {
+    setCalculatorOpen(false);
+    activateAmount();
+  }
+
+  function applyCalculator() {
+    const result = calculate(calculator.expression);
+    if (result.error || Number(calculationText(result.value)) <= 0) return;
+    setAmount(calculationText(result.value).replace(".", ","));
+    setCalculator((previous) => rememberCalculation(previous));
+    closeCalculator();
+  }
+
   function openWalletPicker(slot: "wallet" | "from" | "to") {
     setWalletPickerSlot(slot);
     setShowWalletPicker(true);
@@ -606,7 +638,7 @@ export default function AddTransactionSheet({
     const altWallet = wallets.find((w) => w.id !== defaultWallet?.id) ?? null;
     if (editing) {
       setType(editing.type);
-      setAmount(String(Math.round(Number(editing.amount))));
+      setAmount(String(Number(editing.amount)).replace(".", ","));
       setName(editing.name);
       setCategoryId(editing.category_id);
       setWalletId(editing.wallet_id ?? defaultWallet?.id ?? null);
@@ -646,6 +678,7 @@ export default function AddTransactionSheet({
     // New transaction → keypad auto-shows. Editing → start quiet (the
     // user is reviewing; they tap the amount to bring up the keypad).
     setAmountActive(!editing);
+    setCalculatorOpen(false);
     setDescFocused(false);
     setConfirmDelete(false);
     setShowMovePicker(false);
@@ -836,6 +869,7 @@ export default function AddTransactionSheet({
   // ── Submit ──────────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (calculatorOpen) return;
     setError(null);
     setLoading(true);
 
@@ -876,7 +910,7 @@ export default function AddTransactionSheet({
       }
       const fd = new FormData();
       fd.set("type", type);
-      fd.set("amount", amount);
+      fd.set("amount", amount.replace(/\./g, "").replace(",", "."));
       fd.set("name", name);
       fd.set("category_id", categoryId ?? "");
       fd.set("wallet_id", walletId);
@@ -1101,6 +1135,9 @@ export default function AddTransactionSheet({
 
   // Date input is an invisible overlay; the visible pill is read-only.
   const dateLabel = recurringMode ? formatWeekdayDate(date) : formatTodayOrShort(date);
+  const calculatorPreview = calculate(calculator.expression.replace(/[+−×÷]+$/, ""));
+  const displayedAmount = calculatorOpen && !calculatorPreview.error
+    ? calculationText(calculatorPreview.value).replace(".", ",") : amount;
 
   return (
     <>
@@ -1279,14 +1316,32 @@ export default function AddTransactionSheet({
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-col overflow-hidden">
             {/* Hero amount — driven by the in-app keypad (NumericKeypad
                 below), not the native keyboard. */}
-            <HeroAmountInput
-              value={amount}
-              focused={amountActive}
-              fieldRef={amountRef}
-              onActivate={activateAmount}
-              onDigit={pushDigit}
-              onBackspace={backspaceAmount}
-            />
+            <div className="relative shrink-0">
+              <HeroAmountInput
+                value={displayedAmount}
+                focused={amountActive && !calculatorOpen}
+                fieldRef={amountRef}
+                onActivate={calculatorOpen ? () => {} : activateAmount}
+                onDigit={calculatorOpen ? undefined : pushDigit}
+                onBackspace={calculatorOpen ? undefined : backspaceAmount}
+                readOnly={calculatorOpen}
+              />
+              <button
+                type="button"
+                aria-label={calculatorOpen ? tr("calculator.back") : tr("calculator.open")}
+                aria-expanded={calculatorOpen}
+                disabled={loading || moving}
+                onClick={calculatorOpen ? closeCalculator : openCalculator}
+                className={cn("absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full transition-colors disabled:opacity-40", calculatorOpen ? "bg-[#EE6452]/10 text-[#EE6452]" : "bg-[var(--background)] text-[var(--label-secondary)]")}
+              >
+                <Calculator className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </div>
+
+            {calculatorOpen ? (
+              <TransactionCalculator state={calculator} onChange={setCalculator} onApply={applyCalculator} onClose={closeCalculator} />
+            ) : (
+            <>
 
             {/* Body — natural height, scrolls if it overflows. */}
             <div data-scroll className="flex flex-[0_1_auto] flex-col gap-2.5 overflow-y-auto px-5 pb-3" style={{ minHeight: 0 }}>
@@ -1770,6 +1825,8 @@ export default function AddTransactionSheet({
                 <NumericKeypad onDigit={pushDigit} onBackspace={backspaceAmount} />
               </div>
             </div>
+            </>
+            )}
           </form>
         </div>
         </div>

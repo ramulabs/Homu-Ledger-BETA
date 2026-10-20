@@ -1,12 +1,13 @@
 {
   "name": "homu",
-  "version": "1.48.3",
+  "version": "1.49.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:calculator": "node --experimental-strip-types --test tests/calculator.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -58,6 +58,18 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.49.0",
+    date: "October 20, 2026",
+    changes: [
+      { type: "new",
+        en: "The calculator button beside the transaction amount replaces the fields and numeric keypad with arithmetic, decimals, percentages, and calculation history. Apply returns the result to the form; reopening preserves the expression and history during the current page session. Keyboard support includes operators, Enter for equals, and Escape to return to the form.",
+        id: "Tombol kalkulator di samping nominal transaksi mengganti kolom dan papan angka dengan aritmetika, desimal, persentase, dan riwayat perhitungan. Gunakan jumlah mengembalikan hasil ke formulir; perhitungan dan riwayat tetap tersimpan saat dibuka kembali selama sesi halaman ini. Keyboard mendukung operator, Enter untuk sama dengan, dan Escape untuk kembali ke formulir." },
+      { type: "fix",
+        en: "Calculated decimals remain intact when editing transactions and creating recurring items. The release version is now 1.49.0 and the service-worker cache is v101, so installed apps can replace the previous cached build. Minimum client version remains 1.34.0; no schema changes are required.",
+        id: "Desimal hasil perhitungan tetap utuh saat mengedit transaksi dan membuat transaksi berulang. Versi rilis kini 1.49.0 dan cache service worker v101, sehingga aplikasi terpasang dapat mengganti build lama. Versi minimum klien tetap 1.34.0; tidak diperlukan perubahan skema." },
+    ],
+  },
+  {
     version: "1.48.3",
     date: "October 8, 2026",
     changes: [
