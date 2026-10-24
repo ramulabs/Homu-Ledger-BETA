@@ -54,11 +54,14 @@ export async function matchCategoryLocally(
   // ── Layer 2: per-household cache ──────────────────────────────────
   // One query for every candidate, then walk candidates IN ORDER so the
   // longest / most specific key wins.
-  const { data: hints } = await supabase
+  const [{ data: hints }, { data: seeds }] = await Promise.all([
+    supabase
     .from("category_hints")
     .select("keyword, category_id")
     .eq("household_id", householdId)
-    .in("keyword", candidates);
+    .in("keyword", candidates),
+    supabase.from("category_keyword_seeds").select("keyword, category_name").in("keyword", candidates),
+  ]);
 
   if (hints && hints.length > 0) {
     const hintByKey = new Map(hints.map((h) => [h.keyword, h]));
@@ -72,11 +75,6 @@ export async function matchCategoryLocally(
   }
 
   // ── Layer 3: global keyword seed ──────────────────────────────────
-  const { data: seeds } = await supabase
-    .from("category_keyword_seeds")
-    .select("keyword, category_name")
-    .in("keyword", candidates);
-
   if (seeds && seeds.length > 0) {
     const seedByKey = new Map(seeds.map((s) => [s.keyword, s]));
     for (const key of candidates) {

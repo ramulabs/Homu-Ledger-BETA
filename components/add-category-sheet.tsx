@@ -22,7 +22,7 @@ import { CATEGORY_LUCIDE_ICONS, makeLucideSymbol } from "@/lib/category-icons";
 import { CategoryIcon } from "@/components/category-icon";
 import type { DbCategory, TransactionType } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
-import { readViewportHeight, readViewportOffsetTop } from "@/lib/viewport";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 import { useT } from "@/lib/i18n/provider";
 
 const SOFT_PALETTE = [
@@ -97,29 +97,8 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
   // ── Keep the bento flush above the on-screen keyboard. The wrapper is
   //    sized + offset to overlay window.visualViewport (the visible area
   //    minus the keyboard); the bento is bottom-anchored inside it.
-  //    v1.46.13 — seed vvHeight synchronously + guard against bogus 0 reads;
-  //    see add-transaction-sheet.tsx for the long note (older Android Chrome
-  //    / WebView builds returned 0 or had no `dvh` support, collapsing the
-  //    wrapper to a 0-tall sliver).
-  const [vvHeight, setVvHeight] = useState<number | null>(() => readViewportHeight());
-  const [vvOffsetTop, setVvOffsetTop] = useState<number>(() => readViewportOffsetTop());
-  useEffect(() => {
-    if (!open) return;
-    const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    function update() {
-      const h = readViewportHeight();
-      if (h && h > 0) setVvHeight(h);
-      setVvOffsetTop(readViewportOffsetTop());
-    }
-    update();
-    if (!vv) return;
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, [open]);
+  //    Shared tracking includes fallback height and Safari viewport panning.
+  const { height: vvHeight, offsetTop: vvOffsetTop } = useVisualViewport(open);
 
   function reset() {
     setName("");
@@ -169,6 +148,7 @@ export default function AddCategorySheet({ open, type = "expense", onClose, onAd
   return (
     <div
       className="fixed left-0 top-0 z-[100] w-full"
+      inert={!open}
       style={{
         height: vvHeight != null ? `${vvHeight}px` : "100vh",
         transform: `translateY(${vvOffsetTop}px)`,

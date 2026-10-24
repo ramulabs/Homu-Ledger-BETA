@@ -5,6 +5,9 @@
 export const en = {
   // Common
   "common.cancel": "Cancel",
+  "common.retry": "Try again",
+  "pending.loadFailed": "Couldn't load this ledger. Please try again.",
+  "tx.requestFailed": "Couldn't finish the request. Please try again.",
   "common.save": "Save",
   "common.saved": "Saved",
   "common.saveChanges": "Save Changes",
@@ -464,6 +467,9 @@ export type TKey = keyof typeof en;
 export const id: Record<TKey, string> = {
   // Common
   "common.cancel": "Batal",
+  "common.retry": "Coba lagi",
+  "pending.loadFailed": "Buku keuangan ini belum bisa dimuat. Silakan coba lagi.",
+  "tx.requestFailed": "Permintaan belum bisa diselesaikan. Silakan coba lagi.",
   "common.save": "Simpan",
   "common.saved": "Tersimpan",
   "common.saveChanges": "Simpan Perubahan",

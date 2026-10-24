@@ -17,6 +17,9 @@ export const config = {
     // /api/inbox/transactions, Cloudflare HMAC signature for
     // /api/inbox/email). Running cookie auth on them redirected every
     // caller to /login, so neither ingestion path could ever work (v1.48.2).
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|api/version|api/sw-kill-switch|api/mcp|api/inbox|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // /api/ledger-actions verifies cookie identity and authorization inside
+    // every operation. A second middleware lookup adds latency and redirects
+    // expired API sessions to HTML instead of returning the handler's JSON.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|api/version|api/sw-kill-switch|api/ledger-actions|api/mcp|api/inbox|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

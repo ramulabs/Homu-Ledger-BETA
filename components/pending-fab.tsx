@@ -9,7 +9,7 @@
 // browser client (RLS "select own"), and refetches on tab focus or when the
 // parent bumps `refreshSignal` (after an accept).
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Inbox } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useT } from "@/lib/i18n/provider";
@@ -20,12 +20,19 @@ type Props = {
   currency: string;
   onAccept: (item: PendingRow) => void;
   refreshSignal?: number;
+  resolvedItemIds?: string[];
 };
+const NO_RESOLVED_ITEMS: string[] = [];
 
-export default function PendingFab({ currency, onAccept, refreshSignal = 0 }: Props) {
+export default function PendingFab({ currency, onAccept, refreshSignal = 0, resolvedItemIds = NO_RESOLVED_ITEMS }: Props) {
   const t = useT();
   const [items, setItems] = useState<PendingRow[]>([]);
   const [open, setOpen] = useState(false);
+  const removedIds = useRef(new Set<string>());
+  const refreshRequest = useRef(0);
+  useEffect(() => {
+    for (const id of resolvedItemIds) removedIds.current.add(id);
+  }, [resolvedItemIds]);
 
   const load = useCallback(
     () =>
@@ -37,15 +44,19 @@ export default function PendingFab({ currency, onAccept, refreshSignal = 0 }: Pr
     []
   );
   const refresh = useCallback(async () => {
-    const { data } = await load();
-    setItems((data ?? []) as PendingRow[]);
+    const request = ++refreshRequest.current;
+    try {
+      const { data, error } = await load();
+      if (!error && request === refreshRequest.current) setItems(((data ?? []) as PendingRow[]).filter((item) => !removedIds.current.has(item.id)));
+    } catch { /* Preserve the current list when a background refresh fails. */ }
   }, [load]);
 
   useEffect(() => {
     let cancelled = false;
-    load().then(({ data }) => {
-      if (!cancelled) setItems((data ?? []) as PendingRow[]);
-    });
+    const request = ++refreshRequest.current;
+    Promise.resolve(load()).then(({ data, error }) => {
+      if (!cancelled && !error && request === refreshRequest.current) setItems(((data ?? []) as PendingRow[]).filter((item) => !removedIds.current.has(item.id)));
+    }).catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -59,7 +70,8 @@ export default function PendingFab({ currency, onAccept, refreshSignal = 0 }: Pr
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [refresh]);
 
-  const count = items.length;
+  const visibleItems = items.filter((item) => !resolvedItemIds.includes(item.id));
+  const count = visibleItems.length;
 
   return (
     <>
@@ -88,10 +100,14 @@ export default function PendingFab({ currency, onAccept, refreshSignal = 0 }: Pr
 
       {open && (
         <PendingList
-          items={items}
+          items={visibleItems}
           currency={currency}
           onClose={() => setOpen(false)}
-          onChange={() => void refresh()}
+          onChange={(id) => {
+            removedIds.current.add(id);
+            setItems((previous) => previous.filter((item) => item.id !== id));
+            void refresh();
+          }}
           onAccept={onAccept}
         />
       )}

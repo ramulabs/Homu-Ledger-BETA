@@ -10,7 +10,7 @@ import { formatShortDate, todayLocal } from "@/lib/format";
 import { useT, useLang } from "@/lib/i18n/provider";
 import type { DbRecurringItem, DbCategory, RecurringFrequency } from "@/lib/types";
 import type { IconStyle } from "@/lib/category-icons";
-import { readViewportHeight } from "@/lib/viewport";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 
 type RepeatUntilMode = "forever" | "date";
 
@@ -62,26 +62,9 @@ export default function AddRecurringSheet({
   // v1.46.13 — JS-driven height with a px fallback. The sheet is
   // `fixed top: 0` with `height: 100dvh` originally, but on older Android
   // Chrome / WebView builds without `dvh` support the height collapses to
-  // 0 and the sheet appears as a sliver. Seeding from
-  // visualViewport → innerHeight → documentElement.clientHeight keeps it
-  // working everywhere. See add-transaction-sheet.tsx for the long note.
-  const [sheetHeight, setSheetHeight] = useState<number | null>(() => readViewportHeight());
-  useEffect(() => {
-    if (!open) return;
-    const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    function update() {
-      const h = readViewportHeight();
-      if (h && h > 0) setSheetHeight(h);
-    }
-    update();
-    if (!vv) return;
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, [open]);
+  // 0 and the sheet appears as a sliver. Shared viewport tracking reads
+  // visualViewport with window/document fallbacks and follows Safari panning.
+  const { height: sheetHeight, offsetTop: sheetOffsetTop } = useVisualViewport(open);
 
   // Auto-focus Amount on open (new entries only — editing pre-fills the form
   // and the user usually just wants to tweak one field). See AddTransactionSheet
@@ -239,6 +222,7 @@ export default function AddRecurringSheet({
           element's own height regardless of how it's positioned. */}
       <div
         ref={sheetRef}
+        inert={!open}
         className={cn(
           "fixed top-0 left-1/2 z-[70] w-full max-w-md -translate-x-1/2 flex flex-col rounded-t-3xl bg-[var(--surface)] [touch-action:pan-y]",
           "transition-transform duration-[420ms] [transition-timing-function:cubic-bezier(0.32,0.72,0,1)]",
@@ -254,6 +238,7 @@ export default function AddRecurringSheet({
           // `sheetHeight` (visualViewport → innerHeight → clientHeight),
           // with `100vh` as a universally-supported CSS backstop.
           height: sheetHeight != null ? `${sheetHeight}px` : "100vh",
+          top: sheetOffsetTop,
           paddingTop: "env(safe-area-inset-top)",
         }}
       >
@@ -273,7 +258,7 @@ export default function AddRecurringSheet({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Locked type toggle — sits outside the scroll area so it stays
               pinned to the top of the form while the fields below scroll. */}
           <div className="shrink-0 px-5 pb-3">
@@ -312,7 +297,7 @@ export default function AddRecurringSheet({
             </div>
           </div>
 
-          <div data-scroll className="flex-1 overflow-y-auto overscroll-contain px-5 pt-1 space-y-3 pb-4">
+          <div data-scroll className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pt-1 space-y-3 pb-4">
             {/* Amount */}
             <input
               ref={amountRef}

@@ -22,7 +22,7 @@
 
 "use client";
 
-import { addTransaction } from "@/app/actions/transactions";
+import { addTransaction } from "@/lib/ledger-action-client";
 import { addWallet } from "@/app/actions/wallets";
 import { addCategory } from "@/app/actions/categories";
 import type { DbWallet, DbCategory } from "@/lib/types";

@@ -7,7 +7,7 @@
 // the user's <local>@inbox.homu.app forwarding address.
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requireSession, requireUser } from "@/lib/auth/session";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateApiKey } from "@/lib/inbox/keys";
 import { ensureInboxAddress } from "@/lib/inbox/addresses";
@@ -92,7 +92,7 @@ export async function ensureInboxAddressAction(): Promise<
 export async function rejectInboxItemAction(
   formData: FormData
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { user } = await requireSession();
+  const { user } = await requireUser();
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return { ok: false, error: "Missing inbox item id." };
 

@@ -4,6 +4,17 @@ This file is the GitHub-facing release log for Homu. Every production release mu
 
 > **Note:** v1.37.0–v1.43.3 (the Voice release line), v1.45.0–v1.46.1 and v1.46.3–v1.46.14 updated `lib/changelog.ts` but not this file. See `lib/changelog.ts` for those entries.
 
+## v1.49.1 - October 25, 2026
+
+**Faster pending review and save confirmation, guarded ledger fields, and keyboard-safe forms.**
+
+- Independent JSON transport prevents review reads, duplicate hints, and category learning from holding up saves in the browser's Server Action queue. Route-handler revalidation defers page rendering until after the confirmed write; the sheet closes before refreshing in the background. Offline operation IDs and retry behavior are preserved.
+- Pending operations skip the unused profile lookup. Membership, item and reference checks run concurrently; ledger names are loaded with memberships, category hints/seeds are queried together, and category learning is deferred. Authentication, membership and reference checks remain enforced. The API validates exact request origin and payloads and returns JSON for expired sessions.
+- Wallet, category and Save controls remain disabled until the chosen pending ledger is loaded. Outdated reads are cancelled/ignored, ledger changes clear old references, and failed loads have a retry action. Successful pending deletion/acceptance updates the list immediately; stale refreshes cannot restore resolved rows. Failed saves/deletes retain a retryable UI, including review-status update failures after an idempotent transaction insert.
+- Reproduced description collapse from 48px to 19px at a 393×380 viewport; fixed flex-row shrinking so controls stay 48px and the body scrolls. Shared viewport tracking covers transaction, category, recurring, wallet, ledger-join and generic sheets; closed editors are inert, mobile text fields use readable sizing, and viewport geometry is no longer independently animated against the native keyboard.
+- Validation: 32 automated tests including offline retry keys, delayed ledger changes, failed requests, auth/origin validation and viewport changes. Three regression tests fail against the previous backend. Browser checks verify full-height transaction and wallet fields at reduced viewport height. Native iOS keyboard animation still requires real-device confirmation. Existing lint findings in legacy components remain outside this fix.
+- Version `1.49.1`, service-worker cache `v102`; minimum supported client stays `1.34.0`. No database migration.
+
 ## v1.49.0 - October 20, 2026
 
 **Transaction calculator with percentages and retained calculation history.**

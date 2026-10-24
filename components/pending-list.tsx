@@ -6,9 +6,9 @@
 // the Add Transaction sheet in pending mode, where the user picks the
 // ledger) and Delete (inline confirmation).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, Inbox, Sparkles, Trash2, AlertTriangle, Loader2 } from "lucide-react";
-import { rejectInboxItemAction } from "@/app/actions/inbox";
+import { rejectInboxItemAction } from "@/lib/ledger-action-client";
 import { useT } from "@/lib/i18n/provider";
 import { formatAmountSigned, formatShortDate } from "@/lib/format";
 import { foreignCurrency, pendingDate, type PendingRow } from "@/lib/pending";
@@ -20,7 +20,7 @@ type Props = {
   currency: string;
   onClose: () => void;
   /** Called after a row is deleted so the caller can refetch. */
-  onChange: () => void;
+  onChange: (id: string) => void;
   /** Hands the item to the caller (Add Transaction sheet, pending mode). */
   onAccept: (item: PendingRow) => void;
 };
@@ -122,13 +122,14 @@ function PendingRowCard({
 }: {
   item: PendingRow;
   currency: string;
-  onChange: () => void;
+  onChange: (id: string) => void;
   onAccept: () => void;
 }) {
   const t = useT();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const deletingRef = useRef(false);
 
   const p = item.parsed ?? {};
   const amount = typeof p.amount === "number" ? p.amount : null;
@@ -138,14 +139,22 @@ function PendingRowCard({
   const isAgent = item.source_domain === "mcp";
 
   async function handleDelete() {
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     setBusy(true);
     setError(null);
     const fd = new FormData();
     fd.set("id", item.id);
-    const res = await rejectInboxItemAction(fd);
-    setBusy(false);
-    if (res.ok) onChange();
-    else setError(res.error);
+    try {
+      const res = await rejectInboxItemAction(fd);
+      if (res.ok) onChange(item.id);
+      else setError(res.error);
+    } catch {
+      setError(t("tx.requestFailed"));
+    } finally {
+      deletingRef.current = false;
+      setBusy(false);
+    }
   }
 
   const amountText =
