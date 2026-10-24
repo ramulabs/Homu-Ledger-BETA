@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 import { X, Plus, Check, LogIn, Mail, Loader2 } from "lucide-react";
 import { switchHousehold } from "@/app/actions/households";
 import { acceptInvitation, declineInvitation, joinLedgerByCode } from "@/app/actions/invitations";
@@ -27,6 +28,7 @@ export default function LedgerSwitcherSheet({
   onClose,
 }: Props) {
   const router = useRouter();
+  const viewport = useVisualViewport(true);
   const [switching, setSwitching] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode>("list");
 
@@ -89,7 +91,8 @@ export default function LedgerSwitcherSheet({
   return (
     <>
       <div className="fixed inset-0 z-[80] bg-black/50" onClick={onClose} />
-      <div className="fixed bottom-0 left-1/2 z-[90] flex max-h-[85dvh] w-full max-w-md -translate-x-1/2 flex-col rounded-t-3xl bg-[var(--surface)]">
+      <div className="fixed left-0 top-0 z-[90] w-full" style={{ height: viewport.height ?? "100vh", transform: `translateY(${viewport.offsetTop}px)`, pointerEvents: "none" }}>
+      <div className="absolute bottom-0 left-1/2 flex max-h-[92%] w-full max-w-md -translate-x-1/2 flex-col rounded-t-3xl bg-[var(--surface)]" style={{ pointerEvents: "auto" }}>
         <div className="flex shrink-0 justify-center pt-3 pb-1">
           <div className="h-1 w-10 rounded-full bg-black/10" />
         </div>
@@ -103,7 +106,7 @@ export default function LedgerSwitcherSheet({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-4">
+        <div data-scroll className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">
           {/* Pending invitations */}
           {pendingInvitations.length > 0 && (
             <>
@@ -271,6 +274,7 @@ export default function LedgerSwitcherSheet({
             </form>
           )}
         </div>
+      </div>
       </div>
     </>
   );

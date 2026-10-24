@@ -262,6 +262,19 @@ html, body {
 
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
+/* A smaller keyboard viewport must scroll form rows, not compress controls.
+   This contract also covers new rows added to an editable sheet later. */
+.sheet-form-body > * { flex-shrink: 0; }
+.sheet-form-body { overscroll-behavior: contain; scroll-padding-block: 12px; }
+
+/* Small text fields trigger focus zoom on iPhone, changing viewport geometry
+   again mid-keyboard animation. Keep text entry readable without disabling
+   pinch zoom or changing the larger numeric amount controls. */
+@media (pointer: coarse) {
+  input:where([type="text"], [type="email"], [type="password"], [type="search"], [type="tel"], [type="url"], :not([type])):not([inputmode="numeric"]):not([inputmode="decimal"]),
+  textarea { font-size: 16px; }
+}
+
 /* iOS Safari's native date input has an intrinsic min-width that overflows
    its container. Force it to respect the parent's width. */
 input[type="date"] {

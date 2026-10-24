@@ -7,7 +7,7 @@
 // the current ledger). Membership is checked explicitly in every function.
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requireUser } from "@/lib/auth/session";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { acceptPending, findDuplicates, preparePending, type PrepareResult } from "@/lib/pending-server";
 
@@ -24,13 +24,13 @@ export async function preparePendingAccept(input: {
   description?: string;
   type?: "income" | "expense";
 }): Promise<PrepareResult> {
-  const { user } = await requireSession();
+  const { user } = await requireUser();
   return preparePending(getAdminClient(), user.id, input);
 }
 
 /** Transactions in the chosen ledger with the same amount within ±2 days. */
 export async function findPendingDuplicates(input: { householdId: string; amount: string; date: string }) {
-  const { user } = await requireSession();
+  const { user } = await requireUser();
   return findDuplicates(getAdminClient(), user.id, input);
 }
 
@@ -45,7 +45,7 @@ export async function acceptPendingAction(input: {
   walletId: string | null;
   date: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const { user } = await requireSession();
+  const { user } = await requireUser();
   const res = await acceptPending(getAdminClient(), user.id, input);
   if (res.ok) {
     revalidatePath("/transactions");

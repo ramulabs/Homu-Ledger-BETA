@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { X, Trash2, Star } from "lucide-react";
 import { updateWallet, deleteWallet, setDefaultWallet } from "@/app/actions/wallets";
 import { cn } from "@/lib/cn";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 import { useT } from "@/lib/i18n/provider";
 import { WALLET_ICONS, makeWalletLucideSymbol } from "@/lib/wallet-icons";
 import { CategoryIcon } from "@/components/category-icon";
@@ -31,6 +32,7 @@ export default function EditWalletSheet({
   iconStyle = "2d", currency = "IDR",
 }: Props) {
   const tr = useT();
+  const viewport = useVisualViewport(open);
   const [name, setName] = useState("");
   const [selectedSymbol, setSelectedSymbol] = useState<string>("");
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
@@ -129,9 +131,11 @@ export default function EditWalletSheet({
         )}
         onClick={onClose}
       />
+      <div className="fixed left-0 top-0 z-[110] w-full" inert={!open} style={{ height: viewport.height ?? "100vh", transform: `translateY(${viewport.offsetTop}px)`, pointerEvents: "none" }}>
       <div
+        style={{ maxHeight: "92%", pointerEvents: "auto" }}
         className={cn(
-          "fixed bottom-0 left-1/2 z-[110] w-full max-w-md -translate-x-1/2 flex flex-col rounded-t-3xl bg-[var(--surface)] transition-transform duration-300",
+          "absolute bottom-0 left-1/2 w-full max-w-md -translate-x-1/2 flex flex-col rounded-t-3xl bg-[var(--surface)] transition-transform duration-300",
           open ? "translate-y-0" : "translate-y-full"
         )}
       >
@@ -148,8 +152,8 @@ export default function EditWalletSheet({
           </button>
         </div>
 
-        <form onSubmit={handleSave} className="flex flex-col overflow-hidden">
-          <div className="overflow-y-auto px-5 pb-4 space-y-4" style={{ maxHeight: "70dvh" }}>
+        <form onSubmit={handleSave} className="flex min-h-0 flex-col overflow-hidden">
+          <div data-scroll className="min-h-0 overflow-y-auto px-5 pb-4 space-y-4">
             {/* Preview + default badge */}
             <div className="flex items-center gap-3 rounded-2xl bg-[var(--background)] px-4 py-3 ring-1 ring-black/[0.06]">
               <div
@@ -338,6 +342,7 @@ export default function EditWalletSheet({
             )}
           </div>
         </form>
+      </div>
       </div>
     </>
   );

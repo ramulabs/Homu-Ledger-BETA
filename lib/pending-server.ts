@@ -4,6 +4,7 @@
 // household membership explicitly — RLS doesn't apply to the admin client.
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { after } from "next/server";
 import type { Database } from "@/lib/supabase/database.types";
 import { matchCategoryLocally } from "@/lib/categorize-local";
 import { canonicalKey } from "@/lib/llm/normalize";
@@ -68,12 +69,10 @@ async function isMember(admin: Admin, userId: string, householdId: string) {
  *   2. the source's suggested ledger name, if the user is a member of it;
  *   3. nothing — the user must choose.
  */
-async function suggestLedger(admin: Admin, userId: string, parsed: PendingParsed) {
-  const { data: memberships } = await admin
-    .from("household_members")
-    .select("household_id")
-    .eq("profile_id", userId);
-  const memberIds = new Set((memberships ?? []).map((m) => m.household_id));
+type Membership = { household_id: string; household: { name: string } | { name: string }[] | null };
+
+async function suggestLedger(admin: Admin, userId: string, parsed: PendingParsed, memberships: Membership[]) {
+  const memberIds = new Set(memberships.map((m) => m.household_id));
 
   const key = pendingMatchKey(parsed);
   if (key) {
@@ -93,12 +92,11 @@ async function suggestLedger(admin: Admin, userId: string, parsed: PendingParsed
 
   const wanted = typeof parsed.ledger === "string" ? parsed.ledger.trim().toLowerCase() : "";
   if (wanted && memberIds.size > 0) {
-    const { data: households } = await admin
-      .from("households")
-      .select("id, name")
-      .in("id", [...memberIds]);
-    const match = (households ?? []).find((h) => h.name.trim().toLowerCase() === wanted);
-    if (match) return { householdId: match.id, source: "agent" as const };
+    const match = memberships.find((m) => {
+      const household = Array.isArray(m.household) ? m.household[0] : m.household;
+      return household?.name.trim().toLowerCase() === wanted;
+    });
+    if (match) return { householdId: match.household_id, source: "agent" as const };
   }
 
   return { householdId: null, source: null };
@@ -112,7 +110,7 @@ async function ledgerData(
   type: TxType,
   parsed: PendingParsed
 ): Promise<PendingLedgerData> {
-  const [{ data: household }, { data: cats }, { data: walletRows }] = await Promise.all([
+  const [{ data: household, error: householdError }, { data: cats, error: categoryError }, { data: walletRows, error: walletError }] = await Promise.all([
     admin.from("households").select("currency").eq("id", householdId).maybeSingle(),
     admin.from("categories").select("id, name, symbol, color, type").eq("household_id", householdId).order("name"),
     admin
@@ -122,6 +120,7 @@ async function ledgerData(
       .order("is_default", { ascending: false })
       .order("created_at", { ascending: true }),
   ]);
+  if (householdError || categoryError || walletError || !household) throw new Error("Unable to load the selected ledger.");
   const categories = (cats ?? []) as DbCategory[];
   const wallets: DbWallet[] = (walletRows ?? []).map((w) => ({ ...w, initial_balance: Number(w.initial_balance ?? 0) }));
   const ofType = categories.filter((c) => c.type === type);
@@ -175,18 +174,22 @@ export async function preparePending(
   description?: string;
   type?: TxType;
 }): Promise<PrepareResult> {
-  const item = await loadPendingItem(admin, userId, input.itemId);
+  const [item, { data: memberships, error: membershipError }] = await Promise.all([
+    loadPendingItem(admin, userId, input.itemId),
+    admin.from("household_members").select("household_id, household:households(name)").eq("profile_id", userId),
+  ]);
   if (!item) return { ok: false, error: GONE };
+  if (membershipError) return { ok: false, error: "Unable to load your ledgers. Please try again." };
 
   let householdId = input.householdId ?? null;
   let source: "history" | "agent" | null = null;
   if (input.householdId === undefined) {
-    const s = await suggestLedger(admin, userId, item.parsed);
+    const s = await suggestLedger(admin, userId, item.parsed, memberships ?? []);
     householdId = s.householdId;
     source = s.source;
   }
   if (!householdId) return { ok: true, householdId: null, source: null, ledger: null };
-  if (!(await isMember(admin, userId, householdId))) {
+  if (!(memberships ?? []).some((member) => member.household_id === householdId)) {
     return { ok: false, error: "You're not a member of that ledger." };
   }
 
@@ -239,12 +242,7 @@ export async function acceptPending(
   date: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
 
-  const item = await loadPendingItem(admin, userId, input.itemId);
-  if (!item) return { ok: false, error: GONE };
   if (!input.householdId) return { ok: false, error: "Choose a ledger first." };
-  if (!(await isMember(admin, userId, input.householdId))) {
-    return { ok: false, error: "You're not a member of that ledger." };
-  }
 
   if (input.type !== "income" && input.type !== "expense") {
     return { ok: false, error: "Type must be income or expense." };
@@ -255,24 +253,26 @@ export async function acceptPending(
   const err = validateName(name, LIMITS.TX_NAME, "Description") ?? validateAmount(amount) ?? validateDate(input.date);
   if (err) return { ok: false, error: err };
 
-  if (input.categoryId) {
-    const { data: cat } = await admin
+  const [item, member, category, wallet] = await Promise.all([
+    loadPendingItem(admin, userId, input.itemId),
+    isMember(admin, userId, input.householdId),
+    input.categoryId ? admin
       .from("categories")
       .select("type")
       .eq("id", input.categoryId)
       .eq("household_id", input.householdId)
-      .maybeSingle();
-    if (!cat || cat.type !== type) return { ok: false, error: "That category isn't in the chosen ledger." };
-  }
-  if (input.walletId) {
-    const { data: wallet } = await admin
+      .maybeSingle() : null,
+    input.walletId ? admin
       .from("wallets")
       .select("id")
       .eq("id", input.walletId)
       .eq("household_id", input.householdId)
-      .maybeSingle();
-    if (!wallet) return { ok: false, error: "That wallet isn't in the chosen ledger." };
-  }
+      .maybeSingle() : null,
+  ]);
+  if (!item) return { ok: false, error: GONE };
+  if (!member) return { ok: false, error: "You're not a member of that ledger." };
+  if (input.categoryId && (!category?.data || category.data.type !== type)) return { ok: false, error: "That category isn't in the chosen ledger." };
+  if (input.walletId && !wallet?.data) return { ok: false, error: "That wallet isn't in the chosen ledger." };
 
   const note = typeof item.parsed.note === "string" && item.parsed.note.trim() ? item.parsed.note.trim().slice(0, 500) : null;
 
@@ -306,8 +306,9 @@ export async function acceptPending(
       .maybeSingle();
     transactionId = existing?.id ?? null;
   }
+  if (!transactionId) return { ok: false, error: "Unable to confirm the saved transaction. Please try again." };
 
-  await admin
+  const { error: reviewError } = await admin
     .from("inbox_items")
     .update({
       status: "accepted",
@@ -319,16 +320,21 @@ export async function acceptPending(
     .eq("id", item.id)
     .eq("user_id", userId)
     .eq("status", "pending");
+  if (reviewError) return { ok: false, error: "Transaction saved, but review could not finish. Retry to complete it without adding another transaction." };
 
   // Teach that ledger's category cache, like a normal save does.
   const key = canonicalKey(name);
-  if (key && input.categoryId) {
-    await admin
+  const categoryId = input.categoryId;
+  if (key && categoryId) {
+    after(async () => {
+      const { error } = await admin
       .from("category_hints")
       .upsert(
-        { household_id: input.householdId, keyword: key, category_id: input.categoryId, source: "user" },
+        { household_id: input.householdId, keyword: key, category_id: categoryId, source: "user" },
         { onConflict: "household_id,keyword" }
       );
+      if (error) console.warn("[pending] Category hint could not be updated");
+    });
   }
 
   return { ok: true };

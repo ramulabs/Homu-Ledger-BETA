@@ -30,23 +30,25 @@
 
 import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, AlertTriangle } from "lucide-react";
-import { updateTransaction, deleteTransaction, moveTransaction, prepareMoveTransaction, addTransfer } from "@/app/actions/transactions";
+import { X, Trash2, Camera, ImagePlus, ChevronRight, ChevronDown, ArrowRightLeft, Check, Calendar, Repeat, Sparkles, Loader2, AlertTriangle, Calculator } from "lucide-react";
+import { moveTransaction, prepareMoveTransaction } from "@/app/actions/transactions";
+import { updateTransaction, deleteTransaction, addTransfer, addRecurringItem, acceptPendingAction, preparePendingAccept, findPendingDuplicates } from "@/lib/ledger-action-client";
 import { queuedAddTransaction, isQueued, updateQueuedTransaction, deleteQueuedTransaction } from "@/lib/queue-actions";
 import { logEvent } from "@/lib/events";
 import { withTimeout } from "@/lib/with-timeout";
-import { readViewportHeight, readViewportOffsetTop } from "@/lib/viewport";
+import { useVisualViewport } from "@/lib/use-visual-viewport";
 import { signTransactionPhoto } from "@/app/actions/photos";
-import { addRecurringItem } from "@/app/actions/recurring";
-import { suggestCategory, recordCategoryUsage } from "@/app/actions/ai";
+import { suggestCategory } from "@/app/actions/ai";
 import CategoryPicker from "@/components/category-picker";
 import NumericKeypad from "@/components/numeric-keypad";
+import TransactionCalculator from "@/components/transaction-calculator";
+import { calculate, calculationText, rememberCalculation, EMPTY_CALCULATOR } from "@/lib/calculator";
 import WalletPickerSheet from "@/components/wallet-picker-sheet";
 import { CategoryIcon } from "@/components/category-icon";
 import { cn } from "@/lib/cn";
 import { useT } from "@/lib/i18n/provider";
 import { formatShortDate } from "@/lib/format";
-import { acceptPendingAction, findPendingDuplicates, preparePendingAccept, type PendingLedgerData, type PrepareResult } from "@/app/actions/pending";
+import type { PendingLedgerData, PrepareResult } from "@/lib/pending-server";
 import { uploadTransactionPhoto } from "@/lib/upload-photo";
 import { compressPhoto } from "@/lib/compress-photo";
 import PhotoViewer from "@/components/photo-viewer";
@@ -157,6 +159,7 @@ function HeroAmountInput({
   onActivate,
   onDigit,
   onBackspace,
+  readOnly = false,
 }: {
   value: string;
   focused: boolean;
@@ -164,6 +167,7 @@ function HeroAmountInput({
   onActivate: () => void;
   onDigit?: (d: string) => void;
   onBackspace?: () => void;
+  readOnly?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
@@ -179,7 +183,8 @@ function HeroAmountInput({
   }, [value, focused]);
 
   const empty = !value;
-  const display = empty ? "0" : value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  const [integer, decimals] = value.split(",");
+  const display = empty ? "0" : integer.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (decimals !== undefined ? `,${decimals}` : "");
 
   // Physical-keyboard input. The amount field has no native HTMLInputElement
   // (see comment above on the iOS form-accessory bar) — wiring keydown on
@@ -206,12 +211,12 @@ function HeroAmountInput({
 
   return (
     <div
-      role="button"
+      role={readOnly ? undefined : "button"}
       tabIndex={-1}
       onClick={onActivate}
       ref={containerRef}
       className="relative flex w-full cursor-pointer items-start justify-center"
-      style={{ padding: "18px 24px 14px", gap: 4, boxSizing: "border-box" }}
+      style={{ padding: "18px 64px 14px", gap: 4, boxSizing: "border-box" }}
     >
       <div
         ref={measureRef}
@@ -255,9 +260,10 @@ function HeroAmountInput({
           point: iOS's form-accessory bar can't be removed from inputs. */}
       <div
         ref={fieldRef}
-        tabIndex={0}
+        tabIndex={readOnly ? -1 : 0}
         role="textbox"
         aria-label="Amount"
+        aria-readonly={readOnly}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         className="absolute inset-0 h-full w-full"
@@ -325,6 +331,10 @@ export default function AddTransactionSheet({
   const tr = useT();
   const [type, setType] = useState<"expense" | "income" | "transfer">("expense");
   const [amount, setAmount] = useState("");
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  // Kept outside the form reset: returning to the calculator restores its
+  // expression and history, even after applying or closing the sheet.
+  const [calculator, setCalculator] = useState(EMPTY_CALCULATOR);
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [extraCategories, setExtraCategories] = useState<DbCategory[]>([]);
@@ -369,6 +379,9 @@ export default function AddTransactionSheet({
   // Latest-request guard: switching ledger quickly must not let an older
   // response overwrite a newer one.
   const pendingReqRef = useRef(0);
+  const pendingAbortRef = useRef<AbortController | null>(null);
+  const pendingCacheRef = useRef(new Map<string, PrepareResult>());
+  const submittingRef = useRef(false);
   const previewObjectUrlRef = useRef<string | null>(null);
 
   // v1.45.4 — true when the in-app numeric keypad is showing (the
@@ -433,35 +446,9 @@ export default function AddTransactionSheet({
   // re-focus. Reading visualViewport directly on every event — no
   // baseline, no accumulation — removes the drift entirely.
   //
-  // v1.46.13 — `vvHeight` is now seeded SYNCHRONOUSLY from a fallback
-  // chain (visualViewport → innerHeight → documentElement.clientHeight)
-  // so the wrapper has a real px height on first paint, not after the
-  // effect runs. Without this seed the wrapper rendered `height: 100dvh`
-  // on the first frame; on older Android Chrome / WebView builds where
-  // `dvh` units aren't supported (Chrome < 108), the wrapper resolved to
-  // height:auto = 0, the inner sheet (max-height: 92%) collapsed to 0,
-  // and the entire sheet appeared as a sliver "stuck at the bottom" with
-  // nothing visible. Same fallback in `update()` guards against a bogus
-  // 0 / NaN visualViewport.height read on those devices.
-  const [vvHeight, setVvHeight] = useState<number | null>(() => readViewportHeight());
-  const [vvOffsetTop, setVvOffsetTop] = useState<number>(() => readViewportOffsetTop());
-  useEffect(() => {
-    if (!open) return;
-    const vv = typeof window !== "undefined" ? window.visualViewport : null;
-    function update() {
-      const h = readViewportHeight();
-      if (h && h > 0) setVvHeight(h);
-      setVvOffsetTop(readViewportOffsetTop());
-    }
-    update();
-    if (!vv) return;
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, [open]);
+  // Shared viewport tracking uses a hydration-safe CSS fallback, then reads
+  // the visible height and Safari pan offset while this sheet is open.
+  const { height: vvHeight, offsetTop: vvOffsetTop } = useVisualViewport(open);
 
   // True only while the Description native keyboard is up — used purely
   // to trim the action row's bottom padding (the keyboard already covers
@@ -568,12 +555,36 @@ export default function AddTransactionSheet({
     setAmount((prev) => prev.slice(0, -1));
   }
 
+  function openCalculator() {
+    setCalculator((previous) => previous.initialized ? previous : {
+      ...previous, expression: amount.replace(",", "."), initialized: true,
+    });
+    setAmountActive(false);
+    setDescFocused(false);
+    setCalculatorOpen(true);
+  }
+
+  function closeCalculator() {
+    setCalculatorOpen(false);
+    activateAmount();
+  }
+
+  function applyCalculator() {
+    const result = calculate(calculator.expression);
+    if (result.error || Number(calculationText(result.value)) <= 0) return;
+    setAmount(calculationText(result.value).replace(".", ","));
+    setCalculator((previous) => rememberCalculation(previous));
+    closeCalculator();
+  }
+
   function openWalletPicker(slot: "wallet" | "from" | "to") {
+    if (pending && (!pendingLedgerId || !pendingLedger || pendingLoading)) return;
     setWalletPickerSlot(slot);
     setShowWalletPicker(true);
     setPickerVisible(true);
   }
   function openCategoryPicker() {
+    if (pending && (!pendingLedgerId || !pendingLedger || pendingLoading)) return;
     // NOTE: do NOT set userTouchedCategory here. Merely OPENING the
     // picker must not disable AI auto-categorisation — only actually
     // SELECTING a category does (handled in the picker's onSelect).
@@ -606,7 +617,7 @@ export default function AddTransactionSheet({
     const altWallet = wallets.find((w) => w.id !== defaultWallet?.id) ?? null;
     if (editing) {
       setType(editing.type);
-      setAmount(String(Math.round(Number(editing.amount))));
+      setAmount(String(Number(editing.amount)).replace(".", ","));
       setName(editing.name);
       setCategoryId(editing.category_id);
       setWalletId(editing.wallet_id ?? defaultWallet?.id ?? null);
@@ -646,6 +657,7 @@ export default function AddTransactionSheet({
     // New transaction → keypad auto-shows. Editing → start quiet (the
     // user is reviewing; they tap the amount to bring up the keypad).
     setAmountActive(!editing);
+    setCalculatorOpen(false);
     setDescFocused(false);
     setConfirmDelete(false);
     setShowMovePicker(false);
@@ -663,6 +675,7 @@ export default function AddTransactionSheet({
     setPendingLedgerId(null);
     setPendingLedgerSource(null);
     setPendingLedger(null);
+    pendingCacheRef.current.clear();
     setPendingLoading(pendingMode);
     setDupes([]);
     setMoveTarget(null);
@@ -673,6 +686,9 @@ export default function AddTransactionSheet({
   function applyPendingResult(res: PrepareResult) {
     setPendingLoading(false);
     if (!res.ok) {
+      setPendingLedger(null);
+      setCategoryId(null);
+      setWalletId(null);
       setError(res.error);
       return;
     }
@@ -690,11 +706,24 @@ export default function AddTransactionSheet({
   useEffect(() => {
     if (!open || !pendingItemId) return;
     const req = ++pendingReqRef.current;
-    preparePendingAccept({ itemId: pendingItemId }).then((res) => {
+    const controller = new AbortController();
+    pendingAbortRef.current?.abort();
+    pendingAbortRef.current = controller;
+    preparePendingAccept({ itemId: pendingItemId }, controller.signal).then((res) => {
       if (req !== pendingReqRef.current) return;
       if (res.ok) setPendingLedgerSource(res.source);
       applyPendingResult(res);
+    }).catch(() => {
+      if (req === pendingReqRef.current && !controller.signal.aborted) applyPendingResult({ ok: false, error: tr("pending.loadFailed") });
     });
+    return () => {
+      // A sequence counter (not a DOM ref): invalidate even a later selection.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      ++pendingReqRef.current;
+      pendingAbortRef.current?.abort();
+    };
+    // The item/session owns this request, never an incidental translation render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pendingItemId]);
 
   // User picked a ledger: reload its lists + re-run the smart fill against
@@ -702,34 +731,51 @@ export default function AddTransactionSheet({
   async function changePendingLedger(householdId: string) {
     if (!pending || !householdId) return;
     const req = ++pendingReqRef.current;
+    pendingAbortRef.current?.abort();
+    const controller = new AbortController();
+    pendingAbortRef.current = controller;
     setPendingLedgerId(householdId);
+    setPendingLedger(null);
+    setCategoryId(null);
+    setWalletId(null);
     setPendingLedgerSource(null);
     setPendingLoading(true);
     setDupes([]);
     setError(null);
-    const res = await preparePendingAccept({
+    const input = {
       itemId: pending.itemId,
       householdId,
       description: name,
-      type: type === "income" ? "income" : "expense",
-    });
-    if (req !== pendingReqRef.current) return;
-    applyPendingResult(res);
+      type: type === "income" ? "income" as const : "expense" as const,
+    };
+    const key = JSON.stringify(input);
+    try {
+      const res = pendingCacheRef.current.get(key) ?? await preparePendingAccept(input, controller.signal);
+      if (req !== pendingReqRef.current) return;
+      if (res.ok) pendingCacheRef.current.set(key, res);
+      applyPendingResult(res);
+    } catch {
+      if (req === pendingReqRef.current && !controller.signal.aborted) applyPendingResult({ ok: false, error: tr("pending.loadFailed") });
+    }
   }
 
   // Duplicate warning: same amount in the chosen ledger within ±2 days.
   useEffect(() => {
-    if (!open || !pendingMode || !pendingLedgerId || !amount) return;
+    if (!open || !pendingMode || !pendingLedgerId || !pendingLedger || pendingLoading || !amount) return;
     let cancelled = false;
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
-      const matches = await findPendingDuplicates({ householdId: pendingLedgerId, amount, date });
-      if (!cancelled) setDupes(matches);
+      try {
+        const matches = await findPendingDuplicates({ householdId: pendingLedgerId, amount, date }, controller.signal);
+        if (!cancelled) setDupes(matches);
+      } catch { /* Duplicate hints must never block editing or saving. */ }
     }, 400);
     return () => {
       cancelled = true;
+      controller.abort();
       clearTimeout(timer);
     };
-  }, [open, pendingMode, pendingLedgerId, amount, date]);
+  }, [open, pendingMode, pendingLedgerId, pendingLedger, pendingLoading, amount, date]);
 
   // Desktop: focus the amount field on open so the user can type with
   // their physical keyboard immediately, without an extra click.
@@ -836,8 +882,11 @@ export default function AddTransactionSheet({
   // ── Submit ──────────────────────────────────────────────────────────
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (calculatorOpen || submittingRef.current || (pending && (!pendingLedgerId || !pendingLedger || pendingLoading))) return;
+    submittingRef.current = true;
     setError(null);
     setLoading(true);
+    try {
 
     // Pending mode → accept into the chosen ledger (server-side, may not be
     // the current ledger). Date = the item's date, set in prefill.
@@ -864,6 +913,7 @@ export default function AddTransactionSheet({
       }
       onSaved?.();
       onClose();
+      router.refresh();
       return;
     }
 
@@ -876,7 +926,7 @@ export default function AddTransactionSheet({
       }
       const fd = new FormData();
       fd.set("type", type);
-      fd.set("amount", amount);
+      fd.set("amount", amount.replace(/\./g, "").replace(",", "."));
       fd.set("name", name);
       fd.set("category_id", categoryId ?? "");
       fd.set("wallet_id", walletId);
@@ -888,9 +938,9 @@ export default function AddTransactionSheet({
         setError(result.error);
         setLoading(false);
       } else {
-        void recordCategoryUsage(name, categoryId);
         onSaved?.();
         onClose();
+        router.refresh();
       }
       return;
     }
@@ -919,6 +969,7 @@ export default function AddTransactionSheet({
       } else {
         onSaved?.();
         onClose();
+        router.refresh();
       }
       return;
     }
@@ -958,7 +1009,6 @@ export default function AddTransactionSheet({
       : await queuedAddTransaction(fd);
 
     if (result && isQueued(result)) {
-      void recordCategoryUsage(name, categoryId);
       if (!editing) logEvent("transaction_completed", { queued: true });
       onSaved?.();
       onClose();
@@ -968,23 +1018,36 @@ export default function AddTransactionSheet({
       setError(result.error);
       setLoading(false);
     } else {
-      void recordCategoryUsage(name, categoryId);
       if (!editing) logEvent("transaction_completed", { queued: false });
       onSaved?.();
       onClose();
+      router.refresh();
+    }
+    } catch {
+      setError(tr("tx.requestFailed"));
+    } finally {
+      submittingRef.current = false;
+      setLoading(false);
     }
   }
 
   async function handleDelete() {
-    if (!editing) return;
+    if (!editing || submittingRef.current) return;
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setLoading(true);
+    submittingRef.current = true;
+    try {
     if (editing._pending) {
       await deleteQueuedTransaction(editing.id);
     } else {
-      await deleteTransaction(editing.id);
+      const result = await deleteTransaction(editing.id);
+      if (result.error) { setError(result.error); return; }
     }
     onClose();
+    router.refresh();
+    } catch {
+      setError(tr("tx.requestFailed"));
+    } finally { submittingRef.current = false; setLoading(false); }
   }
 
   // Step 1 — a ledger was tapped: load its wallets / categories and the
@@ -1062,9 +1125,10 @@ export default function AddTransactionSheet({
   }
 
   const otherLedgers = memberships.filter((m) => m.household_id !== currentHouseholdId);
+  const ledgerFieldsDisabled = !!pending && (!pendingLedgerId || !pendingLedger || pendingLoading);
   const canSave = !!amount && (
     pending
-      ? !!pendingLedgerId && !pendingLoading
+      ? !ledgerFieldsDisabled
       : !isTransfer ? true : !!toWalletId && toWalletId !== walletId
   );
   // v1.47.1 — while a NEW, plain transaction is still completely empty the
@@ -1101,6 +1165,9 @@ export default function AddTransactionSheet({
 
   // Date input is an invisible overlay; the visible pill is read-only.
   const dateLabel = recurringMode ? formatWeekdayDate(date) : formatTodayOrShort(date);
+  const calculatorPreview = calculate(calculator.expression.replace(/[+−×÷]+$/, ""));
+  const displayedAmount = calculatorOpen && !calculatorPreview.error
+    ? calculationText(calculatorPreview.value).replace(".", ",") : amount;
 
   return (
     <>
@@ -1124,23 +1191,13 @@ export default function AddTransactionSheet({
       {mounted && (
         <div
           className="fixed left-0 top-0 z-[70] w-full"
+          inert={!open}
           style={{
-            // v1.46.13 — `100vh` (not `100dvh`) as the CSS fallback. The
-            // useState init above seeds vvHeight from a JS chain so this
-            // fallback is almost never actually used at runtime, but on
-            // SSR / pre-hydration `100vh` is universally supported back
-            // to IE9, whereas `100dvh` silently drops on Chrome < 108.
+            // Universal fallback until the first viewport measurement.
             height: vvHeight != null ? `${vvHeight}px` : "100vh",
             transform: `translateY(${vvOffsetTop}px)`,
-            // v1.46.7 — ease the height/offset changes. When the
-            // Description keyboard opens, visualViewport.height drops in
-            // one step; with no transition the wrapper (and the sheet
-            // anchored to its bottom) JUMPED up a frame before the
-            // keyboard had finished sliding in — the visible "blink".
-            // Easing it over 300ms keeps the sheet gliding in sync with
-            // the keyboard and with the keypad's own 300ms collapse.
-            transition:
-              "height 300ms cubic-bezier(0.32,0.72,0,1), transform 300ms cubic-bezier(0.32,0.72,0,1)",
+            // Follow the keyboard immediately; animating viewport geometry
+            // separately from iOS leaves gaps and moves focused controls.
             pointerEvents: "none",
           }}
         >
@@ -1279,17 +1336,35 @@ export default function AddTransactionSheet({
           <form onSubmit={handleSubmit} className="flex min-h-0 flex-col overflow-hidden">
             {/* Hero amount — driven by the in-app keypad (NumericKeypad
                 below), not the native keyboard. */}
-            <HeroAmountInput
-              value={amount}
-              focused={amountActive}
-              fieldRef={amountRef}
-              onActivate={activateAmount}
-              onDigit={pushDigit}
-              onBackspace={backspaceAmount}
-            />
+            <div className="relative shrink-0">
+              <HeroAmountInput
+                value={displayedAmount}
+                focused={amountActive && !calculatorOpen}
+                fieldRef={amountRef}
+                onActivate={calculatorOpen ? () => {} : activateAmount}
+                onDigit={calculatorOpen ? undefined : pushDigit}
+                onBackspace={calculatorOpen ? undefined : backspaceAmount}
+                readOnly={calculatorOpen}
+              />
+              <button
+                type="button"
+                aria-label={calculatorOpen ? tr("calculator.back") : tr("calculator.open")}
+                aria-expanded={calculatorOpen}
+                disabled={loading || moving}
+                onClick={calculatorOpen ? closeCalculator : openCalculator}
+                className={cn("absolute right-4 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full transition-colors disabled:opacity-40", calculatorOpen ? "bg-[#EE6452]/10 text-[#EE6452]" : "bg-[var(--background)] text-[var(--label-secondary)]")}
+              >
+                <Calculator className="h-5 w-5" strokeWidth={2} />
+              </button>
+            </div>
+
+            {calculatorOpen ? (
+              <TransactionCalculator state={calculator} onChange={setCalculator} onApply={applyCalculator} onClose={closeCalculator} />
+            ) : (
+            <>
 
             {/* Body — natural height, scrolls if it overflows. */}
-            <div data-scroll className="flex flex-[0_1_auto] flex-col gap-2.5 overflow-y-auto px-5 pb-3" style={{ minHeight: 0 }}>
+            <div data-scroll className="sheet-form-body flex flex-[0_1_auto] flex-col gap-2.5 overflow-y-auto px-5 pb-3" style={{ minHeight: 0 }}>
               {/* Description (expense/income + transfer notes).
                   Focusing it hides the in-app keypad so the native
                   keyboard can take over for text entry. */}
@@ -1318,7 +1393,7 @@ export default function AddTransactionSheet({
               ) : (
                 <div className="flex gap-2">
                   <div className="min-w-0 flex-1">
-                    <WalletPillButton wallet={selectedWallet} iconStyle={iconStyle} placeholder={tr("wallet.selectWallet")} onClick={() => openWalletPicker("wallet")} />
+                    <WalletPillButton wallet={selectedWallet} iconStyle={iconStyle} placeholder={tr("wallet.selectWallet")} disabled={ledgerFieldsDisabled} onClick={() => openWalletPicker("wallet")} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <CategoryPillButton
@@ -1328,6 +1403,7 @@ export default function AddTransactionSheet({
                       loading={aiSuggestingFor !== null && !userTouchedCategory}
                       placeholder={tr("tx.category")}
                       onClick={openCategoryPicker}
+                      disabled={ledgerFieldsDisabled}
                     />
                   </div>
                 </div>
@@ -1456,6 +1532,9 @@ export default function AddTransactionSheet({
               {error && (
                 <p className="rounded-xl bg-rose-50 px-4 py-2.5 text-[13px] text-rose-700 ring-1 ring-rose-200">
                   {error}
+                  {pending && pendingLedgerId && !pendingLedger && !pendingLoading && (
+                    <button type="button" onClick={() => void changePendingLedger(pendingLedgerId)} className="ml-2 underline">{tr("common.retry")}</button>
+                  )}
                 </p>
               )}
             </div>
@@ -1770,6 +1849,8 @@ export default function AddTransactionSheet({
                 <NumericKeypad onDigit={pushDigit} onBackspace={backspaceAmount} />
               </div>
             </div>
+            </>
+            )}
           </form>
         </div>
         </div>
@@ -1838,14 +1919,16 @@ function WalletPillButton({
   iconStyle,
   placeholder,
   onClick,
+  disabled = false,
 }: {
   wallet: DbWallet | null;
   iconStyle: IconStyle;
   placeholder: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
-    <button type="button" onClick={onClick} className={pillBase()}>
+    <button type="button" onClick={onClick} disabled={disabled} className={cn(pillBase(), "disabled:cursor-not-allowed disabled:opacity-40")}>
       {wallet ? (
         <>
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${wallet.color}26` }}>
@@ -1868,6 +1951,7 @@ function CategoryPillButton({
   loading,
   placeholder,
   onClick,
+  disabled = false,
 }: {
   category: DbCategory | null;
   iconStyle: IconStyle;
@@ -1875,9 +1959,10 @@ function CategoryPillButton({
   loading: boolean;
   placeholder: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
-    <button type="button" onClick={onClick} className={pillBase()}>
+    <button type="button" onClick={onClick} disabled={disabled} className={cn(pillBase(), "disabled:cursor-not-allowed disabled:opacity-40")}>
       {category ? (
         <>
           <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${category.color}26` }}>

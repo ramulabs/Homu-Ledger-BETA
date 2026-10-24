@@ -146,6 +146,7 @@ export default function TransactionsShell({
   const [pendingItem, setPendingItem] = useState<PendingRow | null>(null);
   // Bump to make PendingFab refetch after an accept.
   const [pendingRefresh, setPendingRefresh] = useState(0);
+  const [resolvedPendingIds, setResolvedPendingIds] = useState<string[]>([]);
   const [editingTx, setEditingTx] = useState<DbTransaction | null>(null);
   // v1.44.0 — true when the unified sheet was opened to create a
   // recurring item (from the Recurring tab / "Add recurring" button).
@@ -620,7 +621,7 @@ export default function TransactionsShell({
         defaultRecurring={sheetRecurring}
         prefill={pendingPrefill}
         pending={pendingInput}
-        onSaved={pendingItem ? () => setPendingRefresh((n) => n + 1) : undefined}
+        onSaved={pendingItem ? () => { setResolvedPendingIds((ids) => [...ids, pendingItem.id]); setPendingRefresh((n) => n + 1); } : undefined}
       />
 
       <AddRecurringSheet
@@ -681,7 +682,7 @@ export default function TransactionsShell({
       {/* v1.48.0 — Pending transactions button. Same spot the old "Speak
           to add" FAB used (bottom-right, above the bottom nav); only shows
           while something is pending. */}
-      <PendingFab currency={currency} onAccept={handlePendingAccept} refreshSignal={pendingRefresh} />
+      <PendingFab currency={currency} onAccept={handlePendingAccept} refreshSignal={pendingRefresh} resolvedItemIds={resolvedPendingIds} />
     </>
   );
 }

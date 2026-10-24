@@ -7,6 +7,14 @@
 // Keep each summary to ONE short, jargon-free sentence in both languages.
 
 export const CHANGELOG_SUMMARIES: Record<string, { en: string; id: string }> = {
+  "1.49.1": {
+    en: "Review pending transactions with fewer waits, choose a ledger before its wallet and category, and keep form fields readable when the keyboard opens.",
+    id: "Tinjau transaksi tertunda dengan waktu tunggu lebih singkat, pilih buku sebelum dompet dan kategori, serta isi formulir tanpa kolom mengecil saat keyboard terbuka.",
+  },
+  "1.49.0": {
+    en: "Calculate transaction amounts with arithmetic and percentages, then return to your previous calculation or history whenever you reopen the calculator.",
+    id: "Hitung nominal transaksi dengan aritmetika dan persentase, lalu kembali ke perhitungan atau riwayat sebelumnya saat membuka kembali kalkulator.",
+  },
   "1.48.3": {
     en: "Move transactions to another ledger even when its wallets have different names, keep what you typed when adding a new category, a proper dark mode for confirmations and warnings, and faster screens.",
     id: "Pindahkan transaksi ke buku lain meski nama dompetnya berbeda, isian tetap tersimpan saat menambah kategori baru, mode gelap yang rapi untuk konfirmasi dan peringatan, serta layar yang lebih cepat.",

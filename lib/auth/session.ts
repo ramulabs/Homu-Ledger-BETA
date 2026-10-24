@@ -29,6 +29,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
+/** Actions that only need identity should not wait for a profile query. */
+export async function requireUser() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  return { supabase, user };
+}
+
 export type SessionProfile = {
   id: string;
   name: string | null;

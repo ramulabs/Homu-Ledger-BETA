@@ -32,27 +32,24 @@ async function validateTransactionRefs(
   categoryId: string | null,
   walletId: string | null
 ): Promise<ActionResult> {
-  if (categoryId) {
-    const { data, error } = await supabase
+  const [category, wallet] = await Promise.all([
+    categoryId ? supabase
       .from("categories")
       .select("id")
       .eq("id", categoryId)
       .eq("household_id", householdId)
-      .maybeSingle();
-    if (error) return { error: error.message };
-    if (!data) return { error: "Category does not belong to this ledger" };
-  }
-
-  if (walletId) {
-    const { data, error } = await supabase
+      .maybeSingle() : null,
+    walletId ? supabase
       .from("wallets")
       .select("id")
       .eq("id", walletId)
       .eq("household_id", householdId)
-      .maybeSingle();
-    if (error) return { error: error.message };
-    if (!data) return { error: "Wallet does not belong to this ledger" };
-  }
+      .maybeSingle() : null,
+  ]);
+  if (category?.error) return { error: category.error.message };
+  if (categoryId && !category?.data) return { error: "Category does not belong to this ledger" };
+  if (wallet?.error) return { error: wallet.error.message };
+  if (walletId && !wallet?.data) return { error: "Wallet does not belong to this ledger" };
 
   return {};
 }

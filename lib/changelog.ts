@@ -58,6 +58,27 @@ export type VersionEntry = {
 
 export const CHANGELOG: VersionEntry[] = [
   {
+    version: "1.49.1",
+    date: "October 25, 2026",
+    changes: [
+      { type: "improvement", en: "Pending review reads and transaction mutations use independent JSON requests, keeping duplicate checks and category hints out of the serial Server Action queue. Successful writes return before refreshing the transaction page. Authentication and ledger checks remain server-side; pending checks and reference validation run concurrently, and category learning runs after the response.", id: "Pembacaan tinjauan transaksi tertunda dan penyimpanan transaksi memakai permintaan JSON mandiri, sehingga pemeriksaan duplikat dan saran kategori tidak menahan antrean Server Action. Penyimpanan berhasil dikonfirmasi sebelum halaman dimuat ulang. Autentikasi dan pemeriksaan buku tetap di server; pemeriksaan tertunda serta referensi berjalan bersamaan, dan pembelajaran kategori dilakukan setelah respons." },
+      { type: "fix", en: "Wallet, category, and Save stay disabled until the selected pending ledger finishes loading successfully. Ledger changes clear stale selections, cancel outdated reads, and support retry after errors. Confirmed deletions and accepts disappear immediately without stale background refreshes restoring them; failed writes retain the form and clear its busy state.", id: "Dompet, kategori, dan Simpan tidak dapat ditekan sebelum buku tujuan selesai dimuat. Pergantian buku menghapus pilihan lama, membatalkan pembacaan usang, dan mendukung coba lagi saat gagal. Transaksi yang sudah dihapus atau diterima langsung hilang tanpa muncul kembali dari pemuatan latar yang usang; penyimpanan gagal mempertahankan isian dan menghentikan indikator sibuk." },
+      { type: "fix", en: "Transaction form rows scroll instead of shrinking when the keyboard reduces available height. Transaction, recurring, category, wallet, ledger-join and shared sheets use common visual-viewport tracking; closed editors are inert, and mobile text fields avoid focus zoom. Regression coverage includes delayed and failed requests, ledger races, retry safety, and keyboard viewport changes.", id: "Baris formulir transaksi dapat digulir, bukan mengecil saat keyboard mengurangi ruang layar. Lembar transaksi, berulang, kategori, dompet, gabung buku, dan lembar umum memakai pelacakan viewport yang sama; editor tertutup tidak dapat difokuskan, dan kolom teks ponsel menghindari zoom saat disentuh. Uji regresi mencakup permintaan lambat atau gagal, pergantian buku cepat, keamanan coba lagi, dan perubahan viewport keyboard." },
+    ],
+  },
+  {
+    version: "1.49.0",
+    date: "October 20, 2026",
+    changes: [
+      { type: "new",
+        en: "The calculator button beside the transaction amount replaces the fields and numeric keypad with arithmetic, decimals, percentages, and calculation history. Apply returns the result to the form; reopening preserves the expression and history during the current page session. Keyboard support includes operators, Enter for equals, and Escape to return to the form.",
+        id: "Tombol kalkulator di samping nominal transaksi mengganti kolom dan papan angka dengan aritmetika, desimal, persentase, dan riwayat perhitungan. Gunakan jumlah mengembalikan hasil ke formulir; perhitungan dan riwayat tetap tersimpan saat dibuka kembali selama sesi halaman ini. Keyboard mendukung operator, Enter untuk sama dengan, dan Escape untuk kembali ke formulir." },
+      { type: "fix",
+        en: "Calculated decimals remain intact when editing transactions and creating recurring items. The release version is now 1.49.0 and the service-worker cache is v101, so installed apps can replace the previous cached build. Minimum client version remains 1.34.0; no schema changes are required.",
+        id: "Desimal hasil perhitungan tetap utuh saat mengedit transaksi dan membuat transaksi berulang. Versi rilis kini 1.49.0 dan cache service worker v101, sehingga aplikasi terpasang dapat mengganti build lama. Versi minimum klien tetap 1.34.0; tidak diperlukan perubahan skema." },
+    ],
+  },
+  {
     version: "1.48.3",
     date: "October 8, 2026",
     changes: [
